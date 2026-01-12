@@ -28,4 +28,17 @@ public class AddOn : IHasTenant
     {
         return new AddOn(tenantId, addOnKey, name, price, showInCheckout);
     }
+
+    public void Update(
+        string key,
+        string name, 
+        decimal price,
+        bool showInCheckout
+    )
+    {
+        AddOnKey = key;
+        Name = name;
+        Price = price;
+        ShowInCheckout =  showInCheckout;
+    }
 }

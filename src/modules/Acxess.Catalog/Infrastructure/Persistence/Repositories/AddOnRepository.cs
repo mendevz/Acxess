@@ -12,13 +12,16 @@ public class AddOnRepository(
         context.AddOns.Add(addOn);
     }
 
-    public async Task<AccessTier?> GetById(int id, CancellationToken cancellationToken)
-    {
-        return await context.AccessTiers.FindAsync([id], cancellationToken);
-    }
+
 
     public void Update(AccessTier accessTier)
     {
         context.AccessTiers.Update(accessTier);
     }
+
+    public async Task<AddOn?> GetById(int id, CancellationToken cancellationToken)
+    {
+        return await context.AddOns.FindAsync([id], cancellationToken);
+    }
+
 }

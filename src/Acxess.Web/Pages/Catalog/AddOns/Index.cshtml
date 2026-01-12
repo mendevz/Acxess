@@ -1,255 +1,58 @@
 ﻿@page
 @model Acxess.Web.Pages.Catalog.AddOns.IndexModel
-@{
-    ViewData["Title"] = "Gestión de Complementos";
+@section Scripts {
+    <script src="/js-pages/Catalog/AddOns/index.js" asp-append-version="true"></script>
 }
-@* 
-@* PLANTILLA MAESTRA PARA CATÁLOGOS (Master-Detail)
-   ------------------------------------------------
-   Usa esta estructura para: Planes, AddOns, Cupones, etc.
-   Solo cambia el título en el header y los campos del formulario.
-*@
+@{
+     var _title = "Complementos";
+    ViewData["Title"] = _title;
+}
+<div class="h-full w-full flex flex-col bg-gray-100 dark:bg-[#0b0f19] transition-colors duration-300"
+    x-data="addOnsApp()"
+    @@htmx:before-request="isLoading = true"  
+    @@htmx:after-request="isLoading = false">
 
-<div class="h-full w-full flex flex-col bg-gray-100 dark:bg-[#0b0f19] transition-colors duration-300" 
-     x-data="catalogApp()">
+    <partial name="/Pages/Catalog/Shared/_HeaderCatalogs.cshtml" model="_title" />
 
-    <header class="bg-white dark:bg-slate-800 p-3 flex items-center gap-4 shadow-sm border-b border-gray-200 dark:border-slate-700 shrink-0 z-20">
-        
-        <a href="/Catalog/Index" class="group flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 transition-colors" title="Volver al Menú">
-            <svg class="w-5 h-5 text-gray-600 dark:text-gray-300 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-        </a>
-
-        <div class="flex flex-col">
-            <h1 class="text-lg font-bold tracking-tight text-slate-800 dark:text-white leading-tight">
-                Planes de Venta
-            </h1>
-            <span class="text-xs text-gray-400 dark:text-gray-500 font-medium">Configuración de Catálogo</span>
-        </div>
-
-    </header>
 
     <main class="flex-1 grid grid-cols-12 gap-0 overflow-hidden">
 
-        <section class="col-span-4 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        <section 
+            class="col-span-4 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]"
+            id="table-container"
+            hx-get="@Url.Page("Index", pageHandler: "Items")"
+            hx-trigger="load, refreshItems from:body"
+            hx-target="#table-content"
+            hx-swap="innerHTML">
             
-            <div class="p-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 flex justify-between items-center gap-2">
-                <div class="relative w-full">
-                    <input type="text" x-model="search" placeholder="Filtrar..." 
-                           class="w-full pl-8 pr-2 py-1.5 text-sm bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-1 focus:ring-blue-500 outline-none text-gray-700 dark:text-white placeholder-gray-400 transition-colors">
-                    <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <div id="table-content" class="h-full flex flex-col overflow-hidden">
+
+                <div class="flex gap-2 justify-center items-center">
+                    <div class="p-4 text-center text-gray-400 htmx-indicator">Cargando</div>
+                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
                 </div>
-                <button x-on:click="createNew()" class="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-sm font-medium transition shadow-sm whitespace-nowrap">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Nuevo
-                </button>
-            </div>
-
-            <div class="flex-1 overflow-y-auto custom-scrollbar">
-                <template x-for="plan in filteredPlans" :key="plan.id">
-                    <div x-on:click="selectPlan(plan)" 
-                         :class="selectedId === plan.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500' : 'hover:bg-gray-50 dark:hover:bg-slate-700/50 border-l-4 border-transparent border-b border-gray-50 dark:border-slate-700/50'"
-                         class="p-4 cursor-pointer transition-all group">
-                        
-                        <div class="flex justify-between items-start mb-1">
-                            <h3 class="font-bold text-gray-800 dark:text-gray-200 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors" x-text="plan.name"></h3>
-                            <span class="text-xs font-mono font-bold bg-gray-100 dark:bg-slate-900 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded border border-gray-200 dark:border-slate-600" x-text="'$' + plan.price"></span>
-                        </div>
-                        
-                        <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
-                            <span x-text="plan.durationValue + ' ' + plan.durationUnit"></span>
-                            <span :class="plan.isActive ? 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30' : 'text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-slate-700'" 
-                                  class="px-2 py-0.5 rounded-full border border-transparent"
-                                  :class="plan.isActive ? 'dark:border-green-900' : 'dark:border-slate-600'"
-                                  x-text="plan.isActive ? 'Activo' : 'Inactivo'">
-                            </span>
-                        </div>
-                    </div>
-                </template>
-            </div>
-            
-            <div class="p-2 bg-gray-50 dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 text-xs text-center text-gray-400 dark:text-gray-500">
-                Mostrando <span x-text="filteredPlans.length"></span> registros
-            </div>
-        </section>
-
-
-        <section class="col-span-8 bg-gray-50 dark:bg-[#0f1523] flex flex-col relative h-full" x-show="form.id !== null" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-x-4">
-            
-            <div class="flex-1 p-8 grid grid-cols-1 lg:grid-cols-2 gap-12 overflow-y-auto custom-scrollbar">
                 
-                <div class="space-y-6">
-                    <div>
-                        <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                            <span x-text="form.id === 0 ? 'Crear Nuevo Plan' : 'Editar Plan'"></span>
-                            <span x-show="isDirty" class="text-xs font-normal text-amber-700 bg-amber-100 dark:bg-amber-900/40 dark:text-amber-400 px-2 py-0.5 rounded animate-pulse border border-amber-200 dark:border-amber-800">● Cambios sin guardar</span>
-                        </h2>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Define las reglas de negocio para este producto.</p>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre Comercial</label>
-                        <input type="text" x-model="form.name" 
-                               class="w-full p-2.5 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none shadow-sm text-gray-900 dark:text-white transition-colors" 
-                               placeholder="Ej. Mensualidad Estudiante">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Precio</label>
-                            <div class="relative group">
-                                <span class="absolute left-3 top-2.5 text-gray-400 group-focus-within:text-blue-500 transition-colors">$</span>
-                                <input type="number" x-model.number="form.price" 
-                                       class="w-full p-2.5 pl-7 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none shadow-sm font-mono font-bold text-gray-700 dark:text-white transition-colors">
-                            </div>
-                        </div>
-                        
-                        <div class="flex flex-col justify-end pb-2">
-                            <label class="flex items-center cursor-pointer group">
-                                <div class="relative">
-                                    <input type="checkbox" x-model="form.isActive" class="sr-only">
-                                    <div :class="form.isActive ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'" class="w-10 h-6 rounded-full shadow-inner transition-colors"></div>
-                                    <div :class="form.isActive ? 'translate-x-4' : 'translate-x-0'" class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-transform transform"></div>
-                                </div>
-                                <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-500 transition-colors" x-text="form.isActive ? 'Disponible' : 'Archivado'"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm">
-                        <label class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase mb-3 tracking-wide">Vigencia del servicio</label>
-                        <div class="flex gap-4">
-                            <div class="w-1/3">
-                                <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">Valor</label>
-                                <input type="number" x-model="form.durationValue" 
-                                       class="w-full p-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-white rounded focus:ring-blue-500 outline-none transition-colors">
-                            </div>
-                            <div class="flex-1">
-                                <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">Unidad</label>
-                                <select x-model="form.durationUnit" 
-                                        class="w-full p-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-white rounded focus:ring-blue-500 outline-none transition-colors">
-                                    <option value="Days">Días</option>
-                                    <option value="Months">Meses</option>
-                                    <option value="Years">Años</option>
-                                </select>
-                            </div>
-                        </div>
-                        <p class="mt-3 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-100 dark:border-blue-900/30">
-                            <span class="font-bold">Info:</span> El sistema sumará <span x-text="form.durationValue"></span> <span x-text="translateUnit(form.durationUnit)"></span> a la fecha de compra.
-                        </p>
-                    </div>
-
-                </div>
-
-                <div class="flex flex-col items-center justify-center border-l border-gray-200 dark:border-slate-700 pl-0 lg:pl-12 border-dashed">
-                    <span class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Vista Previa en POS</span>
-                    
-                    <div class="w-64 p-5 rounded-xl border-2 transition-all relative shadow-lg bg-white dark:bg-slate-800"
-                         :class="form.isActive ? 'border-blue-500 ring-4 ring-blue-50 dark:ring-blue-900/20' : 'border-gray-200 dark:border-slate-600 opacity-60 grayscale'">
-                        
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-bold text-gray-800 dark:text-white text-lg leading-tight" x-text="form.name || 'Sin nombre'"></h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                    Acceso por <span x-text="form.durationValue"></span> <span x-text="translateUnit(form.durationUnit)"></span>
-                                </p>
-                            </div>
-                            <span class="text-xl font-bold text-blue-600 dark:text-blue-400" x-text="'$' + (form.price || 0)"></span>
-                        </div>
-                        
-                        <div class="absolute top-2 right-2 text-blue-500 dark:text-blue-400">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                        </div>
-                    </div>
-
-                    <p class="mt-6 text-xs text-gray-400 dark:text-gray-500 text-center max-w-[200px]">
-                        Así verá la tarjeta el recepcionista al momento de vender. <br>
-                        <span x-show="!form.isActive" class="text-red-500 dark:text-red-400 font-bold mt-1 block">No visible (Inactivo)</span>
-                    </p>
-
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-4 flex justify-between items-center shrink-0 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-                <button x-on:click="deletePlan()" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    Eliminar
-                </button>
-                <div class="flex gap-3">
-                    <button x-on:click="resetForm()" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg text-sm transition-colors">
-                        Cancelar <span class="bg-gray-200 dark:bg-slate-600 text-gray-500 dark:text-gray-300 px-1 py-0.5 rounded text-[10px] ml-1 border border-gray-300 dark:border-slate-500">Esc</span>
-                    </button>
-                    <button class="px-6 py-2 bg-slate-900 hover:bg-black dark:bg-blue-600 dark:hover:bg-blue-500 text-white rounded-lg shadow-lg text-sm font-bold flex items-center gap-2 transform active:scale-95 transition-all">
-                        <span>GUARDAR CAMBIOS</span>
-                        <span class="bg-gray-700 dark:bg-blue-800 text-gray-300 dark:text-blue-100 text-[10px] px-1.5 py-0.5 rounded opacity-70">Ctrl + S</span>
-                    </button>
-                </div>
             </div>
 
         </section>
 
-        <section class="col-span-8 bg-gray-50 dark:bg-[#0f1523] flex flex-col items-center justify-center text-gray-400 dark:text-gray-600" x-show="form.id === null">
-            <div class="bg-white dark:bg-slate-800 p-6 rounded-full shadow-sm mb-4">
-                <svg class="w-12 h-12 text-gray-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-            </div>
-            <p>Selecciona un registro para editar o crea uno nuevo</p>
-        </section>
 
+        <section class="col-span-8 bg-gray-50 dark:bg-[#0f1523] flex flex-col relative h-full" id="form-section">
+
+            <div id="form-container" class="h-full w-full">
+                <div class="h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-full shadow-sm mb-4">
+                        <svg class="w-12 h-12 text-gray-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    </div>
+                    <p>Selecciona un registro para editar o crea uno nuevo</p>
+                </div>
+            </div>
+
+        </section>
+        
     </main>
-
-    <script>
-        function catalogApp() {
-            return {
-                search: '',
-                selectedId: null,
-                isDirty: false,
-                
-                // Datos dummy
-                plans: [
-                    { id: 1, name: 'Mensualidad', price: 500, durationValue: 1, durationUnit: 'Months', isActive: true },
-                    { id: 2, name: 'Semanal', price: 150, durationValue: 7, durationUnit: 'Days', isActive: true },
-                    { id: 3, name: 'Visita', price: 50, durationValue: 1, durationUnit: 'Days', isActive: true },
-                    { id: 4, name: 'Anualidad VIP', price: 4500, durationValue: 1, durationUnit: 'Years', isActive: false },
-                ],
-                
-                form: { id: null, name: '', price: 0, durationValue: 1, durationUnit: 'Months', isActive: true },
-
-                get filteredPlans() {
-                    if (this.search === '') return this.plans;
-                    return this.plans.filter(p => p.name.toLowerCase().includes(this.search.toLowerCase()));
-                },
-
-                selectPlan(plan) {
-                    this.selectedId = plan.id;
-                    this.form = JSON.parse(JSON.stringify(plan));
-                    this.isDirty = false;
-                },
-
-                createNew() {
-                    this.selectedId = 0;
-                    this.form = { id: 0, name: '', price: 0, durationValue: 1, durationUnit: 'Months', isActive: true };
-                    this.isDirty = true;
-                },
-                
-                translateUnit(unit) {
-                    const dict = { 'Days': 'días', 'Months': 'meses', 'Years': 'años' };
-                    return dict[unit] || unit;
-                },
-
-                resetForm() {
-                    this.selectedId = null;
-                    this.form.id = null;
-                },
-
-                deletePlan() {
-                    if(confirm("¿Eliminar registro?")) this.resetForm();
-                },
-
-                init() {
-                    this.$watch('form', (value) => {
-                        if (this.selectedId !== null) this.isDirty = true;
-                    });
-                }
-            }
-        }
-    </script>
+    
 </div>

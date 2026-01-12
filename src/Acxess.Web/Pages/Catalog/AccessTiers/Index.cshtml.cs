@@ -43,7 +43,7 @@ public class IndexModel(IMediator sender) : PageModel
 
     public async Task<IActionResult> OnGetFormAsync(int? id)
     {   
-        if (id is null) return Partial("_NoSelectedItem");
+        if (id is null) return Partial("/Pages/Catalog/Shared/_NoSelectedItem.cshtml");
 
         if (id == 0)
         {
@@ -77,8 +77,8 @@ public class IndexModel(IMediator sender) : PageModel
     public async Task<IActionResult> OnPostSaveAsync()
     {
 
-           var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-            foreach(var err in errors) Console.WriteLine($"ERROR BACKEND: {err}");
+        //    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+        //     foreach(var err in errors) Console.WriteLine($"ERROR BACKEND: {err}");
 
         if (!ModelState.IsValid) return Partial("_Form", Input);
 
@@ -99,14 +99,13 @@ public class IndexModel(IMediator sender) : PageModel
         if (resultSaved.IsFailure)
         {
             ModelState.AddModelError(string.Empty, resultSaved.Error.Description);
-            return Partial("_Form", Input); // Retorna form con errores
+            return Partial("_Form", Input); 
         }
 
         Response.Headers.Append("HX-Trigger", "refreshItems");
 
         if(Input.IdAccessTier == 0) Input = new AccessTierInput(); 
 
-        // SOLUCIÓN: Crear el PartialViewResult manualmente para inyectar el ViewData correcto
         var partialView = new PartialViewResult
         {
             ViewName = "_Form",

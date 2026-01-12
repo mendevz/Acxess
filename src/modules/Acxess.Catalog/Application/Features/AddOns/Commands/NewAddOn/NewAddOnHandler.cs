@@ -7,9 +7,9 @@ namespace Acxess.Catalog.Application.Features.AddOns.Commands.NewAddOn;
 public class NewAddOnHandler(
     ICatalogUnitOfWork unitOfWork,
     IAddOnRepository addOnRepository
-) : IRequestHandler<NewAddOnCommand, Result>
+) : IRequestHandler<NewAddOnCommand, Result<string>>
 {
-    public async Task<Result> Handle(NewAddOnCommand request, CancellationToken cancellationToken)
+    public async Task<Result<string>> Handle(NewAddOnCommand request, CancellationToken cancellationToken)
     {
         var addOn = Domain.Entities.AddOn.Create(
             request.TenantId,
@@ -23,6 +23,11 @@ public class NewAddOnHandler(
 
         var result = await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return result;
+        if (result.IsFailure)
+        {
+            return Result<string>.Failure(result.Error);
+        }
+
+        return "Complementado guardado correctamente";
     }
 }
