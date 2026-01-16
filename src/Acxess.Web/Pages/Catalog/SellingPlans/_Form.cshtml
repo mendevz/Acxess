@@ -5,9 +5,6 @@
     var modelJson = System.Text.Json.JsonSerializer.Serialize(Model);
     var tiersJson = System.Text.Json.JsonSerializer.Serialize(tiersList);
 }
-<script>
-    window.availableTiersData = @Html.Raw(tiersJson);
-</script>
 <div class="h-full flex flex-col  overflow-hidden bg-gray-50 dark:bg-[#0f1523]"
      x-data="sellingPlanForm(@modelJson, @tiersJson)">
     
@@ -16,7 +13,10 @@
             <div class="mb-3 flex flex-col gap-2">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
                     <span>@(Model.IdSellingPlan == 0 ? "Crear Nuevo Plan" : "Editar Plan")</span>
-                    <span x-show="isDirty" class="text-xs font-normal text-amber-600 bg-amber-100 px-2 py-0.5 rounded animate-pulse">● Cambios sin guardar</span>
+                    <span x-show="isDirty" 
+                          class="text-xs font-normal text-amber-600 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/50 px-2 py-0.5 rounded animate-pulse">
+                        ● Cambios sin guardar
+                    </span>
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Define las reglas de negocio para esta configuración.</p>
                 
@@ -53,7 +53,6 @@
                            placeholder="Ej. 3"
                            id="Input_TotalMembers"> <span asp-validation-for="TotalMembers" class="text-xs text-red-500 font-bold mt-1 block"></span>
                 </div>
-
 
                 <div class="grid grid-cols-2 gap-4 ">
                     <div>
@@ -177,7 +176,6 @@
             type="submit"
             form="sellingPlanForm"
             :disabled=" !isDirty">
-
             <span x-show="!isLoading">GUARDAR CAMBIOS</span>
 
             <span x-show="isLoading" class="flex items-center gap-2">

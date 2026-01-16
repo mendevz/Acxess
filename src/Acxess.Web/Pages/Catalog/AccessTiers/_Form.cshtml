@@ -3,16 +3,8 @@
     var modelJson = System.Text.Json.JsonSerializer.Serialize(Model);
 }
 
-<div class="h-full flex flex-col overflow-hidden bg-gray-50 dark:bg-[#0f1523]" x-data="{
-            form: @modelJson,
-            initialState: null,
-            init() {
-                this.initialState = JSON.stringify(this.form);
-            },
-            get isDirty(){
-                return JSON.stringify(this.form) !== this.initialState;
-            }
-        }">
+<div class="h-full flex flex-col  overflow-hidden bg-gray-50 dark:bg-[#0f1523]" 
+     x-data="accessTiersForm(@modelJson)">
     
     <div class="flex-1 p-8 grid grid-cols-1 overflow-y-auto custom-scrollbar content-start">
         <div class="space-y-6">
@@ -20,7 +12,10 @@
             <div class="mb-6">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
                     <span>@(Model.IdAccessTier == 0 ? "Crear Nuevo" : "Editar Registro")</span>
-                    <span x-show="isDirty" class="text-xs font-normal text-amber-600 bg-amber-100 px-2 py-0.5 rounded animate-pulse">● Cambios sin guardar</span>
+                    <span x-show="isDirty" 
+                          class="text-xs font-normal text-amber-600 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/50 px-2 py-0.5 rounded animate-pulse">
+                        ● Cambios sin guardar
+                    </span>
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Define las reglas de negocio para esta configuración.</p>
 

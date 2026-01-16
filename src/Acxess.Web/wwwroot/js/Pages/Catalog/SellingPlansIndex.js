@@ -3,7 +3,7 @@ document.addEventListener('alpine:init', () => {
         return {
             form: model,
             initialState: null,
-            tiersMap: {}, 
+            tiersMap: {},
             units: { 1: "Días", 2: "Meses", 3: "Años" },
             init() {
                 if (tiers && tiers.length > 0) {
@@ -32,7 +32,7 @@ document.addEventListener('alpine:init', () => {
     })
     Alpine.data('sellingPlanApp', (initialData) => {
         return {
-            selectedId: null, 
+            selectedId: null,
             loadedId: null,
             isLoading: false,
             mapDayUnit(value){
