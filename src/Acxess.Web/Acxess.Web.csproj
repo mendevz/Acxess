@@ -27,5 +27,9 @@
     <ProjectReference Include="..\modules\Acxess.Billing\Acxess.Billing.csproj" />
     <ProjectReference Include="..\modules\Acxess.Marketing\Acxess.Marketing.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Pages\Catalog\PaymentMethods\Index.cshtml" />
+  </ItemGroup>
 
 </Project>

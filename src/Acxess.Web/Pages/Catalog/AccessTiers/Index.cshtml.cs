@@ -53,28 +53,23 @@ public class IndexModel(IMediator sender) : PageModel
                 break;
             default:
             {
-                var query = new GetAccesTierByIdQuery(id??0);
+                var query = new GetAccesTierByIdQuery(id ?? 0);
+                
                 var result = await sender.Send(query);
+                
+                if (result.IsFailure) return Form(errorMessage: result.Error.Description);
 
-                if (result.IsFailure)
+                Input = new AccessTierInput()
                 {
-                    return Form(errorMessage: result.Error.Description);
-                }
-
-                var item = result.Value;
-            
-                Input = new AccessTierInput 
-                { 
-                    IdAccessTier = item.IdAccessTier, 
-                    Name = item.Name, 
-                    Description = item.Description, 
-                    IsActive = item.IsActive 
+                    Description = result.Value.Description,
+                    Name = result.Value.Name,
+                    IsActive = result.Value.IsActive
                 };
                 break;
             }
         }
 
-        return Partial("_Form", Input);
+        return Form();
     }
 
     public async Task<IActionResult> OnPostSaveAsync()

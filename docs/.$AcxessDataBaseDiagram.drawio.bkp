@@ -1,6 +1,6 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.2.9 Chrome/140.0.7339.249 Electron/38.7.2 Safari/537.36" version="29.2.9">
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.2.9 Chrome/140.0.7339.249 Electron/38.7.2 Safari/537.36" version="29.2.9">
   <diagram name="Page-1" id="a7904f86-f2b4-8e86-fa97-74104820619b">
-    <mxGraphModel dx="3477" dy="2252" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="none" math="0" shadow="0">
+    <mxGraphModel dx="2860" dy="2053" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="none" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1240,8 +1240,8 @@
             <mxRectangle height="30" width="356" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="EXhqKi_Y3ZOClS1SiWaz-117" parent="1" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=0;strokeColor=#6F0000;fontSize=16;fillColor=#a20025;fontColor=#ffffff;" value="PaymentMethods" vertex="1">
-          <mxGeometry height="120" width="380.76923076923083" x="-455.0500000000001" y="238" as="geometry" />
+        <mxCell id="EXhqKi_Y3ZOClS1SiWaz-117" parent="1" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=0;strokeColor=#A50040;fontSize=16;fillColor=#d80073;fontColor=#ffffff;" value="PaymentMethods" vertex="1">
+          <mxGeometry height="120" width="380.76923076923083" x="977.9999999999998" y="-361" as="geometry" />
         </mxCell>
         <mxCell id="EXhqKi_Y3ZOClS1SiWaz-118" parent="EXhqKi_Y3ZOClS1SiWaz-117" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;strokeColor=inherit;fontSize=16;" value="" vertex="1">
           <mxGeometry height="30" width="380.76923076923083" y="30" as="geometry" />
@@ -1283,10 +1283,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="EXhqKi_Y3ZOClS1SiWaz-127" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="DEFAULTS:&lt;div&gt;Efectivo&lt;/div&gt;&lt;div&gt;Transferencia&lt;/div&gt;" vertex="1">
-          <mxGeometry height="30" width="185" x="-392.00000000000006" y="372" as="geometry" />
-        </mxCell>
-        <mxCell id="EXhqKi_Y3ZOClS1SiWaz-131" edge="1" parent="1" source="6USHphWyz12L0hbrUzBd-219" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="EXhqKi_Y3ZOClS1SiWaz-118">
-          <mxGeometry relative="1" as="geometry" />
+          <mxGeometry height="30" width="185" x="1085" y="-222" as="geometry" />
         </mxCell>
         <mxCell id="EXhqKi_Y3ZOClS1SiWaz-156" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Complementos al momento de registrar nueva subscripción o renovar, ejemplo: Con caminadora $50 más, Inscripción $100, etc." vertex="1">
           <mxGeometry height="30" width="241" x="1043" y="-666" as="geometry" />
