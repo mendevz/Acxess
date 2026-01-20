@@ -19,7 +19,6 @@ public class IndexModel(IMediator sender) : PageModel
     [BindProperty]
     public AccessTierInput Input {get; set;}= new();
 
-
     public void OnGet()
     {
 

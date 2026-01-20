@@ -71,8 +71,7 @@ public class IndexModel(IMediator mediator) : PageModel
 
             if (result.IsFailure)
             {
-                ModelState.AddModelError(string.Empty, result.Error.Description);
-                return Partial("_Form", Input);
+                return Partial("_ErrorState", result.Error.Description);
             }
 
             var item = result.Value;

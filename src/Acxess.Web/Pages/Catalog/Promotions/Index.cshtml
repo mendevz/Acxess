@@ -1,4 +1,5 @@
 @page
+@using Acxess.Web.Pages.Catalog.Shared
 @model Acxess.Web.Pages.Catalog.Promotions.IndexModel
 @section Scripts
 {
@@ -16,7 +17,36 @@
     <main class="flex-1 grid grid-cols-12 gap-0 overflow-hidden">
         
         <div class="h-full col-span-4   flex flex-col bg-white dark:bg-slate-800">
+            <partial
+                name="/Pages/Catalog/Shared/_CatalogListFilter.cshtml"
+                model='new CatalogListFilterViewModel{
+                    SearchValue = Model.Search??"",
+                    FilterUrl = Url.Page("Index", "Items")!,
+                    CreateUrl = Url.Page("Index", "Form", new {id=0})!,
+                    CreateButtonText="Nueva Promoción"
+                }'
+            />
+            
+            <section
+                class="flex-1 min-h-0  relative bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]"
+                id="table-container"
+                hx-get="@Url.Page("Index", pageHandler: "Items")"
+                hx-trigger="load, refreshItems from:body"
+                hx-target="#table-content"
+                hx-swap="innerHTML">
 
+                <div id="table-content" class="h-full flex flex-col overflow-hidden">
+                    <partial name="/Pages/Catalog/Shared/_LoadingList.cshtml"/>
+                </div>
+
+            </section>
+            
         </div>
+        
+        <section class="col-span-8 bg-gray-50 dark:bg-[#0f1523] flex flex-col relative h-full min-h-0" id="form-section">
+            <div id="form-container" class="h-full w-full">
+                <partial name="/Pages/Catalog/Shared/_EmptySelectionBox.cshtml"/>
+            </div>
+        </section>
     </main>
 </div>

@@ -9,9 +9,11 @@ public class Promotion : IHasTenant
     {
     }
 
-    private Promotion( int idTenant, DiscountType discountType, decimal discount, bool requiresCoupon, bool autoApply, DateTime? availableFrom, DateTime? availableTo, bool isActive, int createdByUser)
+    private Promotion( int idTenant, string name, DiscountType discountType, decimal discount, bool requiresCoupon, bool autoApply, DateTime? availableFrom, DateTime? availableTo, bool isActive, int createdByUser)
     {
+        
         IdTenant = idTenant;
+        Name = name;
         DiscountType = discountType;
         Discount = discount;
         RequiresCoupon = requiresCoupon;
@@ -35,6 +37,49 @@ public class Promotion : IHasTenant
 
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public int CreatedByUser { get; private set; }
+
+    public static Promotion Create(
+        int idTenant,
+        string name, 
+        DiscountType discountType,
+        decimal discount,
+        bool requiresCoupon,
+        bool autoApply,
+        bool isActive,
+        DateTime? availableFrom,
+        DateTime? availableTo,
+        int  createdByUser
+        )
+    {
+        return new Promotion(
+            idTenant,
+            name,
+            discountType,
+            discount,
+            requiresCoupon, autoApply, availableFrom, availableTo, isActive, createdByUser
+        );
+    }
+
+    public void Update(
+        string name,
+        DiscountType discountType,
+        decimal discount,
+        bool requiresCoupon,
+        bool autoApply,
+        bool isActive,
+        DateTime? availableFrom,
+        DateTime? availableTo
+    )
+    {
+        Name = name;
+        DiscountType = discountType;
+        Discount = discount;
+        RequiresCoupon = requiresCoupon;
+        AutoApply = autoApply;
+        IsActive = isActive;
+        AvailableFrom = availableFrom;
+        AvailableTo = availableTo;
+    }
 
     
 }

@@ -19,33 +19,33 @@ public class NewSellingPlansHandler(
        if (!currentTenant.IsAvailable)
             return Result<string>.Failure("TenantId.NotAvailable","Tenant information is not available.");
 
-        var sellingPlan = SellingPlan.Create(
-            currentTenant.Id ?? 0,
-            request.Name,
-            request.TotalMembers,
-            request.Duration,
-            request.DurationUnit,
-            request.Price,
-            request.CreatedBy
-        );
+       var sellingPlan = SellingPlan.Create(
+           currentTenant.Id ?? 0,
+           request.Name,
+           request.TotalMembers,
+           request.Duration,
+           request.DurationUnit,
+           request.Price,
+           request.CreatedBy
+       );
 
-        if (request.AccessTiersIds != null && request.AccessTiersIds.Any())
-        {
-            foreach (var tierId in request.AccessTiersIds)
-            {
-                sellingPlan.AddAccessTier(tierId);
-            }
-        }
+       if (request.AccessTiersIds != null && request.AccessTiersIds.Any())
+       {
+           foreach (var tierId in request.AccessTiersIds)
+           {
+               sellingPlan.AddAccessTier(tierId);
+           }
+       }
 
-        sellingPlanRepository.Add(sellingPlan);
+       sellingPlanRepository.Add(sellingPlan);
 
-        var resultSave = await catalogUnitOfWork.SaveChangesAsync(cancellationToken);   
+       var resultSave = await catalogUnitOfWork.SaveChangesAsync(cancellationToken);   
 
-        if (resultSave.IsFailure)
-        {
-            return Result<string>.Failure(resultSave.Error);
-        }
+       if (resultSave.IsFailure)
+       {
+           return Result<string>.Failure(resultSave.Error);
+       }
 
-        return "Plan guardado correctamente";
+       return "Plan guardado correctamente";
     }
 }
