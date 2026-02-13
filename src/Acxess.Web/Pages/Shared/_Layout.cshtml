@@ -62,7 +62,6 @@
       }"
       @@keydown.window.ctrl.k.prevent="toggleSearch()"
       @@keydown.window.escape="searchOpen = false">
-
       @Html.AntiForgeryToken()
 
     <nav class="w-20 bg-slate-900 flex flex-col items-center py-6 z-50 shadow-2xl shrink-0 h-full">
@@ -79,7 +78,7 @@
                 <span class="tooltip">Mostrador Rápido<span class="text-gray-400 text-[10px] ml-1">Ctrl+2</span></span>
             </a>
 
-            <a href="/Membership/Members" class="menu-item group relative w-full h-12 flex items-center justify-center cursor-pointer transition-all @GetNavLinkClass("/Membership/Members")">
+            <a href="/Membership/DigitalExpedient" class="menu-item group relative w-full h-12 flex items-center justify-center cursor-pointer transition-all @GetNavLinkClass("/Membership/DigitalExpedient")">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 <span class="tooltip">Socios<span class="text-gray-400 text-[10px] ml-1">Ctrl+3</span></span>
             </a>

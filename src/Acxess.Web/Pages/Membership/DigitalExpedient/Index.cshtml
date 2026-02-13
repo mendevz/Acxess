@@ -1,112 +1,100 @@
-﻿@page
-@model Acxess.Web.Pages.Membership.MembersModel
-@{
-    ViewData["Title"] = "Gestión de Socios";
+@page
+@model Acxess.Web.Pages.Membership.DigitalExpedient.IndexModel
+@section Scripts {
+    <script src="~/js/Pages/Membership/DigitalExpedientIndex.js" asp-append-version="true"></script>
 }
-
-@* Contenedor Principal: Full Height, Flex Column *@
+@{
+    ViewData["Title"] = "Expediente Digital";
+}
 <div class="h-full w-full flex flex-col bg-gray-100 dark:bg-[#0b0f19] transition-colors duration-300" 
-     x-data="memberApp()">
+     x-data="digitalExpedientApp()">
 
-    <header class="bg-white dark:bg-slate-800 p-3 flex justify-between items-center shadow-sm border-b border-gray-200 dark:border-slate-700 shrink-0 z-20">
-        <div class="flex items-center gap-4">
-            <h1 class="text-xl font-bold tracking-tight text-slate-700 dark:text-white pl-2">
-                Socios <span class="text-gray-400 font-normal text-sm">/ Expediente Digital</span>
-            </h1>
-        </div>
-        
-        <div class="flex items-center bg-gray-100 dark:bg-slate-900 rounded-lg px-3 py-2 w-96 border border-gray-200 dark:border-slate-600 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
-            <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            <input type="text" x-model="search" placeholder="Buscar por nombre, ID o teléfono (Ctrl + F)..." 
-                   class="bg-transparent border-none outline-none text-sm text-gray-700 dark:text-white w-full placeholder-gray-400">
-        </div>
-    </header>
+    <partial name="_Header" />
 
     <main class="flex-1 grid grid-cols-12 gap-0 overflow-hidden">
 
-        <section class="col-span-12 md:col-span-3 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col z-10">
+        <section class="col-span-12 md:col-span-3 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 h-full flex flex-col overflow-hidden z-10 ">
+            
             <div class="p-3 bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase flex justify-between items-center">
-                <span>Resultados (<span x-text="filteredMembers.length"></span>)</span>
-                <button class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
-                    Filtrar <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
+                <div class="flex items-center bg-gray-100 dark:bg-slate-900 rounded-lg px-3 py-2 w-96 border border-gray-200 dark:border-slate-600 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                    <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="text" 
+                           name="SearchMember"
+                           value="@Model.SearchMember"
+                           placeholder="Buscar por nombre o ID" 
+                           hx-get="@Url.Page("Index", pageHandler: "Members")"
+                           hx-trigger="load, keyup changed delay:500ms"
+                           hx-target="#members-list"
+                           x-swap="innerHTML"
+                           @@focus="$el.select()"
+                           class="bg-transparent border-none outline-none text-sm text-gray-700 dark:text-white w-full placeholder-gray-400">
+                </div>
             </div>
             
-            <div class="flex-1 overflow-y-auto custom-scrollbar">
-                <template x-for="m in filteredMembers" :key="m.id">
-                    <div x-on:click="selectMember(m)" 
-                         :class="selectedMember?.id === m.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 dark:border-blue-500' : 'hover:bg-gray-50 dark:hover:bg-slate-700/50 border-l-4 border-transparent border-b border-gray-50 dark:border-slate-700/50'"
-                         class="p-4 cursor-pointer transition-all flex items-center gap-3 group">
-                        
-                        <div class="relative">
-                            <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-300 font-bold text-sm">
-                                <span x-text="getInitials(m.name)"></span>
-                            </div>
-                            <div :class="getStatusColor(m.status)" class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-800"></div>
-                        </div>
-
-                        <div class="overflow-hidden">
-                            <p class="font-bold text-sm text-gray-800 dark:text-gray-200 truncate group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors" x-text="m.name"></p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate" x-text="m.email || 'Sin email'"></p>
-                        </div>
-                    </div>
-                </template>
+            <div id="members-list" class="flex-1 overflow-hidden flex flex-col min-h-0">
+                <div class="flex justify-center items-center py-3">
+                    <span class="text-gray-500">Loading...</span>
+                </div>
             </div>
         </section>
 
-
-        <section class="col-span-12 md:col-span-6 bg-gray-50 dark:bg-[#0f1523] flex flex-col overflow-y-auto custom-scrollbar relative" x-show="selectedMember">
-            
+        <section class="col-span-12 md:col-span-6 bg-gray-50 dark:bg-[#0f1523] flex flex-col overflow-y-auto custom-scrollbar relative" x-show="selectedMemberId">
+        
             <div class="bg-white dark:bg-slate-800 p-8 border-b border-gray-200 dark:border-slate-700 shadow-sm">
                 <div class="flex justify-between items-start">
                     <div class="flex gap-5">
                         <div class="w-20 h-20 rounded-xl bg-slate-900 dark:bg-slate-950 text-white flex items-center justify-center text-2xl font-bold shadow-lg border-2 border-slate-100 dark:border-slate-700">
-                            <span x-text="getInitials(selectedMember?.name)"></span>
+                            <span >MM</span>
+                            @* x-text="getInitials(selectedMember?.name)" *@
                         </div>
-                        
+        
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white" x-text="selectedMember?.name"></h2>
+                            @* x-text="selectedMember?.name" *@
+                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Leopoldo Martinez</h2>
                             <div class="flex items-center gap-3 mt-1 text-sm text-gray-500 dark:text-gray-400">
                                 <span class="flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg> 
-                                    <span x-text="selectedMember?.phone"></span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                    @* x-text="selectedMember?.phone" *@
+                                    <span >2222222222</span>
                                 </span>
                                 <span>•</span>
-                                <span class="font-mono text-gray-400">ID: <span x-text="selectedMember?.id"></span></span>
+                                @* x-text="selectedMember?.id" *@
+                                <span class="font-mono text-gray-400">ID: <span >1</span></span>
                             </div>
-                            
+
                             <div class="mt-3 flex gap-2">
-                                <span :class="getStatusBadgeClass(selectedMember?.status)" class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider border">
-                                    <span x-text="selectedMember?.status"></span>
+                                <span :class="getStatusBadgeClass('Activo')" class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider border">
+                                    @* x-text="selectedMember?.status" *@
+                                    <span >Activo</span>
                                 </span>
-                                <span x-show="selectedMember?.debt > 0" class="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-2 py-0.5 rounded text-xs font-bold flex items-center gap-1">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    Deuda: $<span x-text="selectedMember?.debt"></span>
-                                </span>
+                                @* <span x-show="selectedMember?.debt > 0" class="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-2 py-0.5 rounded text-xs font-bold flex items-center gap-1"> *@
+                                @*     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> *@
+                                @*     Deuda: $<span x-text="selectedMember?.debt"></span> *@
+                                @* </span> *@
                             </div>
                         </div>
                     </div>
-
+        
                     <div class="flex flex-col gap-2">
                         <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition flex items-center justify-center gap-2 w-40">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                             Renovar (F2)
                         </button>
-                        
+        
                         <button class="bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 w-40">
                             <svg class="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
                             Asignar Cupón
                         </button>
-
+        
                         <button class="bg-transparent hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center justify-center gap-2">
                             Editar Info
                         </button>
                     </div>
                 </div>
             </div>
-
+        
             <div class="p-8 space-y-6">
-                
+        
                 <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
                     <div class="bg-gray-50 dark:bg-slate-700/50 px-6 py-3 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
                         <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm uppercase tracking-wide">Membresía Activa</h3>
@@ -129,13 +117,13 @@
                         <div class="bg-blue-500 h-1.5" style="width: 15%"></div>
                     </div>
                 </div>
-
+        
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm">
                         <h4 class="text-sm font-bold text-gray-800 dark:text-white mb-2">Notas Administrativas</h4>
                         <textarea class="w-full text-sm text-gray-600 dark:text-gray-300 bg-yellow-50 dark:bg-yellow-900/10 p-3 rounded border border-yellow-200 dark:border-yellow-800/30 h-24 resize-none focus:outline-none placeholder-gray-400 dark:placeholder-gray-500" placeholder="Escribe notas internas aquí (ej. Cliente prefiere locker 15)..."></textarea>
                     </div>
-                    
+        
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm">
                         <h4 class="text-sm font-bold text-gray-800 dark:text-white mb-2">Estadísticas Rápidas</h4>
                         <ul class="text-sm space-y-3">
@@ -147,26 +135,21 @@
                                 <span class="text-gray-500 dark:text-gray-400">Total gastado (LTV):</span>
                                 <span class="font-medium text-green-600 dark:text-green-400">$5,450.00</span>
                             </li>
-                             <li class="flex justify-between pb-1">
-                                <span class="text-gray-500 dark:text-gray-400">Asistencias este mes:</span>
-                                <span class="font-medium text-gray-700 dark:text-gray-200">4</span>
-                            </li>
                         </ul>
                     </div>
                 </div>
-
+        
             </div>
         </section>
-
-
-        <section class="col-span-12 md:col-span-3 bg-white dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 flex flex-col z-10 h-full shadow-[0_0_15px_rgba(0,0,0,0.03)]" x-show="selectedMember">
+        
+        <section class="col-span-12 md:col-span-3 bg-white dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 flex flex-col z-10 h-full shadow-[0_0_15px_rgba(0,0,0,0.03)]" x-show="selectedMemberId">
             <div class="p-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
                 <h3 class="text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">Historial de Actividad</h3>
             </div>
-            
+        
             <div class="flex-1 overflow-y-auto p-5 custom-scrollbar">
                 <div class="relative">
-                    
+        
                     <div class="pl-8 pb-8 relative timeline-line">
                         <div class="absolute left-0 top-0 bg-green-100 dark:bg-green-900/30 p-1.5 rounded-full border border-green-200 dark:border-green-800 z-10">
                             <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -182,18 +165,7 @@
                             <div class="flex justify-between font-bold mt-1 pt-1 border-t border-gray-200 dark:border-slate-600 text-gray-800 dark:text-white"><span>Total</span> <span>$550</span></div>
                         </div>
                     </div>
-
-                    <div class="pl-8 pb-8 relative timeline-line">
-                        <div class="absolute left-0 top-0 bg-blue-100 dark:bg-blue-900/30 p-1.5 rounded-full border border-blue-200 dark:border-blue-800 z-10">
-                             <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
-                        </div>
-                         <div class="flex justify-between items-start mb-1">
-                            <span class="font-bold text-sm text-gray-800 dark:text-gray-200">Check-in</span>
-                            <span class="text-xs font-mono text-gray-400">Ayer, 18:45</span>
-                        </div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Acceso concedido Torniquete 1.</p>
-                    </div>
-
+        
                     <div class="pl-8 pb-8 relative timeline-line last-item">
                         <div class="absolute left-0 top-0 bg-gray-100 dark:bg-slate-700 p-1.5 rounded-full border border-gray-200 dark:border-slate-600 z-10">
                              <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -204,16 +176,16 @@
                         </div>
                         <p class="text-xs text-gray-500 dark:text-gray-500">Sistema desactivó acceso.</p>
                     </div>
-
+        
                 </div>
             </div>
-            
+        
             <div class="p-3 border-t border-gray-200 dark:border-slate-700 text-center">
                 <button class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">Ver historial completo</button>
             </div>
         </section>
 
-        <section class="col-span-9 bg-gray-50 dark:bg-[#0f1523] flex flex-col items-center justify-center text-gray-400 dark:text-gray-600" x-show="!selectedMember">
+        <section class="col-span-9 bg-gray-50 dark:bg-[#0f1523] flex flex-col items-center justify-center text-gray-400 dark:text-gray-600" x-show="!selectedMemberId">
             <div class="bg-white dark:bg-slate-800 p-6 rounded-full shadow-sm mb-4">
                 <svg class="w-16 h-16 text-gray-200 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
             </div>
@@ -223,46 +195,3 @@
     </main>
 </div>
 
-<script>
-    function memberApp() {
-        return {
-            search: '',
-            selectedMember: null,
-            // Datos de Ejemplo
-            members: [
-                { id: 1024, name: 'Juan Pérez', email: 'juan.perez@gmail.com', phone: '55 1234 5678', status: 'Activo', debt: 0 },
-                { id: 1025, name: 'María González', email: 'mary.gonz@hotmail.com', phone: '55 8765 4321', status: 'Vencido', debt: 0 },
-                { id: 1026, name: 'Carlos López', email: 'charly@outlook.com', phone: '55 1111 2222', status: 'Deuda', debt: 150 },
-                { id: 1027, name: 'Ana Martínez', email: 'ana.mtz@gmail.com', phone: '55 3333 4444', status: 'Activo', debt: 0 },
-            ],
-            
-            get filteredMembers() {
-                if (this.search === '') return this.members;
-                return this.members.filter(m => m.name.toLowerCase().includes(this.search.toLowerCase()));
-            },
-
-            selectMember(m) {
-                this.selectedMember = m;
-            },
-
-            getInitials(name) {
-                if (!name) return '';
-                return name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-            },
-
-            getStatusColor(status) {
-                if (status === 'Activo') return 'bg-green-500';
-                if (status === 'Vencido') return 'bg-gray-400';
-                if (status === 'Deuda') return 'bg-red-500';
-                return 'bg-gray-300';
-            },
-
-            getStatusBadgeClass(status) {
-                if (status === 'Activo') return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800';
-                if (status === 'Vencido') return 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-slate-600';
-                if (status === 'Deuda') return 'bg-red-500 text-white border-red-600';
-                return '';
-            }
-        }
-    }
-</script>
