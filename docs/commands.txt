@@ -4,10 +4,15 @@
  dotnet ef migrations add InitIdentity -p ./modules/Acxess.Identity/ -s Acxess.Web -c IdentityModuleContext -o Infrastructure/Persistence/Migrations
 dotnet ef migrations add InitBilling -p ./modules/Acxess.Billing/ -s Acxess.Web -c BillingModuleContext -o Infrastructure/Persistence/Migrations
 dotnet ef migrations add InitMarketing -p ./modules/Acxess.Marketing/ -s Acxess.Web -c MarketingModuleContext -o Infrastructure/Persistence/Migrations
+
+dotnet ef migrations add InitRelationsMembership -p ./modules/Acxess.Membership/ -s Acxess.Web -c MembershipModuleContext -o Infrastructure/Persistence/Migrations
  
  si no funciona dotnet ef
  export PATH="$PATH:$HOME/.dotnet/tools"
 
+
+ASPNETCORE_ENVIRONMENT=Localhost dotnet ef database update --project ./modules/Acxess.Membership/ --startup-project Acxess.Web --context MembershipModuleContext
+ASPNETCORE_ENVIRONMENT=Localhost dotnet ef database update --project ./modules/Acxess.Billing/ --startup-project Acxess.Web --context BillingModuleContext
 
  recompilar todo el compose: 
  docker compose up --build
@@ -26,3 +31,5 @@ npx @tailwindcss/cli -i ./wwwroot/css/input.css -o ./wwwroot/css/site.css --watc
 sudo usermod -aG docker $USER
 newgrp docker
 
+
+docker compose --profile tools up --build

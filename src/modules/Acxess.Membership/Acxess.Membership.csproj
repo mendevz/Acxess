@@ -13,9 +13,5 @@
     <ProjectReference Include="..\..\shared\Acxess.Shared\Acxess.Shared.csproj" />
     <ProjectReference Include="..\..\shared\Acxess.Infrastructure\Acxess.Infrastructure.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Application\Features\Members\Queries\" />
-  </ItemGroup>
   
 </Project>
