@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Acxess.Billing", "modules\A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Acxess.Marketing", "modules\Acxess.Marketing\Acxess.Marketing.csproj", "{C41360E1-7A79-4BD8-A79A-FB1D723D3F07}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{03101E9E-5624-4E11-BA26-A6C2AD269D92}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

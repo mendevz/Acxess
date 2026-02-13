@@ -1,0 +1,20 @@
+@using Acxess.Catalog.Domain.Constants
+@model IndexModel
+@foreach (var addOn in Model.AddOnsItems.Where(addOn => addOn.AddOnKey != AddOnDefaults.Inscription.Key))
+{
+    var addOnJson = System.Text.Json.JsonSerializer.Serialize(addOn);
+    <label class="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 transition">
+        <div class="flex items-center gap-2">
+            <input
+                type="checkbox"
+                class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 bg-gray-100 dark:bg-slate-900 border-gray-300 dark:border-slate-500"
+                @@change='$el.checked
+                    ? addSystemAddon(@Html.Raw(addOnJson)) 
+                    : removeSystemAddon(@addOn.IdAddOn)'
+                :checked="cartAddons.some(x => x.IdAddOn === @addOn.IdAddOn)">
+
+            <span class="text-sm text-gray-700 dark:text-gray-200">@addOn.Name</span>
+        </div>
+        <span class="text-xs font-bold text-gray-500">+$@addOn.Price</span>
+    </label>
+}

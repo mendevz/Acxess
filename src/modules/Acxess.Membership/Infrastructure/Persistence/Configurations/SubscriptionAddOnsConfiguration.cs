@@ -9,6 +9,9 @@ public class SubscriptionAddOnsConfiguration : IEntityTypeConfiguration<Subscrip
     public void Configure(EntityTypeBuilder<SubscriptionAddOns> builder)
     {
         builder.ToTable("SubscriptionAddOns");
+        
+        builder.Property(t => t.IdTenant)
+            .IsRequired();
 
         builder.HasKey(t => t.IdSubscriptionAddOn);
         

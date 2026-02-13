@@ -24,7 +24,7 @@ public class SubscriptionConfiguration : IEntityTypeConfiguration<Subscription>
         builder.Property(t => t.IdSellingPlan)
             .IsRequired();
 
-        builder.Property(t => t.IsAcive)
+        builder.Property(t => t.IsActive)
             .IsRequired()
             .HasDefaultValue(false);
 
@@ -49,5 +49,19 @@ public class SubscriptionConfiguration : IEntityTypeConfiguration<Subscription>
             .IsRequired();
 
         builder.HasIndex(t => t.IdTenant);
+        
+        builder.HasMany(s => s.SubscriptionMembers)
+            .WithOne(sm => sm.Subscription)
+            .HasForeignKey(sm => sm.IdSubscription)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasMany(s => s.AddOns)
+            .WithOne(sa => sa.Subscription)
+            .HasForeignKey(sa => sa.IdSubscription)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasOne(s => s.OwnerMember)
+            .WithMany(m => m.OwnedSubscriptions)
+            .HasForeignKey(s => s.IdMemberOwner);
     }
 }

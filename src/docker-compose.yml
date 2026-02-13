@@ -6,7 +6,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sql_acxess_container
     restart: unless-stopped
-    mem_limit: 1024m
+    mem_limit: 3072m
     cpus: 1.0
     environment:
       - ACCEPT_EULA=Y

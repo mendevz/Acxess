@@ -1,9 +1,10 @@
 
 using Acxess.Billing.Domain.Enums;
+using Acxess.Shared.Abstractions;
 
 namespace Acxess.Billing.Domain.Entities;
 
-public class MemberTransactionDetail
+public class MemberTransactionDetail : IHasTenant
 {
     public int IdMemberTransactionDetail { get; private set; }
     public int IdMemberTransaction { get; private set; }
@@ -11,21 +12,34 @@ public class MemberTransactionDetail
     public int? IdItem { get; private set; }
     public ItemTransactionType ItemTransactionType { get; private set; }
     public string Description { get; private set; } = string.Empty;
-    public int Amount { get; private set; }
-    public decimal Price { get; private set; }
-    public decimal Total { get; private set; }
+    public int Quantity { get; private set; }
+    public decimal UnitPrice { get; private set; }
+    public decimal TotalLine { get; private set; }
+    public int IdTenant { get; }
+    
+    public virtual MemberTransaction Transaction { get; private set; } = null!;
 
     private MemberTransactionDetail() { }
-    private MemberTransactionDetail(int idMemberTransaction, ItemTransactionType itemTransactionType, string description, int amount, decimal price, decimal total, int? idSubscription = null, int? idItem = null)
+    internal MemberTransactionDetail(
+        int idMemberTransaction, 
+        int idTenant,
+        ItemTransactionType type, 
+        string description, 
+        int quantity, 
+        decimal unitPrice, 
+        int? idSubscription, 
+        int? idItem)
     {
+        IdTenant = idTenant;
         IdMemberTransaction = idMemberTransaction;
+        ItemTransactionType = type;
+        Description = description;
+        Quantity = quantity;
+        UnitPrice = unitPrice;
         IdSubscription = idSubscription;
         IdItem = idItem;
-        ItemTransactionType = itemTransactionType;
-        Description = description;
-        Amount = amount;
-        Price = price;
-        Total = total;
+        TotalLine = quantity * unitPrice;
     }
-      
+
+  
 }

@@ -25,12 +25,20 @@ public class MemberTransactionConfiguration : IEntityTypeConfiguration<MemberTra
       
         builder.Property(t => t.Total)
         .HasPrecision(18, 2)
+        .IsRequired(); 
+        
+        builder.Property(t => t.Received)
+        .HasPrecision(18, 2)
+        .IsRequired();
+        
+        builder.Property(t => t.Difference)
+        .HasPrecision(18, 2)
         .IsRequired();
         
         builder.Property(t => t.Notes)
         .HasMaxLength(500);
 
-        builder.Property(rt => rt.CreatedAt)
+        builder.Property(rt => rt.TransactionDate)
             .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");
             
@@ -39,5 +47,13 @@ public class MemberTransactionConfiguration : IEntityTypeConfiguration<MemberTra
 
         builder.HasIndex(t => t.IdTenant);
         builder.HasIndex(t => t.IdMember);
+        
+        builder.HasMany(t => t.Details)
+            .WithOne(d => d.Transaction)
+            .HasForeignKey(d => d.IdMemberTransaction)
+            .OnDelete(DeleteBehavior.Cascade); 
+        
+        builder.Metadata.FindNavigation(nameof(MemberTransaction.Details))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

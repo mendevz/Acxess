@@ -19,7 +19,7 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
         builder.Property(t => t.IdTenant)
             .IsRequired();
 
-        builder.Property(t => t.FirtsName)
+        builder.Property(t => t.FirstName)
         .HasMaxLength(80)
         .IsRequired();
       
@@ -47,6 +47,18 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
 
         builder.HasIndex(t => t.IdTenant);
         builder.HasIndex(t => t.IdMember);
+        
+        builder.HasMany(m => m.OwnedSubscriptions)
+            .WithOne(s => s.OwnerMember)
+            .HasForeignKey(s => s.IdMemberOwner)
+            .OnDelete(DeleteBehavior.Restrict); // Evita borrado en cascada peligroso
+        
+        
+        builder.HasMany(m => m.SubscriptionMemberships)
+            .WithOne(sm => sm.Member)
+            .HasForeignKey(sm => sm.IdMember)
+            .OnDelete(DeleteBehavior.Restrict);
+        
             
     }
 }

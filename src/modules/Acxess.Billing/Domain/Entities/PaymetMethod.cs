@@ -8,7 +8,6 @@ public class PaymentMethod : IMayHaveTenant
     public int? IdTenant { get; private set; }
     public string Method { get; private set; } = string.Empty;
 
-
     private PaymentMethod() { }
     private PaymentMethod(string method, int? idTenant = null)
     {

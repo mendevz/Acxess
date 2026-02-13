@@ -1,0 +1,249 @@
+@page
+@using Acxess.Catalog.Domain.Constants
+@model Acxess.Web.Pages.Membership.AddRenewMember.IndexModel 
+@section Scripts {
+    <script src="~/js/Pages/Membership/AddRenewMemberIndex.js" asp-append-version="true"></script>
+}
+@{
+    ViewData["Title"] = "Mostrador";
+}
+<form
+    method="post"
+    hx-post="@Url.Page("Index", "ProcessOrder")"
+    hx-target="#feedback-container"
+    hx-swap="innerHTML"
+    class="h-full w-full flex flex-col bg-gray-100 dark:bg-[#0b0f19] transition-colors duration-300"
+    x-data='addRenewMemberApp(
+        @Html.Raw(Model.InscriptionJson), 
+        @Html.Raw(Model.PreselectedMemberJson)
+    )'>
+    
+    <input type="hidden" name="OrderRequest.Mode" :value="mode">
+    <input type="hidden" name="OrderRequest.PaymentMethod" :value="paymentMethod">
+    <input type="hidden" name="OrderRequest.AmountPaid" :value="amountGiven || 0">
+    
+    <input type="hidden" name="OrderRequest.PlanId" :value="selectedPlan?.idSellingPlan">
+
+    <template x-for="addon in cartAddons" :key="addon.IdAddOn">
+        <input type="hidden" name="OrderRequest.AddOnIds" :value="addon.IdAddOn">
+    </template>
+    
+    <template x-for="(ben, index) in beneficiaries" :key="index">
+        <input type="hidden"
+               :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].Id'"
+               :value="ben.Id">
+        <input type="hidden"
+               :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].FirstName'"
+               :value="ben.FirstName">
+        <input type="hidden"
+               :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].LastName'"
+               :value="ben.LastName">
+        <input type="hidden"
+               :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].Phone'"
+               :value="ben.phone">
+        <input type="hidden"
+               :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].Email'"
+               :value="ben.Email">
+    </template>
+    <div class="flex-1 grid grid-cols-12 gap-0 overflow-hidden">
+        
+        <section class="col-span-3 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 px-2 py-5  flex flex-col z-10">
+            <partial name="_OperationModeSwitch"/>
+            <partial name="_MemberForm"/>
+        </section>
+
+
+        <section class="col-span-6 bg-gray-50 dark:bg-[#0f1523] border-r border-gray-200 dark:border-slate-700 p-4 flex flex-col gap-6 overflow-y-auto custom-scrollbar relative">
+            <div>
+                <label class="text-sm font-semibold text-gray-700 dark:text-gray-300  mb-3">
+                    Seleccionar Plan
+                </label>
+                <div
+                    id="plans-items-list"
+                    hx-get="@Url.Page("Index", pageHandler: "PlanItems")"
+                    hx-trigger="load"
+                    hx-target="#plan-items-content"
+                    hx-swap="innerHTML">
+                    <div id="plan-items-content" class="grid grid-cols-2 gap-4"></div>
+                </div>
+            </div>
+
+            <div x-show="beneficiaries.length > 0">
+                <div class="bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30 rounded-lg p-4">
+                    <h4 class="text-sm font-bold text-purple-800 dark:text-purple-300 mb-2 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        Registro de Beneficiarios Adicionales
+                    </h4>
+                    <div class="space-y-3">
+                        <template x-for="(beneficiary, index) in beneficiaries" :key="index">
+                            <div class="flex gap-2">
+                                <div class=" flex gap-2 justify-center items-center w-full">
+                                    <span class="text-gray-400 text-xs font-bold" x-text="'#' + (index + 1)"></span>
+                                    <input 
+                                           type="text"
+                                           x-model="beneficiary.FirstName"
+                                           :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].FirstName'"
+                                           :placeholder="'Nombre del beneficiario ' + (index+1)"
+                                           @@focus="$el.select()"
+                                           class="w-full pl-8 p-2 text-sm bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-purple-500 outline-none">
+
+                                    <input type="text"
+                                           :placeholder="'Apellidos del beneficiario ' + (index+1)"
+                                           :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].LastName'"
+                                           x-model="beneficiary.LastName"
+                                           @@focus="$el.select()"
+                                           class="w-full pl-8 p-2 text-sm bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-purple-500 outline-none">
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 mt-2">
+                <div
+                    id="addOns-items-list"
+                    hx-get="@Url.Page("Index", pageHandler: "AddOnsItems")"
+                    hx-trigger="load"
+                    hx-target="#addOns-items-content"
+                    hx-swap="innerHTML">
+                    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Complementos</h4>
+                    <div class="space-y-2" id="addOns-items-content"></div>
+                </div>
+
+                @* <div> *@
+                @*     <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex justify-between"> *@
+                @*         <span>Promociones</span> *@
+                @*         <span class="text-[10px] text-blue-500 cursor-pointer hover:underline" @@click="$refs.couponInput.focus()">Tengo Cupón</span> *@
+                @*     </h4> *@
+                @* *@
+                @*     <div class="space-y-2"> *@
+                @*         <div class="relative"> *@
+                @*             <select x-model="selectedPromoId" class="w-full p-2.5 text-sm bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg appearance-none focus:ring-green-500 outline-none text-gray-700 dark:text-gray-300"> *@
+                @*                 <option value="">-- Sin promoción --</option> *@
+                @*                 <option value="promo1">Descuento Estudiante (10%)</option> *@
+                @*                 <option value="promo2">Renovación Anticipada ($50 off)</option> *@
+                @*                 <option value="promo3" x-show="selectedPlan.id === 4">Promo Parejas (2x1 Inscripción)</option> *@
+                @*             </select> *@
+                @*             <div class="absolute right-3 top-3 text-gray-400 pointer-events-none"> *@
+                @*                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg> *@
+                @*             </div> *@
+                @*         </div> *@
+                @* *@
+                @*         <div class="flex gap-2"> *@
+                @*             <input x-ref="couponInput" type="text" placeholder="CÓDIGO" class="w-full p-2 text-xs uppercase bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-green-500 outline-none"> *@
+                @*             <button class="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 rounded-lg text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600">APLICAR</button> *@
+                @*         </div> *@
+                @*     </div> *@
+                @* </div> *@
+            </div>
+            
+            <partial name="_Vencimiento" />
+
+            <div id="feedback-container"></div>
+        </section>
+
+        <section class="col-span-3 bg-slate-900 dark:bg-slate-950 text-white p-6 flex flex-col justify-between shadow-xl z-20 border-l border-slate-700 dark:border-slate-800">
+            <div class="flex flex-col h-full">
+
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                        Método de Pago
+                    </label>
+                    <div class="flex bg-slate-800 p-1 rounded-lg">
+                        <button @@click="paymentMethod = 'cash'"
+                                type="button"
+                                :class="paymentMethod === 'cash' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-white'"
+                                class="flex-1 py-1.5 rounded-md text-xs font-bold transition-all text-center">
+                            EFECTIVO
+                        </button>
+                        <button @@click="paymentMethod = 'transfer'"
+                                type="button"
+                                :class="paymentMethod === 'transfer' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-white'"
+                                class="flex-1 py-1.5 rounded-md text-xs font-bold transition-all text-center">
+                            TRANSFERENCIA
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-3 text-sm border-b border-gray-700 pb-4 mb-4 flex-1">
+                    <div x-show="selectedPlan" class="flex justify-between items-center group cursor-pointer hover:bg-white/5 p-1 rounded transition-colors">
+                        <div class="flex flex-col">
+                            <span class="text-gray-200 font-medium" x-text="selectedPlan?.name"></span>
+                        </div>
+                        <span class="font-mono text-gray-300" x-text="formatMoney(selectedPlan?.price || 0.0)"></span>
+                    </div>
+
+                    <template x-for="addon in cartAddons" :key="addon.IdAddOn">
+                        <div class="flex justify-between text-gray-400 text-xs pl-2 border-l-2 border-blue-500/30">
+                            <span x-text="'+ ' + addon.Name"></span>
+                            <span class="font-mono" x-text="formatMoney(addon.Price)"></span>
+                        </div>
+                    </template>
+
+                    <div class="flex justify-between text-green-400 bg-green-900/20 p-2 rounded border border-green-900/50 dashed-border"
+                         x-show="discountAmount > 0" x-transition>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                            <span x-text="promoName"></span>
+                        </span>
+                        <span class="font-mono font-bold" x-text="'-' + formatMoney(discountAmount)"></span>
+                    </div>
+                </div>
+
+                <div class="text-right mb-6">
+                    <span class="block text-sm text-gray-400 mb-1">Total a Pagar</span>
+                    <div class="text-5xl font-bold tracking-tight text-white transition-all" x-text="formatMoney(total)"></div>
+                </div>
+
+                <div class="mb-4">
+                    <template x-if="paymentMethod === 'cash'">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-2">DINERO RECIBIDO</label>
+                            <div class="relative group">
+                                <span class="absolute left-3 top-3 text-gray-400 text-xl group-focus-within:text-green-500">$</span>
+                                <input type="number" 
+                                       @@focus="$el.select()"
+                                       x-model="amountGiven"
+                                       class="w-full bg-slate-800 dark:bg-slate-900 border border-slate-600 dark:border-slate-700 rounded-lg p-3 pl-8 text-2xl text-white font-mono focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors"
+                                       placeholder="0.00">
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="paymentMethod === 'transfer'">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-2">REFERENCIA / FOLIO</label>
+                            <div class="relative group">
+                                <input type="text" x-model="transferRef"
+                                       @@focus="$el.select()"
+                                       class="w-full bg-slate-800 dark:bg-slate-900 border border-slate-600 dark:border-slate-700 rounded-lg p-3 text-lg text-white font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors uppercase"
+                                       placeholder="Ej. 45879">
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-2 text-right">Adjuntar comprobante opcional después del cobro.</p>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="bg-slate-800 dark:bg-slate-900 rounded-lg p-4 border border-slate-700 dark:border-slate-800 transition-all"
+                     x-show="paymentMethod === 'cash'"
+                     :class="amountGiven > 0 ? 'opacity-100' : 'opacity-50'">
+                    <span class="block text-xs text-gray-400 uppercase text-center mb-1">Cambio a devolver</span>
+                    <div class="text-3xl font-bold text-center font-mono"
+                         :class="change < 0 ? 'text-red-400' : 'text-green-400'"
+                         x-text="change >= 0 ? formatMoney(change) : 'Falta dinero'">
+                        $0.00
+                    </div>
+                </div>
+                <button
+                    type="submit"
+                    :disabled="cannotSubmit"
+                    class="w-full bg-blue-600 hover:bg-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg shadow-lg transform active:scale-95 transition-all mt-4 flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span>COBRAR</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </button>
+            </div>
+        </section>
+    </div>
+</form>
+

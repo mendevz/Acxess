@@ -1,4 +1,5 @@
 using System;
+using Acxess.Catalog.Domain.Enums;
 using Acxess.Catalog.Infrastructure.Persistence;
 using Acxess.Shared.ResultManager;
 using MediatR;
@@ -25,15 +26,23 @@ public class GetSellingPlanByIdHandler(
                 p.DurationUnit,
                 p.Price,
                 p.IsActive,
-                p.AccessTiers.Select(link => link.IdAccessTier).ToList()
+                p.AccessTiers.Select(link => link.IdAccessTier).ToList(),
+                string.Join(", ", p.AccessTiers.Select(link => link.AccessTier.Name)),
+                $"{p.DurationInValue} {GetUnitName(p.DurationUnit, p.DurationInValue)}"
             ))
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (item is null)
+        return item ?? Result<SellingPlanDto>.Failure("NOT FOUND", "No se encontro el plan de venta");
+    }
+    
+    private static string GetUnitName(DurationUnit unit, int value)
+    {
+        return unit switch
         {
-            return Result<SellingPlanDto>.Failure("NOT FOUND", "No se encontro el plan de venta");
-        }
-
-        return item;
+            DurationUnit.Days => value == 1 ? "Día" : "Días",
+            DurationUnit.Months => value == 1 ? "Mes" : "Meses",
+            DurationUnit.Years => value == 1 ? "Año" : "Años",
+            _ => unit.ToString()
+        };
     }
 }

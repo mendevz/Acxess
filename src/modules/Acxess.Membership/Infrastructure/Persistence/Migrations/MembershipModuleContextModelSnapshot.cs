@@ -43,7 +43,7 @@ namespace Acxess.Membership.Infrastructure.Persistence.Migrations
                         .HasMaxLength(80)
                         .HasColumnType("nvarchar(80)");
 
-                    b.Property<string>("FirtsName")
+                    b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(80)
                         .HasColumnType("nvarchar(80)");
@@ -102,7 +102,7 @@ namespace Acxess.Membership.Infrastructure.Persistence.Migrations
                     b.Property<int>("IdTenant")
                         .HasColumnType("int");
 
-                    b.Property<bool>("IsAcive")
+                    b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
@@ -119,6 +119,8 @@ namespace Acxess.Membership.Infrastructure.Persistence.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("IdSubscription");
+
+                    b.HasIndex("IdMemberOwner");
 
                     b.HasIndex("IdTenant");
 
@@ -139,11 +141,16 @@ namespace Acxess.Membership.Infrastructure.Persistence.Migrations
                     b.Property<int>("IdSubscription")
                         .HasColumnType("int");
 
+                    b.Property<int>("IdTenant")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("PriceSnapshot")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
                     b.HasKey("IdSubscriptionAddOn");
+
+                    b.HasIndex("IdSubscription");
 
                     b.ToTable("SubscriptionAddOns", "Membership");
                 });
@@ -162,12 +169,74 @@ namespace Acxess.Membership.Infrastructure.Persistence.Migrations
                     b.Property<int>("IdSubscription")
                         .HasColumnType("int");
 
+                    b.Property<int>("IdTenant")
+                        .HasColumnType("int");
+
                     b.Property<bool>("Owner")
                         .HasColumnType("bit");
 
                     b.HasKey("IdSubscriptionMember");
 
+                    b.HasIndex("IdMember");
+
+                    b.HasIndex("IdSubscription");
+
                     b.ToTable("SubscriptionMembers", "Membership");
+                });
+
+            modelBuilder.Entity("Acxess.Membership.Domain.Entities.Subscription", b =>
+                {
+                    b.HasOne("Acxess.Membership.Domain.Entities.Member", "OwnerMember")
+                        .WithMany("OwnedSubscriptions")
+                        .HasForeignKey("IdMemberOwner")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("OwnerMember");
+                });
+
+            modelBuilder.Entity("Acxess.Membership.Domain.Entities.SubscriptionAddOns", b =>
+                {
+                    b.HasOne("Acxess.Membership.Domain.Entities.Subscription", "Subscription")
+                        .WithMany("AddOns")
+                        .HasForeignKey("IdSubscription")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subscription");
+                });
+
+            modelBuilder.Entity("Acxess.Membership.Domain.Entities.SubscriptionMembers", b =>
+                {
+                    b.HasOne("Acxess.Membership.Domain.Entities.Member", "Member")
+                        .WithMany("SubscriptionMemberships")
+                        .HasForeignKey("IdMember")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Acxess.Membership.Domain.Entities.Subscription", "Subscription")
+                        .WithMany("SubscriptionMembers")
+                        .HasForeignKey("IdSubscription")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+
+                    b.Navigation("Subscription");
+                });
+
+            modelBuilder.Entity("Acxess.Membership.Domain.Entities.Member", b =>
+                {
+                    b.Navigation("OwnedSubscriptions");
+
+                    b.Navigation("SubscriptionMemberships");
+                });
+
+            modelBuilder.Entity("Acxess.Membership.Domain.Entities.Subscription", b =>
+                {
+                    b.Navigation("AddOns");
+
+                    b.Navigation("SubscriptionMembers");
                 });
 #pragma warning restore 612, 618
         }

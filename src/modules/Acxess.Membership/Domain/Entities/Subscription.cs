@@ -4,9 +4,11 @@ namespace Acxess.Membership.Domain.Entities;
 
 public class Subscription : IHasTenant
 {
-
     private Subscription(){}
-    private Subscription(int tenantId, int ownerMemberId, int sellingPlanId, decimal priceSnapshot, int createdByUser, string? notes = null)
+    private Subscription(int tenantId, int ownerMemberId, int sellingPlanId, 
+        DateTime startDate,
+        DateTime endDate, 
+        decimal priceSnapshot, int createdByUser, string? notes = null)
     {
         IdTenant = tenantId;
         IdMemberOwner = ownerMemberId;
@@ -14,19 +16,65 @@ public class Subscription : IHasTenant
         PriceSnapshot = priceSnapshot;
         CreatedByUser = createdByUser;
         Notes = notes;
+        StartDate = startDate;
+        EndDate = endDate;
+        CreatedAt =  DateTime.UtcNow;
+        IsActive = true;
     }
 
     public int IdSubscription { get; private set; }
     public int IdTenant { get; private set; }
     public int IdMemberOwner { get; private set; }
     public int IdSellingPlan { get; private set; }
-    public bool IsAcive { get; private set; } = true;
+    public bool IsActive { get; private set; } = true;
     public DateTime StartDate { get; private set; }
     public DateTime EndDate { get; private set; }
     public decimal PriceSnapshot { get; private set; }
     public string? Notes { get; private set; }
     public DateTime CreatedAt { get; private set; } =  DateTime.UtcNow;
     public int CreatedByUser { get; private set; }
-
     
+    public virtual Member OwnerMember { get; private set; } = null!;
+    
+    private readonly List<SubscriptionMembers> _subscriptionMembers = [];
+    public virtual IReadOnlyCollection<SubscriptionMembers> SubscriptionMembers => _subscriptionMembers.AsReadOnly();
+    
+    private readonly List<SubscriptionAddOns> _addOns = [];
+    public virtual IReadOnlyCollection<SubscriptionAddOns> AddOns => _addOns.AsReadOnly();
+
+    public static Subscription Create(int tenantId, Member owner, int sellingPlanId,
+        DateTime startDate, DateTime endDate, decimal priceSnapshot, int userId)
+    {
+        Subscription subscription = new (tenantId, owner.IdMember, sellingPlanId, startDate, endDate, priceSnapshot,  userId)
+            {
+                OwnerMember = owner
+            };
+        
+        subscription.AddOwnerMember(owner);
+        
+        return subscription;
+    }
+    
+    private void AddOwnerMember(Member owner)
+    {
+        var membership = Membership.Domain.Entities.SubscriptionMembers.CreateForOwner(owner, this.IdSubscription, this.IdTenant);
+        
+        _subscriptionMembers.Add(membership);
+    }
+    
+    public void AddMember(int memberId, bool isOwner)
+    {
+        if (_subscriptionMembers.Any(m => m.IdMember == memberId)) return;
+
+        var membership = Membership.Domain.Entities.SubscriptionMembers.Create(memberId, IdSubscription, isOwner, this.IdTenant);
+        
+        _subscriptionMembers.Add(membership);
+    }
+    
+    public void AddAddOn(int addOnId, decimal priceSnapshot)
+    {
+        var addon =  SubscriptionAddOns.Create(addOnId, IdSubscription, priceSnapshot, this.IdTenant);
+        
+        _addOns.Add(addon);
+    }
 }

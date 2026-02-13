@@ -8,7 +8,7 @@ namespace Acxess.Identity.Infrastructure.Persistence;
 
 public class IdentityModuleContext(DbContextOptions<IdentityModuleContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
-    public DbSet<Tenant> Tenants {get; set; }
+    public DbSet<Tenant> Tenants => Set<Tenant>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -10,6 +10,9 @@ public class SubscriptionMembersConfiguration : IEntityTypeConfiguration<Subscri
     public void Configure(EntityTypeBuilder<SubscriptionMembers> builder)
     {
         builder.ToTable("SubscriptionMembers");
+        
+        builder.Property(t => t.IdTenant)
+            .IsRequired();
 
         builder.HasKey(t => t.IdSubscriptionMember);
         

@@ -8,5 +8,7 @@ public record SellingPlanDto(
     DurationUnit DurationUnit, 
     decimal Price,
     bool IsActive,
-    List<int> AccessTiersIds
+    List<int> AccessTiersIds,
+    string AccessTiers,
+    string DurationDescription
 );

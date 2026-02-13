@@ -4,5 +4,6 @@ public enum ItemTransactionType
 {
     Subscription = 1,
     Promotion = 2,
-    Product = 3
+    Product = 3,
+    AddOn = 4
 }

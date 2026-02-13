@@ -14,7 +14,7 @@ public class TransactionalBehavior<TRequest, TResponse> : IPipelineBehavior<TReq
     {
         if (!typeof(Result).IsAssignableFrom(typeof(TResponse)))
         {
-            return await next();
+            return await next(); 
         }
 
         using var scope = new TransactionScope(

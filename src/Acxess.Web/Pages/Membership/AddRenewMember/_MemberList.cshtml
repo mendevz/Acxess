@@ -1,0 +1,40 @@
+@model IndexModel
+@if (Model.Members.Count > 0)
+{
+    <div  class="mt-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-md shadow-lg overflow-hidden z-20">
+        @foreach (var member in Model.Members)
+        {
+            var jsonMember = System.Text.Json.JsonSerializer.Serialize(member);
+            <div 
+                @@click='selectMember(@Html.Raw(jsonMember))'
+                class="p-3 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer border-b border-gray-100 dark:border-slate-700 flex justify-between group">
+                <div>
+                    <p class="font-bold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                        @member.FirstName @member.LastName
+                    </p>
+                    <p class="text-xs text-gray-500">ID: @member.Id</p>
+                </div>
+                @if (member.IsSubscriptionActive)
+                {
+                    <span class="text-emerald-600 dark:text-emerald-400 font-bold text-xs bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded h-fit flex items-center gap-1">
+                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Activo
+                    </span>
+                }
+                else
+                {
+                    <span class="text-red-600 dark:text-red-400 font-bold text-xs bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded h-fit flex items-center gap-1">
+                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        Vencido
+                    </span>
+                }
+            </div>   
+        }
+    </div>
+}

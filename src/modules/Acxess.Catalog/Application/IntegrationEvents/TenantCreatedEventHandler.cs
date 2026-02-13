@@ -17,7 +17,7 @@ public class TenantCreatedEventHandler(
             AddOnDefaults.Inscription.Key,
             AddOnDefaults.Inscription.Name,
             AddOnDefaults.Inscription.Price,
-            true
+            false
         );  
         var resultAdd = await mediator.Send(command, cancellationToken);
 
