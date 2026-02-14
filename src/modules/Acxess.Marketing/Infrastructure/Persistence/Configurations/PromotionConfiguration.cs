@@ -45,6 +45,11 @@ public class PromotionConfiguration : IEntityTypeConfiguration<Promotion>
         builder.Property(x => x.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");
+        
+        builder.HasMany(p => p.Coupons)
+            .WithOne(c => c.Promotion)
+            .HasForeignKey(c => c.IdPromotion)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(x => x.CreatedByUser).IsRequired();
 

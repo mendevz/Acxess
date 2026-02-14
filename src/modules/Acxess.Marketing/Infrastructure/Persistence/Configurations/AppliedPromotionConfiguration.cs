@@ -10,7 +10,7 @@ public class AppliedPromotionConfiguration : IEntityTypeConfiguration<AppliedPro
         builder.HasKey(x => x.IdAppliedPromotion);
 
         builder.Property(x => x.IdAppliedPromotion).UseIdentityColumn();
-
+        builder.Property(x => x.IdTenant).IsRequired();
         builder.Property(x => x.IdMemberTransactionDetail).IsRequired();
 
         builder.Property(x => x.IdPromotion);
@@ -21,5 +21,13 @@ public class AppliedPromotionConfiguration : IEntityTypeConfiguration<AppliedPro
         .IsRequired();
 
         builder.Property(x => x.Notes).HasMaxLength(200);
+        
+        builder.HasOne(ap => ap.Promotion)
+            .WithMany()
+            .HasForeignKey(ap => ap.IdPromotion);
+
+        builder.HasOne(ap => ap.Coupon)
+            .WithMany()
+            .HasForeignKey(ap => ap.IdCoupon);
     }
 }

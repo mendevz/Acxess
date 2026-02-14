@@ -23,4 +23,11 @@ public class Coupon : IHasTenant
     public DateTime? ExpiresOn { get; private set; }
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public int CreatedByUser { get; private set; }
+    
+    public virtual Promotion Promotion { get; private set; } = null!;
+    
+    public static Coupon Create(int idTenant, int idMember, int idPromotion, int userId, DateTime? expiresOn = null)
+    {
+        return new Coupon(idTenant, idMember, idPromotion, userId, expiresOn);
+    }
 }

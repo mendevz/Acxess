@@ -34,6 +34,9 @@ public class Promotion : IHasTenant
     public DateTime? AvailableFrom { get; private set; }
     public DateTime? AvailableTo { get; private set; }
     public bool IsActive { get; private set; } = true;
+    
+    private readonly List<Coupon> _coupons = [];
+    public virtual IReadOnlyCollection<Coupon> Coupons => _coupons.AsReadOnly();
 
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public int CreatedByUser { get; private set; }
