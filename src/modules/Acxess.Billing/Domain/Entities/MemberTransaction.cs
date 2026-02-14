@@ -46,7 +46,7 @@ public class MemberTransaction : IHasTenant
             IdMemberTransaction, 
             IdTenant,
             ItemTransactionType.Subscription,
-            description: $"Suscripción: {planName}",
+            description: planName,
             quantity: 1, 
             unitPrice: price,
             idSubscription: subscriptionId,

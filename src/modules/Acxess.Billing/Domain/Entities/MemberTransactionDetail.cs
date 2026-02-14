@@ -15,7 +15,7 @@ public class MemberTransactionDetail : IHasTenant
     public int Quantity { get; private set; }
     public decimal UnitPrice { get; private set; }
     public decimal TotalLine { get; private set; }
-    public int IdTenant { get; }
+    public int IdTenant { get; private set; }
     
     public virtual MemberTransaction Transaction { get; private set; } = null!;
 

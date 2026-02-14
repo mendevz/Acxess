@@ -1,5 +1,6 @@
+using Acxess.Catalog.Domain.Constants;
 using Acxess.Catalog.Infrastructure.Persistence;
-using Acxess.Shared.Contracts.Catalog;
+using Acxess.Shared.IntegrationEvents.Catalog;
 using Acxess.Shared.ResultManager;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,5 +34,25 @@ public class CatalogIntegrationService(CatalogModuleContext context) : ICatalogI
             .FirstOrDefaultAsync(ct);
 
         return addOn ?? Result<AddOnIntegrationDto>.Failure("NotFound", "AddOn not found.");
+    }
+
+    public async Task<Result<List<string>>> GetAddOnNamesAsync(List<int> addOnIds, bool includesInscription, CancellationToken ct = default)
+    {
+        
+        var query = context.AddOns
+            .AsNoTracking()
+            .Where(a => addOnIds.Contains(a.IdAddOn));
+        
+        if (!includesInscription)
+        {
+            query = query.Where(a => a.AddOnKey != AddOnDefaults.Inscription.Key);
+        }
+        
+        var addOnNames = await query
+            .Select(a => a.Name)
+            .ToListAsync(ct);
+
+        return addOnNames;
+
     }
 }

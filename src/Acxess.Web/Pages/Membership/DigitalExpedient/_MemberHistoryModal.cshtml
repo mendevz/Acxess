@@ -1,0 +1,81 @@
+@model Acxess.Membership.Application.Features.Members.Queries.GetMemberHistory.MemberHistoryDto
+@{
+    var culture = new System.Globalization.CultureInfo("es-MX");
+}
+
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+     x-data="{}" 
+     @@click.self="$el.remove()"> 
+    
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col animate-in fade-in zoom-in duration-200 border dark:border-slate-800">
+        
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 rounded-t-xl z-10">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-white">Historial Completo</h2>
+            <button @@click="$el.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto custom-scrollbar">
+            <div class="relative space-y-8">
+                <div class="absolute left-4 top-2 bottom-2 w-0.5 bg-gray-200 dark:bg-slate-800"></div>
+
+                @foreach (var item in Model.Items)
+                {
+                    <div class="relative flex gap-6 group">
+                        <div class="relative z-10 flex-shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center
+                                    @(item.ColorClass == "green" ? "border-green-500 text-green-500 bg-green-50 dark:bg-green-900/30 dark:border-green-400 dark:text-green-400" : 
+                                      item.ColorClass == "red" ? "border-red-500 text-red-500 bg-red-50 dark:bg-red-900/30 dark:border-red-400 dark:text-red-400" : 
+                                      item.ColorClass == "blue" ? "border-blue-500 text-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-400" : 
+                                      "border-gray-400 text-gray-400 bg-white dark:bg-slate-800 dark:border-slate-600")">
+                            
+                            @if(item.Type == "Payment") {
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            } else if (item.Type == "Expiration") {
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            } else if (item.Type == "SubscriptionStart") {
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            }
+                        </div>
+
+                        <div class="flex-1 bg-gray-50 dark:bg-slate-800/50 p-4 rounded-lg border border-gray-100 dark:border-slate-800">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <p class="font-bold text-gray-800 dark:text-slate-100">@item.Title</p>
+                                    <p class="text-xs text-gray-500 dark:text-slate-400">
+                                        @item.Date.ToString("f", culture)
+                                    </p>
+                                </div>
+                                @if (item.Amount.HasValue)
+                                {
+                                    <span class="text-lg font-bold text-green-600 dark:text-green-400">
+                                        @item.Amount.Value.ToString("C", culture)
+                                    </span>
+                                }
+                            </div>
+                            
+                            @if (item.Details.Any())
+                            {
+                                <div class="mt-2 border-t border-gray-200 dark:border-slate-700 pt-2">
+                                    <ul class="list-disc list-inside text-sm text-gray-600 dark:text-slate-400">
+                                        @foreach (var detail in item.Details)
+                                        {
+                                            <li>@detail</li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <div class="p-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 rounded-b-xl flex justify-end">
+             <button @@click="$el.closest('.fixed').remove()" 
+                     class="px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 transition">
+                 Cerrar
+             </button>
+        </div>
+    </div>
+</div>

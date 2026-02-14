@@ -1,3 +1,4 @@
+using Acxess.Membership.Domain.Constants;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.Domain;
 using Acxess.Shared.IntegrationEvents.Membership;
@@ -14,6 +15,7 @@ public class Member : Entity, IHasTenant
     public string? Phone { get; private set; }
     public bool IsDeleted { get; private set; } = false;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
     public int CreatedByUser { get; private set; }
     
     private readonly List<Subscription> _ownedSubscriptions = [];
@@ -35,6 +37,9 @@ public class Member : Entity, IHasTenant
         Email = email;
         Phone = phone;
         CreatedByUser = createdByUser;
+        
+        CreatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public static Member Create(
@@ -83,7 +88,8 @@ public class Member : Entity, IHasTenant
             subscription.AddAddOn(addOnId, addOnPrice);
         }
         
-        _ownedSubscriptions.Add(subscription);  
+        _ownedSubscriptions.Add(subscription);
+        UpdatedAt = DateTime.UtcNow;
     }
 
     private (DateTime Start, DateTime End) CalculateSubscriptionDates(int duration, int unit)
@@ -100,7 +106,7 @@ public class Member : Entity, IHasTenant
         {
             var lastEnd = lastSubscription.EndDate.Date;
 
-            if (lastEnd >= today || today <= lastEnd.AddDays(3))
+            if (lastEnd >= today || today <= lastEnd.AddDays(Configurations.PRORROGA_DAYS))
                 startDate = lastEnd; 
             else
                 startDate = today; 

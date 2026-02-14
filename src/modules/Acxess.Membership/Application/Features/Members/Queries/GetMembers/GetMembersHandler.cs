@@ -30,11 +30,12 @@ public class GetMembersHandler(
         var totalCount = await context.Members.CountAsync(cancellationToken);
         var now = DateTime.Now;
         var results = await query
-            .OrderByDescending(m => m.IdMember)
+            .OrderByDescending(m => m.UpdatedAt)
+            .Where(m => !m.IsDeleted)
             .Select(m => new
             {
                 m.IdMember,
-                m.FirstName,
+                m.FirstName ,
                 m.LastName,
                 m.Email,
                 m.Phone,
@@ -47,17 +48,19 @@ public class GetMembersHandler(
             .Take(15)
             .Select(m => new MemberItem(
                 m.IdMember,
-                m.FirstName,
-                m.LastName,
-                // Lógica traducible a SQL (CASE WHEN)
-                m.IsDeleted 
-                    ? "Eliminado" 
-                    : (m.LatestEndDate > now ? "Activo" : "Vencido"),
+                $"{m.FirstName} {m.LastName}",
+                GetInitials(m.FirstName, m.LastName),
+                m.LatestEndDate > now,
                 m.Email ?? string.Empty,
                 m.Phone ?? string.Empty
             ))
             .ToListAsync(cancellationToken);
  
         return new MembersResponse(totalCount, results.Count, results);
+    }
+    
+    private static string GetInitials(string first, string last)
+    {
+        return $"{first.FirstOrDefault()}{last.FirstOrDefault()}".ToUpper();
     }
 }

@@ -17,7 +17,8 @@ public class MemberTransactionDetailConfiguration : IEntityTypeConfiguration<Mem
 
         builder.Property(t => t.IdMemberTransaction)
             .IsRequired();
-
+        builder.Property(t => t.IdTenant)
+            .IsRequired();
         builder.Property(t => t.IdSubscription);
         builder.Property(t => t.IdItem);
 

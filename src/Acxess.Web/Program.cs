@@ -4,9 +4,11 @@ using Acxess.Infrastructure.Extensions;
 using Acxess.Infrastructure.Middlewares;
 using Acxess.Membership;
 using Acxess.Billing;
+using Acxess.Billing.Infrastructure.Services;
 using Acxess.Catalog.Infrastructure.Services;
 using Acxess.Marketing;
-using Acxess.Shared.Contracts.Catalog;
+using Acxess.Shared.IntegrationEvents.Billing;
+using Acxess.Shared.IntegrationEvents.Catalog;
 using Acxess.Web.Filters;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.StaticFiles;
@@ -48,8 +50,9 @@ builder.Services.AddMembershipModule(builder.Configuration);
 builder.Services.AddBillingModule(builder.Configuration);
 builder.Services.AddMarketingModule(builder.Configuration);
 
-//services
+// integrations services
 builder.Services.AddScoped<ICatalogIntegrationService, CatalogIntegrationService>();
+builder.Services.AddScoped<IBillingIntegrationService, BillingIntegrationService>();
 
 var app = builder.Build();
 

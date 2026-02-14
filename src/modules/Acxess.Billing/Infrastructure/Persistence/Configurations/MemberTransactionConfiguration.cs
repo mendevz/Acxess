@@ -53,7 +53,7 @@ public class MemberTransactionConfiguration : IEntityTypeConfiguration<MemberTra
             .HasForeignKey(d => d.IdMemberTransaction)
             .OnDelete(DeleteBehavior.Cascade); 
         
-        builder.Metadata.FindNavigation(nameof(MemberTransaction.Details))!
-            .SetPropertyAccessMode(PropertyAccessMode.Field);
+        builder.Navigation(t => t.Details)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

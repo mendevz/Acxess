@@ -2,7 +2,7 @@ using Acxess.Membership.Application.Features.Members.DTOs;
 using Acxess.Membership.Domain.Abstractions;
 using Acxess.Membership.Domain.Entities;
 using Acxess.Membership.Infrastructure.Persistence;
-using Acxess.Shared.Contracts.Catalog;
+using Acxess.Shared.IntegrationEvents.Catalog;
 using Acxess.Shared.IntegrationEvents.Membership;
 using Acxess.Shared.ResultManager;
 using MediatR;

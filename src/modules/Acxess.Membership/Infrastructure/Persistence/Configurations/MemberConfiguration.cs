@@ -40,6 +40,10 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
 
         builder.Property(rt => rt.CreatedAt)
             .IsRequired()
+            .HasDefaultValueSql("GETUTCDATE()");        
+        
+        builder.Property(rt => rt.UpdatedAt)
+            .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");
 
         builder.Property(t => t.CreatedByUser)
