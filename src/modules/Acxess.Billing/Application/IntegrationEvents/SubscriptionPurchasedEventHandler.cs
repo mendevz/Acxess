@@ -15,10 +15,11 @@ public class SubscriptionPurchasedEventHandler(
         var transaction = MemberTransaction.Create(
             notification.IdTenant,
             notification.IdMember,
+            notification.Member,
             notification.IdPaymentMethod,
             notification.AmountReceived,
             notification.CreatedByUserId,
-            "SubscriptionPurchased");
+            "Subscription Purchased");
         
         transaction.AddSubscriptionItem(
             notification.IdSubscription, 

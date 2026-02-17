@@ -11,6 +11,7 @@ public record SubcriptionPurchasedDomainEvent(
     decimal PlanPriceSnapshot,
     int IdPaymentMethod,
     decimal AmountReceived,
+    string Member,
     List<PurchasedAddOnItem> AddOns
     ) : INotification;
     

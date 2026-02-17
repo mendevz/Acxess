@@ -104,6 +104,7 @@ public class NewMemberHandler(
             planInfo.Price,
             request.PaymentMethodId,
             request.AmountPaid,
+            $"{mainMember.FirstName}  {mainMember.LastName}",
             addOnItems
         );
         

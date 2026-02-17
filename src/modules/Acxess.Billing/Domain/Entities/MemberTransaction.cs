@@ -8,6 +8,7 @@ public class MemberTransaction : IHasTenant
     public int IdMemberTransaction { get; private set; }
     public int IdTenant { get; private set; }
     public int? IdMember { get; private set; }
+    public string? Member { get; private set; }
     public int IdPaymentMethod { get; private set; }
     public decimal Total { get; private set; }
     public decimal Received { get; private set; }
@@ -22,10 +23,19 @@ public class MemberTransaction : IHasTenant
     private MemberTransaction()
     {
     }
-    private MemberTransaction(int idTenant, int? idMember, int idPaymentMethod, DateTime date, string? notes, int createdByUser, decimal received)
+    private MemberTransaction(
+        int idTenant, 
+        int? idMember, 
+        string? member,
+        int idPaymentMethod, 
+        DateTime date, 
+        string? notes, 
+        int createdByUser, 
+        decimal received)
     {
         IdTenant = idTenant;
         IdMember = idMember;
+        Member = member; 
         IdPaymentMethod = idPaymentMethod;
         TransactionDate = date;
         Notes = notes;
@@ -35,9 +45,16 @@ public class MemberTransaction : IHasTenant
     }
 
     public static MemberTransaction Create(
-        int idTenant, int? idMember, int idPaymentMethod, decimal received, int userId, string? notes = null)
+        int idTenant, int? idMember, string? member, int idPaymentMethod, decimal received, int userId, string? notes = null)
     {
-        return new MemberTransaction(idTenant, idMember, idPaymentMethod, DateTime.UtcNow, notes, userId, received);
+        return new MemberTransaction(
+            idTenant, 
+            idMember,member, 
+            idPaymentMethod, 
+            DateTime.UtcNow, 
+            notes, 
+            userId, 
+            received);
     }
     
     public void AddSubscriptionItem(int subscriptionId, string planName, decimal price)

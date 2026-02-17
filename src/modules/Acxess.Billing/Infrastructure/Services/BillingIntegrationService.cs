@@ -57,7 +57,7 @@ public class BillingIntegrationService(BillingModuleContext context) : IBillingI
             .Take(count)
             .Select(t => new RecentActivityDto(
                 "Pago Recibido",
-                $"Ticket #{t.IdMemberTransaction}",
+                t.Member ?? "",
                 t.Total,
                 t.TransactionDate,
                 "payment"

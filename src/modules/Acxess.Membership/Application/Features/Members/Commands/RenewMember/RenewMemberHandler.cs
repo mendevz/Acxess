@@ -107,6 +107,7 @@ public class RenewMemberHandler(
             planInfo.Price,
             request.PaymentMethodId,
             request.AmountPaid,
+            $"{mainMember.FirstName } {mainMember.LastName}",
             addOnItems
         );
         

@@ -37,6 +37,9 @@ public class MemberTransactionConfiguration : IEntityTypeConfiguration<MemberTra
         
         builder.Property(t => t.Notes)
         .HasMaxLength(500);
+        
+        builder.Property(t => t.Member)
+        .HasMaxLength(120);
 
         builder.Property(rt => rt.TransactionDate)
             .IsRequired()
