@@ -1,0 +1,3 @@
+acxess.tu-dominio.com {
+    reverse_proxy acxess-web:8080
+}

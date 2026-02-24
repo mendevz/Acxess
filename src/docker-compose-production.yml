@@ -1,0 +1,97 @@
+services:
+  # ==============================
+  # Reverse Proxy (Auto HTTPS)
+  # ==============================
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile # Archivo de configuración que crearemos
+      - caddy_data:/data # Guarda los certificados SSL
+      - caddy_config:/config
+    networks:
+      - acxess-network
+    depends_on:
+      - acxess-web
+  # ==============================
+  # Base de Datos
+  # ==============================
+  acxess-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql_acxess_container
+    restart: unless-stopped
+    mem_limit: 3072m
+    cpus: 1.0
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD}
+      - MSSQL_PID=Express  
+      - TZ=America/Mexico_City 
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${DB_PASSWORD} -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      retries: 10
+      start_period: 30s
+      timeout: 3s
+    volumes:
+      - sql_data:/var/opt/mssql 
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - acxess-network
+  # ==============================
+  #  Migrator de Base de Datos
+  # ==============================
+  acxess-migrator:
+    build:
+      context: .
+      dockerfile: Acxess.Web/DOCKERFILE
+    container_name: acxess_migrator
+    command: ["dotnet", "Acxess.Web.dll", "--migrate-only"]
+    depends_on:
+      acxess-db:
+        condition: service_healthy
+    environment:
+      - ConnectionStrings__Default=Server=acxess-db;Database=AcxessDB;User Id=${DB_USER};Password=${DB_PASSWORD};TrustServerCertificate=True;
+      - SystemUser__Password=${SYSTEM_USER_PASSWORD}
+    networks:
+      - acxess-network
+    profiles: ["tools", "app"]
+
+  # ==============================
+  #  App Web
+  # ==============================
+  acxess-web:
+    build:
+      context: . 
+      dockerfile: Acxess.Web/DOCKERFILE
+    container_name: acxess_web
+    mem_limit: 512m
+    restart: always
+    depends_on:
+      acxess-db:
+        condition: service_healthy
+      acxess-migrator:
+        condition: service_completed_successfully
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT} 
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Default=Server=acxess-db;Database=AcxessDB;User Id=${DB_USER};Password=${DB_PASSWORD};TrustServerCertificate=True;
+      - SystemUser__Password=${SYSTEM_USER_PASSWORD}
+      - RUN_MIGRATIONS=false
+      - TZ=America/Mexico_City 
+    networks:
+      - acxess-network
+    profiles: ["app"]
+
+volumes:
+  sql_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  acxess-network:
+    driver: bridge
