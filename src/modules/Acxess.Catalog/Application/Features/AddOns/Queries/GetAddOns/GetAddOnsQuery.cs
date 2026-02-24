@@ -12,5 +12,6 @@ public record AddOnDto(
     string Name,
     decimal Price,
     bool IsActive,
-    bool ShowInCheckout
+    bool ShowInCheckout,
+    bool IsVisit
 );

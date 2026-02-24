@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Json;
+using Acxess.Billing.Application.Features.Transactions.Commands.NewVisitTransaction;
 using Acxess.Catalog.Application.Features.AddOns.Queries.GetAddOnInscription;
 using Acxess.Catalog.Application.Features.AddOns.Queries.GetAddOns;
 using Acxess.Catalog.Application.Features.SellingPlans.Queries.GetSellingPlans;
@@ -103,7 +104,7 @@ public class IndexModel(
     
     public async Task<IActionResult> OnPostProcessOrderAsync()
     {
-        if (!ModelState.IsValid)  return Feedback(); 
+        if (!ModelState.IsValid)  return Feedback(errorMessage: "Error de validaciones"); 
         
         var userNumberString = User.FindFirstValue("UserNumber");
         var userNumber = int.TryParse(userNumberString, out var val) ? val : 0;
@@ -118,39 +119,57 @@ public class IndexModel(
 
         var beneficiaries = request.AdditionalBeneficiaries.Select(b => new NewMemberDto(
             b.Id,
-            b.FirstName,
-            b.LastName,
+            b.FirstName ?? "",
+            b.LastName?? "",
             b.Phone)).ToList();
         
         Result<UpdatedSubMemberResponse> result;
-
-        if (request.Mode == "new")
+        
+        switch (request.Mode)
         {
-            var member = new NewMemberDto(0, request.MemberData.FirstName, request.MemberData.LastName, request.MemberData.Phone);
-            var newMemberCommand = new NewMemberCommand(
-                member,
-                request.PlanId??0,
-                idTenant,
-                request.AddOnIds,
-                paymentMethodId,
-                request.AmountPaid,
-                beneficiaries,
-                userNumber);
-             result = await mediator.Send(newMemberCommand);
-        }
-        else
-        {
-            var renewMemberCommand = new RenewMemberCommand(
-                request.MemberData.Id,
-                request.PlanId ?? 0,
-                idTenant,
-                request.AddOnIds,
-                paymentMethodId,
-                request.AmountPaid,
-                beneficiaries,
-                userNumber);
+            case ProcessOrderRequest.VISIT_MEMBER:
+            {
+                var visitName = string.IsNullOrWhiteSpace(request.MemberData.FirstName) ? "Visita General" : request.MemberData.FirstName;
+                var visitCommand = new CreateVisitTransactionCommand(
+                    idTenant, visitName, paymentMethodId, request.AmountPaid, userNumber, request.AddOnIds
+                );
+                var resultVisit = await mediator.Send(visitCommand);
+                if (resultVisit.IsFailure) return Feedback(errorMessage: resultVisit.Error.Description);
+                return Feedback(
+                    successMessage: resultVisit.Value, 
+                    targetUrl: Url.Page("/Membership/AddRenewMember/Index")
+                );
+            }
+            case ProcessOrderRequest.NEW_MEMBER:
+            {
+                var member = new NewMemberDto(0, request.MemberData.FirstName?? "", request.MemberData.LastName?? "", request.MemberData.Phone);
+                var newMemberCommand = new NewMemberCommand(
+                    member,
+                    request.PlanId??0,
+                    idTenant,
+                    request.AddOnIds,
+                    paymentMethodId,
+                    request.AmountPaid,
+                    beneficiaries,
+                    userNumber);
+                result = await mediator.Send(newMemberCommand);
+                break;
+            }
+            default:
+            {
+                var renewMemberCommand = new RenewMemberCommand(
+                    request.MemberData.Id,
+                    request.PlanId ?? 0,
+                    idTenant,
+                    request.AddOnIds,
+                    paymentMethodId,
+                    request.AmountPaid,
+                    beneficiaries,
+                    userNumber);
             
-            result = await mediator.Send(renewMemberCommand);
+                result = await mediator.Send(renewMemberCommand);
+                break;
+            }
         }
 
         if (result.IsFailure)

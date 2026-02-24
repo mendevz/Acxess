@@ -25,9 +25,9 @@
         <div id="members-list"></div>
     </div>
 
-    <div class="flex items-center gap-2 ">
+    <div x-show="mode !== 'visit'" class="flex items-center gap-2 ">
         <div class="h-px bg-gray-200 dark:bg-slate-600 flex-1"></div>
-        <span class="text-gray-400 dark:text-gray-500 text-xs font-semibold">DATOS DEL TITULAR</span>
+        <span  class="text-gray-400 dark:text-gray-500 text-xs font-semibold">DATOS DEL TITULAR</span>
         <div class="h-px bg-gray-200 dark:bg-slate-600 flex-1"></div>
     </div>
 
@@ -36,7 +36,7 @@
         
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</label>
-            <input
+            <input 
                 id="first-name-input"
                 type="text"
                x-model="customer.FirstName"
@@ -46,7 +46,7 @@
                 class="form-input-acxess"
                 @@focus="$el.select()">
         </div>
-        <div>
+        <div x-show="mode !== 'visit'">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Apellidos</label>
             <input type="text"
                    x-model="customer.LastName"
@@ -56,7 +56,7 @@
                    class="form-input-acxess"
                    @@focus="$el.select()">
         </div>
-        <div>
+        <div x-show="mode !== 'visit'">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono <span class="text-xs">(Opcional)</span></label>
             <input type="tel"
                    x-model="customer.Phone"

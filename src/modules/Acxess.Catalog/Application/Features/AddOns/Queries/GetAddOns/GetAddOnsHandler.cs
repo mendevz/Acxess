@@ -23,9 +23,10 @@ public class GetAddOnsHandler(
             a.AddOnKey,
             a.Name,
             a.Price,
+            a.IsActive,
             a.ShowInCheckout,
-            a.ShowInCheckout
-        )).ToListAsync();
+            a.IsVisit
+        )).ToListAsync(cancellationToken);
 
         return items;
     }

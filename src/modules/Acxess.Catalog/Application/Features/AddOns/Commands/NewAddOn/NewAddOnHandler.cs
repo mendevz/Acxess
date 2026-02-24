@@ -16,7 +16,8 @@ public class NewAddOnHandler(
             request.AddOnKey,
             request.Name,
             request.Price,
-            request.ShowInCheckout
+            request.ShowInCheckout,
+            request.IsVisit
         );
 
         addOnRepository.Add(addOn);

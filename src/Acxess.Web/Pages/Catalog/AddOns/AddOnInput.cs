@@ -17,6 +17,7 @@ public class AddOnInput
     public bool ShowInCheckout {get; set;}
 
     public bool IsActive {get; set;} = true;
+    public bool IsVisit {get; set;} = true;
 
 
 }

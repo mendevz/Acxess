@@ -16,12 +16,26 @@ public class TenantCreatedEventHandler(
             notification.TenantId,
             AddOnDefaults.Inscription.Key,
             AddOnDefaults.Inscription.Name,
-            AddOnDefaults.Inscription.Price,
-            false
+            AddOnDefaults.Inscription.Price
         );  
         var resultAdd = await mediator.Send(command, cancellationToken);
 
         if (resultAdd.IsFailure)
+        {
+            throw new IntegrationEventException(resultAdd.Error);
+        }
+        
+        var commandVisit = new NewAddOnCommand(
+            notification.TenantId,
+            AddOnDefaults.Visit.Key,
+            AddOnDefaults.Visit.Name,
+            AddOnDefaults.Visit.Price,
+            true,
+            true
+        );  
+        var resultVisit = await mediator.Send(commandVisit, cancellationToken);
+
+        if (resultVisit.IsFailure)
         {
             throw new IntegrationEventException(resultAdd.Error);
         }

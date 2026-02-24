@@ -7,11 +7,11 @@ public class ProcessOrderRequest : IValidatableObject
 
     public const string NEW_MEMBER = "new";
     public const string RENEW_MEMBER = "renew";
+    public const string VISIT_MEMBER = "visit";
     
     [Required]
     public string Mode { get; set; } = NEW_MEMBER;
     public AddRenewMemberInput MemberData { get; set; } = new();
-    [Required(ErrorMessage = "Por favor selecciona un plan para continuar.")]
     public int? PlanId { get; set; }
 
     public List<int> AddOnIds { get; set; } = [];
@@ -27,6 +27,13 @@ public class ProcessOrderRequest : IValidatableObject
             if (AmountPaid <= 0)
                 yield return new ValidationResult("El monto pagado debe ser mayor a 0.");
         }
+        
+        if (Mode == VISIT_MEMBER)
+        {
+            if (AddOnIds.Count == 0)
+                yield return new ValidationResult("Debes seleccionar al menos un pase de visita o complemento.", new[] { nameof(AddOnIds) });
+        }
+
         
         switch (Mode)
         {

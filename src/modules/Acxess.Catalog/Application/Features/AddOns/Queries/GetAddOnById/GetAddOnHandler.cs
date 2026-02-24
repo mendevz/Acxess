@@ -24,8 +24,9 @@ public class GetAddOnHandler(
             entity.AddOnKey,
             entity.Name,
             entity.Price,
+            entity.IsActive,
             entity.ShowInCheckout,
-            entity.ShowInCheckout
+            entity.IsVisit
         );
 
         return dto;

@@ -20,8 +20,9 @@ public class GetAddOnInscriptionHandler(CatalogModuleContext  context) : IReques
             a.AddOnKey,
             a.Name,
             a.Price,
+            a.IsActive,
             a.ShowInCheckout,
-            a.ShowInCheckout
+            a.IsVisit
         )).FirstOrDefaultAsync(cancellationToken: cancellationToken);
         
         return item ?? Result<AddOnDto>.Failure("AddOn.NotFound","Complemento inscripción no encontrada");

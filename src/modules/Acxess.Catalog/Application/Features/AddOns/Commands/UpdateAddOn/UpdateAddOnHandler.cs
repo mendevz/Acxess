@@ -22,7 +22,9 @@ public class UpdateAddOnHandler(
             request.AddOnKey,
             request.Name,
             request.Price,
-            request.ShowInCheckout);
+            request.ShowInCheckout,
+            request.IsVisit,
+            request.IsActive);
 
         var resultUpdated = await unitOfWork.SaveChangesAsync(cancellationToken);
 

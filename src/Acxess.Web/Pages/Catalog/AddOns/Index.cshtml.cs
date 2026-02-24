@@ -69,7 +69,8 @@ public class IndexModel(
                     Name = item.Name, 
                     Price = item.Price, 
                     IsActive = item.IsActive,
-                    ShowInCheckout = item.ShowInCheckout 
+                    ShowInCheckout = item.ShowInCheckout ,
+                    IsVisit = item.IsVisit
                 };
                 break;
             }
@@ -92,6 +93,7 @@ public class IndexModel(
                 Input.AddOnKey,
                 Input.Name,
                 Input.Price,
+                false,
                 Input.IsActive);
 
             resultSaved = await mediator.Send(command);
@@ -103,7 +105,10 @@ public class IndexModel(
                 Input.AddOnKey,
                 Input.Name, 
                 Input.Price, 
-                Input.IsActive);
+                Input.ShowInCheckout,
+                Input.IsVisit,
+                Input.IsActive
+                );
 
             resultSaved = await mediator.Send(commandUpd);
         }

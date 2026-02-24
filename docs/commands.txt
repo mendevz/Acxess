@@ -13,6 +13,7 @@ dotnet ef migrations add InitRelationsMembership -p ./modules/Acxess.Membership/
 
 ASPNETCORE_ENVIRONMENT=Localhost dotnet ef database update --project ./modules/Acxess.Membership/ --startup-project Acxess.Web --context MembershipModuleContext
 ASPNETCORE_ENVIRONMENT=Localhost dotnet ef database update --project ./modules/Acxess.Billing/ --startup-project Acxess.Web --context BillingModuleContext
+ASPNETCORE_ENVIRONMENT=Localhost dotnet ef database update --project ./modules/Acxess.Catalog/ --startup-project Acxess.Web --context CatalogModuleContext
 
  recompilar todo el compose: 
  docker compose up --build

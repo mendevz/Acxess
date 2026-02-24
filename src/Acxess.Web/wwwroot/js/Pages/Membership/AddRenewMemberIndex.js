@@ -58,9 +58,13 @@ document.addEventListener('alpine:init', () => {
             if (this.mode === 'new') {
                 this.addSystemAddon(this.inscAddon);
                 document.getElementById("first-name-input")?.focus();
-            } else {
+            } else if (this.mode === 'renew') {
                 this.removeSystemAddon(this.inscAddon.IdAddOn);
                 document.getElementById("search-member-input")?.focus();
+            } else {
+                // MODO VISITA
+                this.removeSystemAddon(this.inscAddon.IdAddOn);
+                document.getElementById("first-name-input")?.focus();
             }
         },
         selectMember(memberData) {
@@ -152,6 +156,11 @@ document.addEventListener('alpine:init', () => {
             this.transferRef = '';
         },
         get cannotSubmit() {
+            if (this.mode === 'visit') {
+                return this.cartAddons.length === 0 || (this.paymentMethod === 'cash' && this.change < 0);
+            }
+
+            // Si no es visita, requiere plan y nombre.
             const isFormInvalid = !this.selectedPlan || !this.customer.FirstName || this.customer.FirstName.trim() === '';
             const isMoneyInsufficient = this.paymentMethod === 'cash' && this.change < 0;
             return isFormInvalid || isMoneyInsufficient;
