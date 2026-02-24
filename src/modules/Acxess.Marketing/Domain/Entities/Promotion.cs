@@ -38,7 +38,7 @@ public class Promotion : IHasTenant
     private readonly List<Coupon> _coupons = [];
     public virtual IReadOnlyCollection<Coupon> Coupons => _coupons.AsReadOnly();
 
-    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; private set; } = DateTime.Now;
     public int CreatedByUser { get; private set; }
 
     public static Promotion Create(

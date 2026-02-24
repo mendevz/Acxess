@@ -9,7 +9,7 @@ public class Tenant
     public string Name { get; private set; }
     public string? Logo { get; private set; }
     public bool IsActive { get; private set; } = true;
-    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; private set; } = DateTime.Now;
 
     private Tenant(string name)
     {

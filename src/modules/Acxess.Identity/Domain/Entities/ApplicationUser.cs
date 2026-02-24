@@ -12,6 +12,8 @@ public class ApplicationUser : IdentityUser, IMayHaveTenant
     public int? IdTenant { get; set; }
     public string FullName { get; set; } = string.Empty;
     public bool IsActive { get; set; }
+    
+    public virtual Tenant? Tenant { get; set; }
 
     public static ApplicationUser Create(string userName, string email, string fullName, int? idTenant = null)
     {

@@ -45,7 +45,7 @@ public class GetMemberHistoryHandler(
             });
 
             // 2. Evento: Vencimiento (Solo si ya venció)
-            if (sub.EndDate < DateTime.UtcNow.Date)
+            if (sub.EndDate < DateTime.Now.Date)
             {
                 timeline.Add(new TimelineItemDto
                 {

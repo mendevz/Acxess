@@ -16,7 +16,7 @@ public class GetMemberDetailHandler(
 {
     public async Task<Result<MemberDetailDto>> Handle(GetMemberDetailQuery request, CancellationToken cancellationToken)
     {
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.Now.Date;
         var member = await context.Members
             .AsNoTracking()
             .Where(m => m.IdMember == request.IdMember)

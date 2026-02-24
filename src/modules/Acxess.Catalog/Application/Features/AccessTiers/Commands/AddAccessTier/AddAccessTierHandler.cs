@@ -14,10 +14,10 @@ public class AddAccessTierHandler(
 {
     public async Task<Result<string>> Handle(AddAccessTierCommand request, CancellationToken cancellationToken)
     {
-        if (!currentTenant.IsAvailable)
-            return Result<string>.Failure("TenantId.NotAvailable","Tenant information is not available.");
+        // if (!currentTenant.IsAvailable)
+        //     return Result<string>.Failure("TenantId.NotAvailable","Tenant information is not available.");
 
-        var accessTier = AccessTier.Create(currentTenant.Id ?? 0, request.Name, request.Description);
+        var accessTier = AccessTier.Create(currentTenant.Id ?? request.TenantId ?? 0, request.Name, request.Description);
 
         accessTierRepository.Add(accessTier);
 

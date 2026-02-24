@@ -1,3 +1,4 @@
+using Acxess.Catalog.Application.Features.AccessTiers.Commands.AddAccessTier;
 using Acxess.Catalog.Application.Features.AddOns.Commands.NewAddOn;
 using Acxess.Catalog.Domain.Constants;
 using Acxess.Shared.Exceptions;
@@ -37,8 +38,20 @@ public class TenantCreatedEventHandler(
 
         if (resultVisit.IsFailure)
         {
-            throw new IntegrationEventException(resultAdd.Error);
+            throw new IntegrationEventException(resultVisit.Error);
         }
+
+        var commandAccessTIer = new AddAccessTierCommand(
+            AccessTiersDefaults.GeneralAccessTiers.Name,
+            AccessTiersDefaults.GeneralAccessTiers.Description,
+            notification.TenantId);
         
+        var resultAccessTIer = await mediator.Send(commandAccessTIer, cancellationToken);
+        
+        if (resultAccessTIer.IsFailure)
+        {
+            throw new IntegrationEventException(resultAccessTIer.Error);
+        }
+
     }
 }

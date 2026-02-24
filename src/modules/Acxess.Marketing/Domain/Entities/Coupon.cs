@@ -21,7 +21,7 @@ public class Coupon : IHasTenant
     public int IdPromotion { get; private set; }
     public bool IsRedeemed { get; private set; } = false;
     public DateTime? ExpiresOn { get; private set; }
-    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; private set; } = DateTime.Now;
     public int CreatedByUser { get; private set; }
     
     public virtual Promotion Promotion { get; private set; } = null!;

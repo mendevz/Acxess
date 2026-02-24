@@ -10,7 +10,7 @@ public class GetActiveCouponPromotionsHandler(
 {
     public async Task<Result<List<PromotionSelectDto>>> Handle(GetActiveCouponPromotionsQuery request, CancellationToken cancellationToken)
     {
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.Now.Date;
         
         var promotions = await context.Promotions
             .AsNoTracking()

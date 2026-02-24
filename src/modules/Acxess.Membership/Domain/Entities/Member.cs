@@ -14,8 +14,8 @@ public class Member : Entity, IHasTenant
     public string? Email { get; private set; }
     public string? Phone { get; private set; }
     public bool IsDeleted { get; private set; } = false;
-    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; private set; } = DateTime.Now;
+    public DateTime UpdatedAt { get; private set; } = DateTime.Now;
     public int CreatedByUser { get; private set; }
     
     private readonly List<Subscription> _ownedSubscriptions = [];
@@ -38,8 +38,8 @@ public class Member : Entity, IHasTenant
         Phone = phone;
         CreatedByUser = createdByUser;
         
-        CreatedAt = DateTime.UtcNow;
-        UpdatedAt = DateTime.UtcNow;
+        CreatedAt = DateTime.Now;
+        UpdatedAt = DateTime.Now;
     }
 
     public static Member Create(
@@ -71,7 +71,7 @@ public class Member : Entity, IHasTenant
     
     public bool HasActiveSubscription()
     {
-        return _subscriptionMemberships.Any(sm => sm.Subscription.IsActive && sm.Subscription.EndDate > DateTime.UtcNow);
+        return _subscriptionMemberships.Any(sm => sm.Subscription.IsActive && sm.Subscription.EndDate > DateTime.Now);
     }
     
     public void UpdateInformation(string firstName, string lastName, string? phone, string? email)
@@ -80,7 +80,7 @@ public class Member : Entity, IHasTenant
         LastName = lastName;
         Phone = phone;
         Email = email;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.Now;
     }
 
     public void Subscribe(
@@ -117,12 +117,12 @@ public class Member : Entity, IHasTenant
         }
         
         _ownedSubscriptions.Add(subscription);
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.Now;
     }
 
     private (DateTime Start, DateTime End) CalculateSubscriptionDates(int duration, int unit)
     {
-        var today = DateTime.UtcNow.Date; 
+        var today = DateTime.Now.Date; 
         var startDate = today;
 
         var lastSubscription = _subscriptionMemberships

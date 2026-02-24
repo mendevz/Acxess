@@ -3,8 +3,7 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Información General";
-    var currentHour = DateTime.Now.Hour;
-    var greeting = currentHour < 12 ? "Buenos días" : currentHour < 18 ? "Buenas tardes" : "Buenas noches";
+    const string greeting = "Bienvenido";
 }
 
 <div class="h-full w-full flex flex-col bg-gray-100 dark:bg-[#0b0f19] transition-colors duration-300 overflow-y-auto custom-scrollbar">
@@ -12,9 +11,9 @@
     <header class="px-8 pt-8 pb-4 shrink-0">
         <div class="flex justify-between items-end">
             <div>
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">@DateTime.Now.ToString("dddd, dd MMMM yyyy", new CultureInfo("MX"))</p>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">@DateTime.Now.ToString("dddd, dd MMMM yyyy", new CultureInfo("es-MX"))</p>
                 <h1 class="text-3xl font-bold tracking-tight text-slate-800 dark:text-white">
-                    @greeting, <span class="text-blue-600 dark:text-blue-400">Admin</span>
+                    @greeting, <span class="text-blue-600 dark:text-blue-400">@(User.FindFirst("TenantName")?.Value ?? "Invitado")</span>
                 </h1>
             </div>
             <div class="flex items-center gap-2">

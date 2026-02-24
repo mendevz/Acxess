@@ -51,7 +51,7 @@ public class SellingPlan : IHasTenant
     public DurationUnit DurationUnit { get; private set; }
     public decimal Price { get; private set; }
     public bool IsActive { get; private set; } = true;
-    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; private set; } = DateTime.Now;
     public int CreatedByUser { get; private set; }
 
     public virtual ICollection<PlanAccessTiers> AccessTiers { get; private set; } = new List<PlanAccessTiers>();

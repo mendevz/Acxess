@@ -12,6 +12,7 @@ services:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${DB_PASSWORD}
       - MSSQL_PID=Express  
+      - TZ=America/Mexico_City 
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${DB_PASSWORD} -C -Q 'SELECT 1' || exit 1"]
       interval: 5s
@@ -22,6 +23,7 @@ services:
       - "1433:1433" 
     volumes:
       - sql_data:/var/opt/mssql 
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - acxess-network
   # ==============================
@@ -64,6 +66,7 @@ services:
       - ConnectionStrings__Default=Server=acxess-db;Database=AcxessDB;User Id=${DB_USER};Password=${DB_PASSWORD};TrustServerCertificate=True;
       - SystemUser__Password=${SYSTEM_USER_PASSWORD}
       - RUN_MIGRATIONS=false
+      - TZ=America/Mexico_City 
     ports:
       - "5000:8080" 
     networks:

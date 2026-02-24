@@ -24,7 +24,7 @@ public class Subscription : IHasTenant
         Notes = notes;
         StartDate = startDate;
         EndDate = endDate;
-        CreatedAt =  DateTime.UtcNow;
+        CreatedAt =  DateTime.Now;
         IsActive = true;
         SellingPlanName = sellingPlanName;
     }
@@ -42,7 +42,7 @@ public class Subscription : IHasTenant
     public DateTime EndDate { get; private set; }
     public decimal PriceSnapshot { get; private set; }
     public string? Notes { get; private set; }
-    public DateTime CreatedAt { get; private set; } =  DateTime.UtcNow;
+    public DateTime CreatedAt { get; private set; } =  DateTime.Now;
     public int CreatedByUser { get; private set; }
     
     public DateTime? CancelledAt { get; private set; }
@@ -116,16 +116,26 @@ public class Subscription : IHasTenant
 
         IsActive = false;
         
-        CancelledAt = DateTime.UtcNow;
+        CancelledAt = DateTime.Now;
         CancellationReason = reason;
         CancelledBy = userId;
 
         // AddDomainEvent(new SubscriptionCancelledEvent(this.Id));
         return Result.Success();
     }
+    public void Deactivate()
+    {
+        if (!IsActive)
+        {
+           return ;
+        }
+
+        IsActive = false;
+        CancelledBy = 1;
+    }
     
     public void MarkAsExpired()
     {
-        if (IsActive && EndDate < DateTime.UtcNow) IsActive = false;
+        if (IsActive && EndDate < DateTime.Now) IsActive = false;
     }
 }

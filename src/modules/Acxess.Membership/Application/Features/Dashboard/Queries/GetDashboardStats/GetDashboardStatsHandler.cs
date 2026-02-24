@@ -9,7 +9,7 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
 {
     public async Task<Result<DashboardStatsDto>> Handle(GetDashboardStatsQuery request, CancellationToken cancellationToken)
     {
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.Now.Date;
         var startOfToday = today;
         var endOfToday = today.AddDays(1).AddTicks(-1);
         var threeDaysFromNow = today.AddDays(3);

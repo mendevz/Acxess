@@ -18,5 +18,10 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
        builder
             .HasIndex(u => u.UserNumber)
             .IsUnique();
+       
+       builder.HasOne(u => u.Tenant)
+           .WithMany()
+           .HasForeignKey(u => u.IdTenant)
+           .OnDelete(DeleteBehavior.Restrict);
     }
 }

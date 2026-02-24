@@ -13,7 +13,7 @@ public class SearchEligibleMembersHandler(
         if (string.IsNullOrWhiteSpace(request.Term) )
             return Result<List<EligibleMemberDto>>.Success([]);
         
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.Now.Date;
         
         
         List<int> sharedSubscriptionIds = [];

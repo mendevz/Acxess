@@ -10,7 +10,7 @@ public class GetRenewalMemberContextHandler(
 {
     public async Task<Result<RenewalContextDto>> Handle(GetRenewalMemberContextQuery request, CancellationToken cancellationToken)
     {
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.Now.Date;
 
         var requestingMember = await context.Members
             .AsNoTracking()
