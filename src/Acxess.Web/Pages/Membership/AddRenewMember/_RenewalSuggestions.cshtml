@@ -19,29 +19,62 @@
                     Phone = s.Phone, 
                     Email = s.Email 
                 });
-
+                
                 <button type="button"
                         @if (s.IsEligible)
                         {
                             @: @@click="addSuggestion(@jsonMember)"
                         }
                         disabled="@(!s.IsEligible)"
-                        class="group flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all border shadow-sm
-                               @(s.IsEligible ? "bg-white hover:border-blue-500 text-gray-700" : "bg-gray-100 text-gray-400 cursor-not-allowed opacity-70")">
+                        :class="isSuggestionUsed(@s.Id) 
+            ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-60 border-gray-200 dark:border-slate-700/50' 
+            : '@(s.IsEligible ? "bg-white dark:bg-slate-900 hover:border-blue-500 dark:hover:border-blue-500 text-gray-700 dark:text-gray-300 shadow-sm" : "bg-gray-50 dark:bg-slate-800/80 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-70 border-gray-200 dark:border-slate-700")'"
+                        class="group flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all border">
                     
-                    <span>@s.FirstName @s.LastName</span>
-                    
+                    <div class="flex flex-col">
+                        <span class="text-sm font-medium">@s.FirstName @s.LastName</span>
+        
+                        @if (!s.IsEligible)
+                        {
+                            <span class="text-[10px] text-red-500 dark:text-red-400 font-bold leading-tight mt-0.5">
+                                @s.IneligibilityReason
+                            </span>
+                        }
+                    </div>
                     @if (!s.IsEligible)
                     {
-                         <span title="@s.IneligibilityReason">
-                             <svg class="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                         </span>
+                        <span title="@s.IneligibilityReason">
+                            <svg class="w-4 h-4 text-red-400 dark:text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                        </span>
                     }
                     else 
                     {
-                        <svg class="w-4 h-4 text-blue-500 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        <svg class="w-4 h-4 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                     }
                 </button>
+
+@*                 <button type="button" *@
+@*                         @if (s.IsEligible) *@
+@*                         { *@
+@*                             @: @@click="addSuggestion(@jsonMember)" *@
+@*                         } *@
+@*                         disabled="@(!s.IsEligible)" *@
+@*                         class="group flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all border shadow-sm *@
+@*                                @(s.IsEligible ? "bg-white hover:border-blue-500 text-gray-700" : "bg-gray-100 text-gray-400 cursor-not-allowed opacity-70")"> *@
+@*                      *@
+@*                     <span>@s.FirstName @s.LastName</span> *@
+@*                      *@
+@*                     @if (!s.IsEligible) *@
+@*                     { *@
+@*                          <span title="@s.IneligibilityReason"> *@
+@*                              <svg class="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg> *@
+@*                          </span> *@
+@*                     } *@
+@*                     else  *@
+@*                     { *@
+@*                         <svg class="w-4 h-4 text-blue-500 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg> *@
+@*                     } *@
+@*                 </button> *@
             }
         </div>
     </div>

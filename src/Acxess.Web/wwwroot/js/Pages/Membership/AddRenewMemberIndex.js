@@ -66,6 +66,10 @@ document.addEventListener('alpine:init', () => {
         selectMember(memberData) {
             this.selectedMember = memberData;
             this.customer.Id = memberData.Id;
+
+            this.selectedPlan = null; // Resetear plan para obligar a nueva selección
+            this.beneficiaries = [];  // Limpiar beneficiarios previos
+            
             this.customer.FirstName = memberData.FirstName;
             this.customer.LastName = memberData.LastName;
             this.customer.Phone = memberData.Phone || '';
@@ -73,6 +77,45 @@ document.addEventListener('alpine:init', () => {
             
             const listContainer = document.getElementById('members-list');
             if(listContainer) listContainer.innerHTML = '';
+
+            document.body.dispatchEvent(new CustomEvent('loadRenewalContext', {
+                detail: { id: memberData.Id } // Asegúrate de que coincida con la propiedad de tu JSON
+            }));
+        },
+        addSuggestion(member) {
+            // Busca el primer renglón que no tenga ID y esté vacío
+            const slotIndex = this.beneficiaries.findIndex(b => b.Id === 0 && b.FirstName.trim() === '');
+
+            if (slotIndex !== -1) {
+                this.beneficiaries[slotIndex].Id = member.Id;
+                this.beneficiaries[slotIndex].FirstName = member.FirstName;
+                this.beneficiaries[slotIndex].LastName = member.LastName;
+                this.beneficiaries[slotIndex].Phone = member.Phone || '';
+                this.beneficiaries[slotIndex].Email = member.Email || '';
+            } else {
+                alert('Ya no hay espacios vacíos para agregar a este compañero.');
+            }
+        },
+        isSuggestionUsed(id) {
+            return this.beneficiaries.some(b => b.Id === id);
+        },
+        // 3. Selecciona a un usuario desde el buscador de HTMX
+        selectBeneficiaryFromSearch(index, member) {
+            this.beneficiaries[index].Id = member.Id;
+            this.beneficiaries[index].FirstName = member.FirstName;
+            this.beneficiaries[index].LastName = member.LastName;
+            this.beneficiaries[index].Phone = member.Phone || '';
+            this.beneficiaries[index].Email = member.Email || '';
+
+            const dropdown = document.getElementById('search-results-' + index);
+            if (dropdown) dropdown.innerHTML = '';
+        },
+        clearBeneficiary(index) {
+            this.beneficiaries[index].Id = 0;
+            this.beneficiaries[index].FirstName = '';
+            this.beneficiaries[index].LastName = '';
+            this.beneficiaries[index].Phone = '';
+            this.beneficiaries[index].Email = '';
         },
         resetCustomerForm() {
             this.selectedMember = null;
@@ -83,6 +126,8 @@ document.addEventListener('alpine:init', () => {
                 Phone: '',
                 Email: '',
             };
+            this.selectedPlan = null; // Resetear plan para obligar a nueva selección
+            this.beneficiaries = [];  // Limpiar beneficiarios previos
         },
         addSystemAddon(addon) {
             const exists = this.cartAddons.find(a => a.IdAddOn == addon.IdAddOn);

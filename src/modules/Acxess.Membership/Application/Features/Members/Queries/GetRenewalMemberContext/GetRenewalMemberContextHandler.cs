@@ -15,19 +15,26 @@ public class GetRenewalMemberContextHandler(
         var requestingMember = await context.Members
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.IdMember == request.MemberId, cancellationToken);
-        
+            
         if (requestingMember is null) 
             return Result<RenewalContextDto>.Failure(Error.NotFound("Member.NotFound", "Socio no encontrado"));
-        
+            
+        // 1. OBTENEMOS TODAS LAS SUSCRIPCIONES DEL SOCIO PRINCIPAL (El que está renovando)
+        var sharedSubscriptionIds = await context.SubscriptionMembers
+            .AsNoTracking()
+            .Where(sm => sm.IdMember == request.MemberId)
+            .Select(sm => sm.IdSubscription)
+            .ToListAsync(cancellationToken);
+
         var lastGroupSub = await context.SubscriptionMembers
             .AsNoTracking()
             .Where(sm => sm.IdMember == request.MemberId)
             .OrderByDescending(sm => sm.Subscription.EndDate)
             .Select(sm => new { sm.IdSubscription, sm.Subscription.IdSellingPlan }) 
             .FirstOrDefaultAsync(cancellationToken);
-        
+            
         List<SuggestedBeneficiaryDto> suggestions = [];
-        
+            
         if (lastGroupSub != null)
         {
             var previousMembersRaw = await context.SubscriptionMembers
@@ -40,11 +47,13 @@ public class GetRenewalMemberContextHandler(
                     sm.Member.LastName,
                     Phone = sm.Member.Phone ?? "",
                     Email = sm.Member.Email ?? "",
+                    
+                    // 2. LA MAGIA: Buscamos si tiene una suscripción activa que NO esté en la lista compartida
                     ConflictingSub = sm.Member.SubscriptionMemberships
                         .Where(subLink => 
                             subLink.Subscription.IsActive &&
                             subLink.Subscription.EndDate >= today && 
-                            subLink.Subscription.IdSubscription != lastGroupSub.IdSubscription
+                            !sharedSubscriptionIds.Contains(subLink.IdSubscription) // <- REGLA CORREGIDA
                         )
                         .Select(subLink => subLink.Subscription.EndDate)
                         .OrderByDescending(d => d)
@@ -57,9 +66,10 @@ public class GetRenewalMemberContextHandler(
                 let isEligible = !hasConflict
                 let reason = isEligible
                     ? "Disponible"
-                    : $"Tiene otro plan activo (Vence: {item.ConflictingSub:dd/MM/yyyy})"
+                    : $"Tiene otro plan activo "
                 select new SuggestedBeneficiaryDto(item.IdMember, item.FirstName, item.LastName, item.Phone, item.Email, isEligible, reason));
         }
+        
         return Result<RenewalContextDto>.Success(new RenewalContextDto
         {
             MemberId = requestingMember.IdMember,
@@ -68,6 +78,6 @@ public class GetRenewalMemberContextHandler(
             LastPlanName = lastGroupSub != null ? $"Plan anterior ({lastGroupSub.IdSellingPlan})" : null,
             SuggestedBeneficiaries = suggestions
         });
-        
+                
     }
 }

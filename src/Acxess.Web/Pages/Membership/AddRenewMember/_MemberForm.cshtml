@@ -39,10 +39,10 @@
             <input
                 id="first-name-input"
                 type="text"
-                   x-model="customer.FirstName"
-                   name="OrderRequest.MemberData.FirstName"
-                   placeholder="Nombre del socio"
-                   :readonly="mode === 'renew'"
+               x-model="customer.FirstName"
+               name="OrderRequest.MemberData.FirstName"
+               placeholder="Nombre del socio"
+               :readonly="mode === 'renew'"
                 class="form-input-acxess"
                 @@focus="$el.select()">
         </div>

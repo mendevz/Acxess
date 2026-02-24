@@ -6,6 +6,10 @@
 @{
     ViewData["Title"] = "Mostrador";
 }
+
+<style>
+    [x-cloak] { display: none !important; }
+</style>
 <form
     method="post"
     hx-post="@Url.Page("Index", "ProcessOrder")"
@@ -53,6 +57,7 @@
 
 
         <section class="col-span-6 bg-gray-50 dark:bg-[#0f1523] border-r border-gray-200 dark:border-slate-700 p-4 flex flex-col gap-6 overflow-y-auto custom-scrollbar relative">
+            
             <div>
                 <label class="text-sm font-semibold text-gray-700 dark:text-gray-300  mb-3">
                     Seleccionar Plan
@@ -67,31 +72,92 @@
                 </div>
             </div>
 
-            <div x-show="beneficiaries.length > 0">
+            <div x-show="selectedPlan && (selectedPlan.totalMembers > 1 || selectedPlan.TotalMembers > 1)"
+                 x-transition
+                 x-cloak
+                 class="mb-6">
+                
+                <div id="member-renewal-context"
+                     hx-get="@Url.Page("Index", pageHandler: "RenewalContext")"
+                     hx-target="this"
+                     hx-trigger="loadRenewalContext from:body"
+                     hx-vals="js:{ id: event && event.detail ? event.detail.id : 0 }"></div>
+                
                 <div class="bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30 rounded-lg p-4">
                     <h4 class="text-sm font-bold text-purple-800 dark:text-purple-300 mb-2 flex items-center gap-2">
+
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                         Registro de Beneficiarios Adicionales
                     </h4>
                     <div class="space-y-3">
                         <template x-for="(beneficiary, index) in beneficiaries" :key="index">
-                            <div class="flex gap-2">
-                                <div class=" flex gap-2 justify-center items-center w-full">
-                                    <span class="text-gray-400 text-xs font-bold" x-text="'#' + (index + 1)"></span>
-                                    <input 
-                                           type="text"
-                                           x-model="beneficiary.FirstName"
-                                           :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].FirstName'"
-                                           :placeholder="'Nombre del beneficiario ' + (index+1)"
-                                           @@focus="$el.select()"
-                                           class="w-full pl-8 p-2 text-sm bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-purple-500 outline-none">
-
-                                    <input type="text"
-                                           :placeholder="'Apellidos del beneficiario ' + (index+1)"
-                                           :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].LastName'"
-                                           x-model="beneficiary.LastName"
-                                           @@focus="$el.select()"
-                                           class="w-full pl-8 p-2 text-sm bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-purple-500 outline-none">
+                            @* <div class="flex gap-2"> *@
+                            @*     <div class=" flex gap-2 justify-center items-center w-full"> *@
+                            @*         <span class="text-gray-400 text-xs font-bold" x-text="'#' + (index + 1)"></span> *@
+                            @*         <input *@
+                            @*             type="text" *@
+                            @*             x-model="beneficiary.FirstName" *@
+                            @*             :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].FirstName'" *@
+                            @*             :placeholder="'Nombre del beneficiario ' + (index+1)" *@
+                            @*             @@focus="$el.select()" *@
+                            @*             class="w-full pl-8 p-2 text-sm bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-purple-500 outline-none"> *@
+                            @* *@
+                            @*         <input type="text" *@
+                            @*                :placeholder="'Apellidos del beneficiario ' + (index+1)" *@
+                            @*                :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].LastName'" *@
+                            @*                x-model="beneficiary.LastName" *@
+                            @*                @@focus="$el.select()" *@
+                            @*                class="w-full pl-8 p-2 text-sm bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-purple-500 outline-none"> *@
+                            @*     </div> *@
+                            @* </div> *@
+                            
+                            <div class="flex gap-2 relative">
+                                <div class="flex gap-2 justify-center items-start w-full relative pt-1">
+                                    <span class="text-gray-400 dark:text-gray-500 text-xs font-bold mt-2" x-text="'#' + (index + 1)"></span>
+                                    
+                                    <div class="w-full relative">
+                                        <input type="text"
+                                               x-model="beneficiary.FirstName"
+                                               :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].FirstName'"
+                                               :placeholder="'Nombre del beneficiario ' + (index+1)"
+                                               :readonly="beneficiary.Id > 0"
+                                               @@focus="$el.select()"
+                                               autocomplete="off"
+                                               x-init="$nextTick(() => htmx.process($el))"
+                                               :hx-get="'@Url.Page("Index", pageHandler: "SearchBeneficiary")&index=' + index"
+                                               hx-trigger="keyup changed delay:300ms"
+                                               :hx-target="'#search-results-' + index"
+       
+                                               :data-renewing-id="customer.Id || 0"
+                                               hx-vals="js:{ term: event.target.value, renewingMemberId: event.target.dataset.renewingId }"
+       
+                                               :class="beneficiary.Id > 0 ? 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 font-semibold' : 'bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-200'"
+                                               class="w-full pl-3 p-2 text-sm border border-gray-300 dark:border-slate-600 rounded-md focus:ring-purple-500 dark:focus:ring-purple-400 outline-none transition-colors">
+                                        
+                                        <div :id="'search-results-' + index" 
+                                             x-show="beneficiary.Id === 0 && beneficiary.FirstName.length > 0"
+                                             class="absolute z-50 w-full mt-1 empty:hidden">
+                                        </div>
+                                    </div>
+                
+                                    <div class="w-full">
+                                        <input type="text"
+                                               x-model="beneficiary.LastName"
+                                               :name="'OrderRequest.AdditionalBeneficiaries[' + index + '].LastName'"
+                                               :placeholder="'Apellidos del beneficiario ' + (index+1)"
+                                               :readonly="beneficiary.Id > 0"
+                                               @@focus="$el.select()"
+                                               :class="beneficiary.Id > 0 ? 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 font-semibold' : 'bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-200'"
+                                               class="w-full pl-3 p-2 text-sm border border-gray-300 dark:border-slate-600 rounded-md focus:ring-purple-500 dark:focus:ring-purple-400 outline-none transition-colors">
+                                    </div>
+                
+                                    <button type="button"
+                                            x-show="beneficiary.Id > 0"
+                                            @@click="clearBeneficiary(index)"
+                                            class="mt-1 p-1.5 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                                            title="Quitar socio seleccionado">
+                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
                                 </div>
                             </div>
                         </template>

@@ -173,9 +173,10 @@ public class IndexModel(
         return Partial("_RenewalSuggestions", result.IsSuccess ? result.Value : null);
     }
 
-    public async Task<IActionResult> OnGetSearchBeneficiaryAsync(string term)
+    public async Task<IActionResult> OnGetSearchBeneficiaryAsync(string term, int index, int? renewingMemberId = null)
     {
-        var result = await mediator.Send(new SearchEligibleMembersQuery(term));
+        var result = await mediator.Send(new SearchEligibleMembersQuery(term, renewingMemberId));
+        ViewData["TargetIndex"] = index;
         return Partial("_BeneficiarySearchResults", result.IsSuccess ? result.Value : []);
     }
     

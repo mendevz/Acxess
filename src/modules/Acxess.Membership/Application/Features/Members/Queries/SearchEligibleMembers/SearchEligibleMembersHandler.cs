@@ -15,6 +15,18 @@ public class SearchEligibleMembersHandler(
         
         var today = DateTime.UtcNow.Date;
         
+        
+        List<int> sharedSubscriptionIds = [];
+        if (request.RenewingMemberId is > 0)
+        {
+            sharedSubscriptionIds = await context.SubscriptionMembers
+                .AsNoTracking()
+                .Where(sm => sm.IdMember == request.RenewingMemberId.Value)
+                .Select(sm => sm.IdSubscription)
+                .ToListAsync(cancellationToken);
+        }
+        
+        
         var query = context.Members.AsNoTracking();
         
         var isNumeric = int.TryParse(request.Term, out var id);
@@ -37,8 +49,10 @@ public class SearchEligibleMembersHandler(
                 m.Phone,
                 m.Email,
                 ActiveSubscription = m.SubscriptionMemberships
-                    .Where(sm => sm.Subscription.EndDate >= today && sm.Subscription.IsActive)
-                    .Select(sm => new { sm.Subscription.EndDate, sm.Subscription.IdSellingPlan })
+                    .Where(sm => sm.Subscription.EndDate >= today 
+                                 && sm.Subscription.IsActive 
+                                 && !sharedSubscriptionIds.Contains(sm.IdSubscription))
+                    .Select(sm => new { sm.Subscription.EndDate, sm.Subscription.IdSellingPlan, sm.Subscription.SellingPlanName })
                     .FirstOrDefault()
             })
             .ToListAsync(cancellationToken);
@@ -49,7 +63,7 @@ public class SearchEligibleMembersHandler(
             
             var reason = isEligible 
                 ? "Disponible" 
-                : $"Tiene plan activo (Vence: {c.ActiveSubscription!.EndDate:dd/MM/yy})";
+                : $"Tiene plan activo ({c.ActiveSubscription?.SellingPlanName ?? ""})";
 
             return new EligibleMemberDto(
                 c.IdMember, 

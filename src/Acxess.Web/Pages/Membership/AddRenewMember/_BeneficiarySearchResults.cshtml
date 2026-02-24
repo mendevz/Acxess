@@ -1,13 +1,16 @@
 @using System.Text.Json
 @model List<Acxess.Membership.Application.Features.Members.Queries.SearchEligibleMembers.EligibleMemberDto>
+@{
+    var targetIndex = (int)(ViewData["TargetIndex"] ?? 0);
+}
 
 @if (!Model.Any())
 {
-    <div class="px-4 py-2 text-xs text-gray-400 italic">No se encontraron socios.</div>
+    <div class="px-4 py-3 text-xs text-gray-400 dark:text-gray-500 italic bg-white dark:bg-slate-800 rounded-md">No se encontraron socios. Crea uno nuevo.</div>
 }
 else
 {
-    <ul class="py-1">
+    <ul class="py-1 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-gray-200 dark:border-slate-600 max-h-48 overflow-y-auto custom-scrollbar">
         @foreach (var m in Model)
         {
             var jsonCandidate = JsonSerializer.Serialize(new { 
@@ -18,25 +21,24 @@ else
                 Email = m.Email 
             });
 
-            <li class="px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer border-b border-gray-100 dark:border-slate-700/50 flex justify-between items-center group
-                       @(!m.IsEligible ? "opacity-60 cursor-not-allowed" : "")"
+            <li class="px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer border-b border-gray-100 dark:border-slate-700/50 flex justify-between items-center group @(!m.IsEligible ? "opacity-60 cursor-not-allowed" : "")"
                 @if (m.IsEligible)
                 {
-                    @:@@click="selectBeneficiaryFromSearch(index, @jsonCandidate)"
+                    @:@@click="selectBeneficiaryFromSearch(@targetIndex, @jsonCandidate)"
                 }
             >
                 <div>
-                    <p class="text-sm font-bold text-gray-800 dark:text-white">@m.FirstName @m.LastName</p>
-                    <p class="text-xs text-gray-500">ID: @m.IdMember • @m.Phone</p>
+                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">@m.FirstName @m.LastName</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">ID: @m.IdMember @(!string.IsNullOrEmpty(m.Phone) ? "• " + m.Phone : "")</p>
                 </div>
                 
                 @if (m.IsEligible)
                 {
-                    <span class="text-xs text-blue-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Seleccionar</span>
+                    <span class="text-xs text-blue-600 dark:text-blue-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Agregar</span>
                 }
                 else
                 {
-                    <span class="text-[10px] bg-red-50 text-red-500 px-2 py-1 rounded">@m.IneligibilityReason</span>
+                    <span class="text-[10px] bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 px-2 py-1 rounded">@m.IneligibilityReason</span>
                 }
             </li>
         }
