@@ -31,8 +31,8 @@ services:
   # ==============================
   acxess-migrator:
     build:
-      context: .
-      dockerfile: Acxess.Web/DOCKERFILE
+      context: ..
+      dockerfile: src/Acxess.Web/DOCKERFILE
     container_name: acxess_migrator
     command: ["dotnet", "Acxess.Web.dll", "--migrate-only"]
     depends_on:
@@ -50,8 +50,8 @@ services:
   # ==============================
   acxess-web:
     build:
-      context: . 
-      dockerfile: Acxess.Web/DOCKERFILE
+      context: .. 
+      dockerfile: src/Acxess.Web/DOCKERFILE
     container_name: acxess_web
     mem_limit: 512m
     restart: always
