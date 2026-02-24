@@ -156,15 +156,8 @@ public class IndexModel(
         if (result.IsFailure)
             return Feedback(errorMessage: result.Error.Description);
 
-        var targetUrl = Url.Page(
-            "/Membership/DigitalExpedient/Index", 
-            new { SearchMember = result.Value.IdMember }
-        );
-
-        Response.Headers.Append("HX-Redirect", targetUrl);
-
-        TempData["SuccessMessage"] = result.Value.Mensaje;
-        return new EmptyResult();
+        var targetUrl = Url.Page("/Membership/DigitalExpedient/Index", new { SearchMember = result.Value.IdMember });
+        return Feedback(successMessage: result.Value.Mensaje, targetUrl: targetUrl);
     }
     
     public async Task<IActionResult> OnGetRenewalContextAsync(int id)
@@ -180,17 +173,19 @@ public class IndexModel(
         return Partial("_BeneficiarySearchResults", result.IsSuccess ? result.Value : []);
     }
     
-    private PartialViewResult Feedback(string? successMessage = null, string? errorMessage = null)
+    private PartialViewResult Feedback(string? successMessage = null, string? errorMessage = null, string? targetUrl = null)
     {
-        var partial = Partial("_FeedbackMessages", this); 
-    
+        var partial = Partial("_FeedbackMessageModal", this); 
+
         if (!string.IsNullOrWhiteSpace(successMessage))
             partial.ViewData["SuccessMessage"] = successMessage;
 
         if (!string.IsNullOrWhiteSpace(errorMessage))
             partial.ViewData["ErrorMessage"] = errorMessage;
+        
+        if (!string.IsNullOrWhiteSpace(targetUrl))
+            partial.ViewData["TargetUrl"] = targetUrl; // Pasamos la URL al modal
 
         return partial;
     }
-    
 }
