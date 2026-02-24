@@ -175,7 +175,7 @@ public class IndexModel(
         if (result.IsFailure)
             return Feedback(errorMessage: result.Error.Description);
 
-        var targetUrl = Url.Page("/Membership/DigitalExpedient/Index", new { SearchMember = result.Value.IdMember });
+        var targetUrl = Url.Page("/Membership/DigitalExpedient/Index", new { SearchTerm = result.Value.IdMember });
         return Feedback(successMessage: result.Value.Mensaje, targetUrl: targetUrl);
     }
     

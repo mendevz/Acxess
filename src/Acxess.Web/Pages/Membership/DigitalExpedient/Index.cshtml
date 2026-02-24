@@ -25,21 +25,44 @@
         
                     <span class="text-xs font-bold tracking-wide">Nuevo Socio</span>
                 </a>
-                
+                <input type="hidden" name="StatusFilter" id="statusFilterHidden" :value="statusFilter" />
                 <div class=" w-full flex items-center bg-gray-100 dark:bg-slate-900 rounded-lg px-3 py-2 flex-1 max-w-md border border-gray-200 dark:border-slate-600 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
                     <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                     <input type="text" 
-                           name="SearchMember"
-                           value="@Model.SearchMember"
+                           name="SearchTerm" value="@Model.SearchTerm"
                            placeholder="Buscar por nombre o ID" 
                            hx-get="@Url.Page("Index", pageHandler: "Members")"
-                           hx-trigger="load, keyup changed delay:500ms"
+                           hx-trigger="load, keyup changed delay:500ms, reloadMembersList from:body"
                            hx-target="#members-list"
+                           hx-include="#statusFilterHidden"
                            x-swap="innerHTML"
                            @@focus="$el.select()"
                            class="bg-transparent border-none outline-none text-sm text-gray-700 dark:text-white w-full placeholder-gray-400">
+                </div>
+                
+                <div class="w-full flex items-center justify-between gap-1 mt-1 bg-gray-100 dark:bg-slate-900 p-1 rounded-lg">
+                    <button @@click="setFilter('all')" 
+                            :class="statusFilter === 'all' ? 'bg-white dark:bg-slate-700 text-gray-800 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                            class="flex-1 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all">
+                        Todos
+                    </button>
+                    <button @@click="setFilter('active')" 
+                            :class="statusFilter === 'active' ? 'bg-white dark:bg-slate-700 text-green-600 dark:text-green-400 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                            class="flex-1 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all">
+                        Activos
+                    </button>
+                    <button @@click="setFilter('expired')" 
+                            :class="statusFilter === 'expired' ? 'bg-white dark:bg-slate-700 text-orange-600 dark:text-orange-400 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                            class="flex-1 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all">
+                        Vencidos
+                    </button>
+                    <button @@click="setFilter('deleted')" 
+                            :class="statusFilter === 'deleted' ? 'bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                            class="flex-1 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all">
+                        Bajas
+                    </button>
                 </div>
             </div>
             

@@ -57,11 +57,16 @@
             @if(m.IsDeleted)
             {
                 <div class="mt-4 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg text-center font-medium animate-in fade-in">
-                    <button hx-post="@Url.Page("Index", "RestoreMember", new { id = m.IdMember })"
-                            class="underline cursor-pointer font-bold hover:text-red-800 ml-1">
+                    El socio fue dado de baja.
+                    <form hx-post="@Url.Page("Index", "RestoreMember", new { id = m.IdMember })"
+                          hx-target="#modal-container"
+                          hx-swap="innerHTML"
+                          class="inline-block ml-1">
                         @Html.AntiForgeryToken()
-                        Restaurar usuario
-                    </button>
+                        <button type="submit" class="underline cursor-pointer font-bold hover:text-red-800">
+                            Restaurar usuario
+                        </button>
+                    </form>
                 </div>
             }
             else

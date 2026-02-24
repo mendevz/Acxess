@@ -35,15 +35,18 @@ public class IndexModel(IMediator mediator) : PageModel
     public MemberHistoryDto? InitialMemberHistory { get; set; }
     
     [BindProperty(SupportsGet = true)]
-    public string? SearchMember { get; set; } = string.Empty;
-
+    public string? SearchTerm { get; set; } = string.Empty;
+    
+    [BindProperty(SupportsGet = true)]
+    public string StatusFilter { get; set; } = "active";
+    
     public MembersResponse? MembersResponse { get; set; }
     
     public async Task OnGet()
     {
-        if (string.IsNullOrWhiteSpace(SearchMember)) return;
+        if (string.IsNullOrWhiteSpace(SearchTerm)) return;
         
-        var membersResult = await mediator.Send(new GetMembersQuery(SearchMember));
+        var membersResult = await mediator.Send(new GetMembersQuery(SearchTerm));
         if (membersResult.IsFailure || !membersResult.Value.Members.Any())  return; 
         
         MembersResponse = membersResult.Value;
@@ -64,7 +67,7 @@ public class IndexModel(IMediator mediator) : PageModel
 
     public async Task<IActionResult> OnGetMembersAsync()
     {
-        var queryMembers = new GetMembersQuery(SearchMember);
+        var queryMembers = new GetMembersQuery(SearchTerm, StatusFilter);
         var result = await mediator.Send(queryMembers);
 
         if (result.IsFailure) return Partial("_ErrorState", result.Error.Description);
@@ -221,7 +224,8 @@ public class IndexModel(IMediator mediator) : PageModel
 
         Response.Headers.Append("HX-Trigger", JsonSerializer.Serialize(new { 
             memberUpdated = true, 
-            closeModal = true
+            closeModal = true,
+            reloadMembersList = true
         }));
 
         return Partial("_ActionSuccess", "Suscripción cancelada correctamente.");
@@ -240,11 +244,14 @@ public class IndexModel(IMediator mediator) : PageModel
 
         if (result.IsFailure)
         {
-
+            ModelState.AddModelError(string.Empty, result.Error.Description);
+            await OnGetMemberDetailAsync(id);
+            return Partial("_DeleteMemberModal", this); 
         }
 
         Response.Headers.Append("HX-Trigger", JsonSerializer.Serialize(new { 
             memberUpdated = true, 
+            reloadMembersList = true
         }));
 
         return Partial("_ActionSuccess", "Socio eliminado correctamente.");
@@ -256,9 +263,8 @@ public class IndexModel(IMediator mediator) : PageModel
 
         if (result.IsFailure) return BadRequest(result.Error.Description);
 
-        Response.Headers.Append("HX-Trigger", JsonSerializer.Serialize(new { memberUpdated = true }));
-        
-        return new EmptyResult(); 
+        Response.Headers.Append("HX-Trigger", JsonSerializer.Serialize(new { memberUpdated = true, reloadMembersList = true }));
+        return Partial("_ActionSuccess", "Socio restaurado exitosamente.");
     }
     
     

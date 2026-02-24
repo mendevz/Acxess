@@ -148,33 +148,29 @@ public class GetMemberDetailHandler(
             }
         }
         
-        // 2. Cálculo Matemático Estable
+        // 2. Cálculo Matemático Estable (Progreso del ciclo actual)
         var remainingDays = 0;
         double progress = 0;
-        var totalDaysDuration = 1; // Valor seguro por defecto
+        var totalDaysDuration = 1; 
 
-        if (absoluteEndDate.HasValue && chainStartDate.HasValue)
+        if (displaySub != null && !isExpired && displaySub.IsActive)
         {
-            // A. Días Restantes (Siempre respecto a hoy)
-            remainingDays = (absoluteEndDate.Value.Date - today).Days;
+            // Usamos estrictamente las fechas del ciclo que se está mostrando (displaySub)
+            var currentStart = displaySub.StartDate.Date;
+            var currentEnd = displaySub.EndDate.Date;
 
-            // B. Duración TOTAL fija (No cambia con el tiempo)
-            // Calculamos la distancia total desde el primer día pagado hasta el último vencimiento
-            var totalSpan = (absoluteEndDate.Value.Date - chainStartDate.Value.Date).TotalDays;
-            
-            // Si es 0 días (mismo día), ponemos 1 para evitar división por cero
-            totalDaysDuration = totalSpan <= 0 ? 1 : (int)totalSpan;
+            remainingDays = (currentEnd - today).Days;
+            if (remainingDays < 0) remainingDays = 0;
 
-            // C. Días Transcurridos
-            // ¿Cuántos días han pasado desde el inicio original?
-            var daysPassed = (today - chainStartDate.Value.Date).TotalDays;
+            totalDaysDuration = (currentEnd - currentStart).Days;
+            if (totalDaysDuration <= 0) totalDaysDuration = 1; // Prevenir división por cero
 
-            // D. Cálculo del Porcentaje
-            // Fórmula: (Lo que ya pasamos / El total del camino) * 100
+            var daysPassed = (today - currentStart).TotalDays;
+    
             progress = (daysPassed / totalDaysDuration) * 100;
 
-            // E. Límites Visuales (Clamping)
-            if (progress < 0) progress = 0;     // Si la suscripción empieza en el futuro
+            // Clamping (Límites)
+            if (progress < 0) progress = 0;     // Si el plan empieza en el futuro
             if (progress > 100) progress = 100; // Si ya venció
         }
         else if (isExpired)

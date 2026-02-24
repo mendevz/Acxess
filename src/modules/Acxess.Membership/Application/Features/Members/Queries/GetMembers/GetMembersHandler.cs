@@ -10,11 +10,11 @@ public class GetMembersHandler(
 {
     public async Task<Result<MembersResponse>> Handle(GetMembersQuery request, CancellationToken cancellationToken)
     {
-        var query = context.Members.AsNoTracking();
+        var query = context.Members.IgnoreQueryFilters().AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(request.searchTerm))
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
-            var term = request.searchTerm.Trim();
+            var term = request.SearchTerm.Trim();
             if (int.TryParse(term, out var id))
             {
                 query = query.Where(m => m.IdMember == id);
@@ -27,35 +27,55 @@ public class GetMembersHandler(
             }
         }
 
-        var totalCount = await context.Members.CountAsync(cancellationToken);
+       
         var now = DateTime.Now;
+        
+        // 2. Aplicar Filtro de Estado (Las Reglas de Negocio)
+        switch (request.StatusFilter?.ToLower())
+        {
+            case "active":
+                query = query.Where(m => !m.IsDeleted && 
+                                         m.SubscriptionMemberships.Any(sm => sm.Subscription.EndDate >= now && sm.Subscription.IsActive));
+                break;
+            case "expired":
+                query = query.Where(m => !m.IsDeleted && 
+                                         !m.SubscriptionMemberships.Any(sm => sm.Subscription.EndDate >= now && sm.Subscription.IsActive));
+                break;
+            case "deleted":
+                query = query.Where(m => m.IsDeleted);
+                break;
+            case "all":
+            default:
+                query = query.Where(m => !m.IsDeleted); // <-- FALTABA ESTO: Ocultar bajas por defecto
+                break;
+        }
+        
+        var totalCount = await query.CountAsync(cancellationToken);
+        
         var results = await query
             .OrderByDescending(m => m.UpdatedAt)
-            .Where(m => !m.IsDeleted)
             .Select(m => new
             {
                 m.IdMember,
-                m.FirstName ,
+                m.FirstName,
                 m.LastName,
                 m.Email,
                 m.Phone,
                 m.IsDeleted,
-                LatestEndDate = m.SubscriptionMemberships
-                    .Select(sm => sm.Subscription.EndDate)
-                    .OrderByDescending(ed => ed)
-                    .FirstOrDefault()
+                HasActiveSubscription = m.SubscriptionMemberships
+                    .Any(sm => sm.Subscription.EndDate >= now && sm.Subscription.IsActive)
             })
             .Take(15)
             .Select(m => new MemberItem(
                 m.IdMember,
                 $"{m.FirstName} {m.LastName}",
                 GetInitials(m.FirstName, m.LastName),
-                m.LatestEndDate > now,
+                m.HasActiveSubscription,
+                m.IsDeleted,
                 m.Email ?? string.Empty,
                 m.Phone ?? string.Empty
             ))
             .ToListAsync(cancellationToken);
- 
         return new MembersResponse(totalCount, results.Count, results);
     }
     

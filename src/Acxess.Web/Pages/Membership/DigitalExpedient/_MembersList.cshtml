@@ -26,7 +26,7 @@
                         <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-300 font-bold text-sm">
                            <span>@member.Initials</span>
                         </div>
-                        <div :class="@member.Active.ToString().ToLower() ? 'bg-green-500' : 'bg-orange-700'" class=" absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-800"></div>
+                        <div class="@(member.IsDeleted ? "bg-gray-400 dark:bg-gray-500" : (member.Active ? "bg-green-500" : "bg-orange-500")) absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-800"></div>
                     </div>
 
                     <div class="overflow-hidden">

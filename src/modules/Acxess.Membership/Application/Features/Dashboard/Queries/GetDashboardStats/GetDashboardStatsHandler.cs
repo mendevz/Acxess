@@ -33,25 +33,48 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
         // Por simplicidad y rendimiento en dashboard, a veces se muestra "Vencidos este mes".
         // Usaremos: Socios con suscripción que venció y no tienen una nueva futura.
         var expiredMembers = totalMembers - activeMembers; // Aritmética simple para dashboard rápido
-        
-        // 4. Por Vencer (Próximos 3 días)
-        var expiringSoon = await context.Subscriptions
-            .Where(s => s.EndDate >= today && s.EndDate <= threeDaysFromNow)
-            .Select(s => s.IdSubscription) // Count es más rápido seleccionando ID
-            .CountAsync(cancellationToken);
-        
-        // 5. Tabla Top 5 Por Vencer (Para el listado central)
-        var topExpiring = await context.SubscriptionMembers
+        // 1. Creamos una consulta base reutilizable para el conteo y la tabla
+        var baseExpiringQuery = context.Members
             .AsNoTracking()
-            .Where(sm => sm.Subscription.EndDate >= today && sm.Subscription.EndDate <= threeDaysFromNow)
-            .OrderBy(sm => sm.Subscription.EndDate)
+            .Where(m => !m.IsDeleted) // Descartar a los eliminados
+            .Where(m => m.SubscriptionMemberships.Any(sm => 
+                sm.Subscription.IsActive && // Solo planes activos/vigentes
+                sm.Subscription.EndDate >= today && 
+                sm.Subscription.EndDate <= threeDaysFromNow))
+            // 2. LA MAGIA CONTRA DUPLICADOS/PRONTO PAGO:
+            // Excluir a los socios que ya tengan otra suscripción que venza DESPUÉS de estos 3 días
+            .Where(m => !m.SubscriptionMemberships.Any(sm => 
+                sm.Subscription.IsActive && 
+                sm.Subscription.EndDate > threeDaysFromNow));
+
+       // 4. Por Vencer (Conteo real de PERSONAS en riesgo de no renovar)
+        var expiringSoon = await baseExpiringQuery.CountAsync(cancellationToken);
+
+            // 5. Tabla Top 5 Por Vencer
+        var topExpiring = await baseExpiringQuery
+            .Select(m => new 
+            {
+                m.IdMember,
+                m.FirstName,
+                m.LastName,
+                // Buscamos cuál es exactamente la suscripción que está a punto de vencer
+                ExpiringSub = m.SubscriptionMemberships
+                    .Where(sm => sm.Subscription.IsActive && 
+                                 sm.Subscription.EndDate >= today && 
+                                 sm.Subscription.EndDate <= threeDaysFromNow)
+                    .Select(sm => sm.Subscription)
+                    .OrderByDescending(s => s.EndDate)
+                    .FirstOrDefault()
+            })
+            // Ordenamos por los que vencen primero (los más urgentes arriba)
+            .OrderBy(x => x.ExpiringSub!.EndDate)
             .Take(5)
-            .Select(sm => new ExpiringMemberItem(
-                sm.IdMember,
-                $"{sm.Member.FirstName} {sm.Member.LastName}",
-                sm.Subscription.SellingPlanName, 
-                sm.Subscription.EndDate,
-                (sm.Subscription.EndDate.Date - today).Days
+            .Select(x => new ExpiringMemberItem(
+                x.IdMember,
+                $"{x.FirstName} {x.LastName}",
+                x.ExpiringSub!.SellingPlanName, 
+                x.ExpiringSub.EndDate,
+                (x.ExpiringSub.EndDate.Date - today).Days
             ))
             .ToListAsync(cancellationToken);
         

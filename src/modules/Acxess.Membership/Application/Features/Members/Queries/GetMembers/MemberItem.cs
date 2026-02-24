@@ -5,5 +5,6 @@ public record MemberItem(
     string FullName,
     string Initials,
     bool Active,
+    bool IsDeleted,
     string? Email,
     string? Phone);
