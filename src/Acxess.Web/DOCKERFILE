@@ -48,29 +48,31 @@ RUN apt-get update && \
     apt-get install -y nodejs npm
 
 # 1. Copiar Archivos de Configuración Global
-COPY ["Directory.Packages.props", "."]
-COPY ["Directory.Build.props", "."] 
+COPY ["Directory.Packages.props*", "./"]
+COPY ["Directory.Build.props*", "./"] 
+COPY ["src/Directory.Packages.props*", "src/"]
+COPY ["src/Directory.Build.props*", "src/"]
 
 # 2. Copiar los CSPROJ de proyectos dependientes
-COPY ["shared/Acxess.Shared/Acxess.Shared.csproj", "Acxess.Shared/"]
-COPY ["shared/Acxess.Infrastructure/Acxess.Infrastructure.csproj", "Acxess.Infrastructure/"]
-COPY ["modules/Acxess.Identity/Acxess.Identity.csproj", "Acxess.Identity/"]
-COPY ["modules/Acxess.Catalog/Acxess.Catalog.csproj", "Acxess.Catalog/"]
-COPY ["modules/Acxess.Membership/Acxess.Membership.csproj", "Acxess.Membership/"]
-COPY ["modules/Acxess.Billing/Acxess.Billing.csproj", "Acxess.Billing/"]
-COPY ["modules/Acxess.Marketing/Acxess.Marketing.csproj", "Acxess.Marketing/"]
+COPY ["src/shared/Acxess.Shared/Acxess.Shared.csproj", "src/shared/Acxess.Shared/"]
+COPY ["src/shared/Acxess.Infrastructure/Acxess.Infrastructure.csproj", "src/shared/Acxess.Infrastructure/"]
+COPY ["src/modules/Acxess.Identity/Acxess.Identity.csproj", "src/modules/Acxess.Identity/"]
+COPY ["src/modules/Acxess.Catalog/Acxess.Catalog.csproj", "src/modules/Acxess.Catalog/"]
+COPY ["src/modules/Acxess.Membership/Acxess.Membership.csproj", "src/modules/Acxess.Membership/"]
+COPY ["src/modules/Acxess.Billing/Acxess.Billing.csproj", "src/modules/Acxess.Billing/"]
+COPY ["src/modules/Acxess.Marketing/Acxess.Marketing.csproj", "src/modules/Acxess.Marketing/"]
 
 # 3. Copiar App Web
-COPY ["Acxess.Web/Acxess.Web.csproj", "Acxess.Web/"]
+COPY ["src/Acxess.Web/Acxess.Web.csproj", "src/Acxess.Web/"]
 
 # 4. Restaurar dependencias
-RUN dotnet restore "Acxess.Web/Acxess.Web.csproj"
+RUN dotnet restore "src/Acxess.Web/Acxess.Web.csproj"
 
 # 5. Copiar TODO el código fuente
 COPY . .
 
 # 6. Publish
-WORKDIR /src/Acxess.Web
+WORKDIR /src/src/Acxess.Web
 RUN npm install
 RUN dotnet publish "Acxess.Web.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
