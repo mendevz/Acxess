@@ -25,6 +25,7 @@ public class GetMemberByIdHandler(MembershipModuleContext context) : IRequestHan
                 member.CreatedAt,
                 null,
                 null,
-                true);
+                true,
+                false);
     }
 }

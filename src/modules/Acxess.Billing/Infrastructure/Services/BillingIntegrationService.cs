@@ -1,3 +1,4 @@
+using System.Globalization;
 using Acxess.Billing.Infrastructure.Persistence;
 using Acxess.Shared.IntegrationEvents.Billing;
 using Microsoft.EntityFrameworkCore;
@@ -73,7 +74,7 @@ public class BillingIntegrationService(BillingModuleContext context) : IBillingI
                 t.TransactionDate,
                 t.Total,
                 "Pagado", 
-                t.Details.Select(d => $"{d.Description ?? "item"} - {d.TotalLine.ToString("C")}" ).ToList()
+                t.Details.Select(d => $"{d.Description ?? "item"} - {d.TotalLine.ToString("C", new CultureInfo("es-MX"))}" ).ToList()
             ))
             .ToListAsync(cancellationToken);
     }

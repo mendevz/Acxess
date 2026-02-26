@@ -9,4 +9,5 @@ public sealed record MemberResponse(
     DateTime JoinedDate,
     DateTime? LastExpirationDate,
     string? LastPlanName, 
-    bool IsSubscriptionActive); 
+    bool IsSubscriptionActive,
+    bool IsProrrogation); 

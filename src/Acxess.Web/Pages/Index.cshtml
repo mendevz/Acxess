@@ -8,128 +8,126 @@
 
 <div class="h-full w-full flex flex-col bg-gray-100 dark:bg-[#0b0f19] transition-colors duration-300 overflow-y-auto custom-scrollbar">
 
-    <header class="px-8 pt-8 pb-4 shrink-0">
-        <div class="flex justify-between items-end">
+    <header class="px-4 lg:px-8 pt-6 lg:pt-8 pb-4 shrink-0">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 sm:gap-0">
             <div>
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">@DateTime.Now.ToString("dddd, dd MMMM yyyy", new CultureInfo("es-MX"))</p>
-                <h1 class="text-3xl font-bold tracking-tight text-slate-800 dark:text-white">
+                <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">@DateTime.Now.ToString("dddd, dd MMMM yyyy", new CultureInfo("es-MX"))</p>
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-800 dark:text-white">
                     @greeting, <span class="text-blue-600 dark:text-blue-400">@(User.FindFirst("TenantName")?.Value ?? "Invitado")</span>
                 </h1>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 self-start sm:self-auto">
                 <span class="relative flex h-3 w-3">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                 </span>
-                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Sistema Operativo</span>
+                <span class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Sistema Operativo</span>
             </div>
         </div>
     </header>
 
-    <section class="px-8 py-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 shrink-0">
+    <section class="px-4 lg:px-8 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 shrink-0">
         
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col justify-between h-32 relative overflow-hidden group">
+        <div class="bg-white dark:bg-slate-800 p-5 lg:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col justify-between h-28 lg:h-32 relative overflow-hidden group">
             <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 dark:bg-blue-900/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
             <div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">NUEVOS SOCIOS HOY</p>
-                <h3 class="text-3xl font-bold text-slate-800 dark:text-white mt-1">@Model.Stats.NewMembersToday</h3>
+                <p class="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-wider">NUEVOS SOCIOS HOY</p>
+                <h3 class="text-2xl lg:text-3xl font-bold text-slate-800 dark:text-white mt-1">@Model.Stats.NewMembersToday</h3>
             </div>
-            <div class="flex items-center text-xs font-medium text-green-500">
+            <div class="flex items-center text-[10px] lg:text-xs font-medium text-green-500">
                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                @* +@Model.Stats.NewMembersLastMonth % vs el mes pasado *@
                 Registrados
             </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col justify-between h-32 relative overflow-hidden group">
+        <div class="bg-white dark:bg-slate-800 p-5 lg:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col justify-between h-28 lg:h-32 relative overflow-hidden group">
             <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-50 dark:bg-indigo-900/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
             <div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total</p>
-                <h3 class="text-3xl font-bold text-slate-800 dark:text-white mt-1">@Model.Stats.TotalMembers <span class="text-sm font-normal text-gray-400">socios</span></h3>
+                <p class="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-wider">Total</p>
+                <h3 class="text-2xl lg:text-3xl font-bold text-slate-800 dark:text-white mt-1">@Model.Stats.TotalMembers <span class="text-xs lg:text-sm font-normal text-gray-400">socios</span></h3>
             </div>
-            <div class="flex items-center text-xs font-medium text-gray-400">
+            <div class="flex items-center text-[10px] lg:text-xs font-medium text-gray-400">
                 <span class="text-indigo-500 font-bold mr-1">@Model.Stats.ActiveMembers</span>Al corriente
             </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col justify-between h-32 relative overflow-hidden group">
+        <div class="bg-white dark:bg-slate-800 p-5 lg:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col justify-between h-28 lg:h-32 relative overflow-hidden group">
             <div class="absolute right-0 top-0 w-24 h-24 bg-purple-50 dark:bg-purple-900/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
             <div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Vencidos</p>
-                <h3 class="text-3xl font-bold text-slate-800 dark:text-white mt-1">@Model.Stats.ExpiredMembers</h3>
+                <p class="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-wider">Vencidos</p>
+                <h3 class="text-2xl lg:text-3xl font-bold text-slate-800 dark:text-white mt-1">@Model.Stats.ExpiredMembers</h3>
             </div>
-            <div class="flex items-center text-xs font-medium text-purple-500">
-                No han renovado subscripción
+            <div class="flex items-center text-[10px] lg:text-xs font-medium text-purple-500">
+                No han renovado
             </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col justify-between h-32 relative overflow-hidden group cursor-pointer hover:border-orange-300 transition-colors">
+        <div class="bg-white dark:bg-slate-800 p-5 lg:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col justify-between h-28 lg:h-32 relative overflow-hidden group cursor-pointer hover:border-orange-300 transition-colors">
             <div class="absolute right-0 top-0 w-24 h-24 bg-orange-50 dark:bg-orange-900/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
             <div>
-                <p class="text-xs font-bold text-orange-500 uppercase tracking-wider flex items-center gap-1">
+                <p class="text-[10px] lg:text-xs font-bold text-orange-500 uppercase tracking-wider flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span> Por Vencer
                 </p>
-                <h3 class="text-3xl font-bold text-slate-800 dark:text-white mt-1">@Model.Stats.ExpiringSoon</h3>
+                <h3 class="text-2xl lg:text-3xl font-bold text-slate-800 dark:text-white mt-1">@Model.Stats.ExpiringSoon</h3>
             </div>
-            <div class="flex items-center text-xs font-medium text-gray-400">
-                En los próximos 3 días
+            <div class="flex items-center text-[10px] lg:text-xs font-medium text-gray-400">
+                Próximos 3 días
             </div>
         </div>
     </section>
 
-    <main class="px-8 pb-8 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <main class="px-4 lg:px-8 pb-8 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
 
         <div class="lg:col-span-2 flex flex-col gap-6">
             
             <div>
-                <h2 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Accesos Directos</h2>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <h2 class="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Accesos Directos</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     
-                    <a href="/Membership/AddRenewMember" class="group bg-blue-600 hover:bg-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600 rounded-xl p-5 shadow-lg text-white flex flex-col items-start justify-between h-32 transition-all transform hover:-translate-y-1">
-                    
-                        <div class="p-2 bg-white/20 rounded-lg" >
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                    <a href="/Membership/AddRenewMember" class="group bg-blue-600 hover:bg-blue-500 dark:bg-blue-700 rounded-xl p-4 lg:p-5 shadow-lg text-white flex sm:flex-col items-center sm:items-start justify-start sm:justify-between gap-4 sm:gap-0 h-auto sm:h-32 transition-all transform hover:-translate-y-1">
+                        <div class="p-2 bg-white/20 rounded-lg shrink-0" >
+                            <svg class="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
                         </div>
                         <div>
-                            <span class="block font-bold text-lg">Nuevo Socio</span>
-                            <span class="text-blue-100 text-xs">Registrar expediente</span>
+                            <span class="block font-bold text-base lg:text-lg">Nuevo Socio</span>
+                            <span class="text-blue-100 text-[10px] lg:text-xs hidden sm:block">Registrar expediente</span>
                         </div>
                     </a>
 
-                    <a href="/Membership/AddRenewMember?mode=renew" class="group bg-white dark:bg-slate-800 hover:border-blue-500 dark:hover:border-blue-500 border border-gray-200 dark:border-slate-700 rounded-xl p-5 shadow-sm flex flex-col items-start justify-between h-32 transition-all transform hover:-translate-y-1">
-                        <div class="p-2 bg-gray-100 dark:bg-slate-700 rounded-lg text-gray-600 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <a href="/Membership/AddRenewMember?mode=renew" class="group bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 lg:p-5 shadow-sm flex sm:flex-col items-center sm:items-start justify-start sm:justify-between gap-4 sm:gap-0 h-auto sm:h-32 transition-all transform hover:-translate-y-1">
+                        <div class="p-2 bg-gray-100 dark:bg-slate-700 rounded-lg text-gray-600 dark:text-white shrink-0">
+                            <svg class="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                         </div>
                         <div>
-                            <span class="block font-bold text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Renovar Socio</span>
-                            <span class="text-gray-400 text-xs">Actualizar subscripción</span>
+                            <span class="block font-bold text-gray-800 dark:text-white text-base lg:text-lg">Renovar Socio</span>
+                            <span class="text-gray-400 text-[10px] lg:text-xs hidden sm:block">Actualizar subscripción</span>
                         </div>
                     </a>
 
-                    <a href="/Catalog" class="group bg-white dark:bg-slate-800 hover:border-purple-500 dark:hover:border-purple-500 border border-gray-200 dark:border-slate-700 rounded-xl p-5 shadow-sm flex flex-col items-start justify-between h-32 transition-all transform hover:-translate-y-1">
-                        <div class="p-2 bg-gray-100 dark:bg-slate-700 rounded-lg text-gray-600 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    <a href="/Catalog" class=" group bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 lg:p-5 shadow-sm flex sm:flex-col items-center sm:items-start justify-start sm:justify-between gap-4 sm:gap-0 h-auto sm:h-32 transition-all transform hover:-translate-y-1">
+                        <div class="p-2 bg-gray-100 dark:bg-slate-700 rounded-lg text-gray-600 dark:text-white shrink-0">
+                            <svg class="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
                         </div>
                         <div>
-                            <span class="block font-bold text-gray-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">Configuración</span>
-                            <span class="text-gray-400 text-xs">Planes y Precios</span>
+                            <span class="block font-bold text-gray-800 dark:text-white text-base lg:text-lg">Configuración</span>
+                            <span class="text-gray-400 text-[10px] lg:text-xs hidden sm:block">Planes y Precios</span>
                         </div>
                     </a>
                 </div>
             </div>
 
-            <div class="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+            <div class="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-4 lg:p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-gray-800 dark:text-white">Próximos Vencimientos</h3>
+                    <h3 class="font-bold text-gray-800 dark:text-white text-sm lg:text-base">Próximos Vencimientos</h3>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto custom-scrollbar pb-2">
                     <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-400 uppercase bg-gray-50 dark:bg-slate-900/50">
+                        <thead class="text-[10px] lg:text-xs text-gray-400 uppercase bg-gray-50 dark:bg-slate-900/50">
                             <tr>
-                                <th class="px-4 py-2 rounded-l-lg">Socio</th>
-                                <th class="px-4 py-2">Plan</th>
-                                <th class="px-4 py-2">Vence</th>
-                                <th class="px-4 py-2 rounded-r-lg text-right">Acción</th>
+                                <th class="px-3 lg:px-4 py-2 rounded-l-lg whitespace-nowrap">Socio</th>
+                                <th class="px-3 lg:px-4 py-2 whitespace-nowrap">Plan</th>
+                                <th class="px-3 lg:px-4 py-2 whitespace-nowrap">Vence</th>
+                                <th class="px-3 lg:px-4 py-2 rounded-r-lg text-right whitespace-nowrap">Acción</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
@@ -138,13 +136,13 @@
                             var dayLabel = item.DaysLeft == 0 ? "Hoy" : item.DaysLeft == 1 ? "Mañana" : $"En {item.DaysLeft} días";
                             var colorClass = item.DaysLeft == 0 ? "text-red-500" : "text-orange-500";
 
-                            <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition">
-                                <td class="px-4 py-3 font-medium text-gray-800 dark:text-white">@item.FullName</td>
-                                <td class="px-4 py-3 text-gray-500 dark:text-gray-400">@item.PlanName</td>
-                                <td class="px-4 py-3 @colorClass font-bold">@dayLabel</td>
-                                <td class="px-4 py-3 text-right">
+                            <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition text-xs lg:text-sm">
+                                <td class="px-3 lg:px-4 py-3 font-medium text-gray-800 dark:text-white whitespace-nowrap">@item.FullName</td>
+                                <td class="px-3 lg:px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">@item.PlanName</td>
+                                <td class="px-3 lg:px-4 py-3 @colorClass font-bold whitespace-nowrap">@dayLabel</td>
+                                <td class="px-3 lg:px-4 py-3 text-right whitespace-nowrap">
                                     <a href="/Membership/AddRenewMember?SearchMember=@item.Id" 
-                                       class="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded hover:bg-blue-100 transition">
+                                       class="text-[10px] lg:text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded hover:bg-blue-100 transition">
                                         Renovar
                                     </a>
                                 </td>
@@ -157,33 +155,33 @@
 
         </div>
 
-        <div class="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-gray-200 dark:border-slate-700 flex flex-col h-full">
+        <div class="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-4 lg:p-6 border border-gray-200 dark:border-slate-700 flex flex-col h-full min-h-[300px]">
             <div class="flex items-center justify-between mb-6">
-                <h2 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actividad Reciente</h2>
+                <h2 class="text-xs lg:text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actividad Reciente</h2>
                 <span class="relative flex h-2 w-2">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                   <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                 </span>
             </div>
 
-            <div class="flex-1 overflow-y-auto space-y-6 custom-scrollbar pr-2">
+            <div class="flex-1 overflow-y-auto space-y-4 lg:space-y-6 custom-scrollbar pr-2">
                 @foreach (var activity in Model.RecentActivity)
                 {
-                    <div class="flex gap-4">
+                    <div class="flex gap-3 lg:gap-4">
                         <div class="flex-shrink-0">
-                            <div class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <div class="w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
+                                <svg class="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
                                 </svg>
                             </div>
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-gray-800 dark:text-white">
+                            <p class="text-xs lg:text-sm font-medium text-gray-800 dark:text-white">
                                 @activity.Title 
-                                @if(activity.Total > 0) { <span class="text-green-600 font-bold">+$@activity.Total.ToString("N0")</span> }
+                                @if(activity.Total > 0) { <span class="text-green-600 font-bold ml-1">+$@activity.Total.ToString("N0")</span> }
                             </p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">@activity.Ticket</p>
-                            <span class="text-[10px] text-gray-400">@activity.Date.ToString("dd/MMM • HH:mm")</span>
+                            <p class="text-[10px] lg:text-xs text-gray-500 dark:text-gray-400 mt-0.5">@activity.Ticket</p>
+                            <span class="text-[9px] lg:text-[10px] text-gray-400">@activity.Date.ToString("dd/MMM • HH:mm")</span>
                         </div>
                     </div>
                 }

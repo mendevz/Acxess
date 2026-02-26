@@ -1,46 +1,40 @@
-
 <div class="p-2 dark:bg-slate-800/50">
     <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 text-center">
         Modo de Operación
     </label>
     <div class="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-lg">
+        
         <button 
             type="button" 
             @@click="setMode('new')"
-            :class="mode === 'new' 
-            ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm' 
-            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
-            class="flex-1 py-2 rounded-md text-sm font-bold transition-all flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            :class="mode === 'new' ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+            class="flex-1 py-2 rounded-md transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
             </svg>
-            NUEVO
+            <span class="text-[10px] sm:text-sm font-bold">NUEVO</span>
         </button>
 
         <button 
             type="button" 
             @@click="setMode('renew')"
-            :class="mode === 'renew' 
-            ? 'bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-sm' 
-            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
-            class="flex-1 py-2 rounded-md text-sm font-bold transition-all flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            :class="mode === 'renew' ? 'bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+            class="flex-1 py-2 rounded-md transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
-            RENOVAR
+            <span class="text-[10px] sm:text-sm font-bold">RENOVAR</span>
         </button>
         
         <button 
             type="button" 
             @@click="setMode('visit')"
-            :class="mode === 'visit' 
-            ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm' 
-            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
-            class="flex-1 py-2 rounded-md text-sm font-bold transition-all flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            :class="mode === 'visit' ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+            class="flex-1 py-2 rounded-md transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
             </svg>
-            VISITA
+            <span class="text-[10px] sm:text-sm font-bold">VISITA</span>
         </button>
     </div>
 </div>

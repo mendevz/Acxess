@@ -94,7 +94,41 @@ public class GetMemberDetailHandler(
         }
         
         
+        // 2. Cálculo Matemático Estable (Progreso del ciclo actual)
+        var remainingDays = 0;
+        double progress = 0;
+        var totalDaysDuration = 1; 
+        
         var isExpired = absoluteEndDate < today;
+
+        if (displaySub != null && !isExpired && displaySub.IsActive)
+        {
+            // Usamos estrictamente las fechas del ciclo que se está mostrando (displaySub)
+            var currentStart = displaySub.StartDate.Date;
+            var currentEnd = displaySub.EndDate.Date;
+
+            remainingDays = (currentEnd - today).Days;
+            if (remainingDays < 0) remainingDays = 0;
+
+            totalDaysDuration = (currentEnd - currentStart).Days;
+            if (totalDaysDuration <= 0) totalDaysDuration = 1; // Prevenir división por cero
+
+            var daysPassed = (today - currentStart).TotalDays;
+    
+            progress = (daysPassed / totalDaysDuration) * 100;
+
+            // Clamping (Límites)
+            if (progress < 0) progress = 0;     // Si el plan empieza en el futuro
+            if (progress > 100) progress = 100; // Si ya venció
+        }
+        else if (isExpired)
+        {
+            progress = 100;
+            remainingDays = 0;
+        }
+        
+        
+       
         var inGracePeriod = false;
         DateTime? gracePeriodEnd = null;
         var statusLabel = "ACTIVO";
@@ -146,37 +180,6 @@ public class GetMemberDetailHandler(
                 renewalMsg = "La membresía venció. Al renovar, la fecha de corte se reiniciará.";
                 colorSubscription = "text-red-500";
             }
-        }
-        
-        // 2. Cálculo Matemático Estable (Progreso del ciclo actual)
-        var remainingDays = 0;
-        double progress = 0;
-        var totalDaysDuration = 1; 
-
-        if (displaySub != null && !isExpired && displaySub.IsActive)
-        {
-            // Usamos estrictamente las fechas del ciclo que se está mostrando (displaySub)
-            var currentStart = displaySub.StartDate.Date;
-            var currentEnd = displaySub.EndDate.Date;
-
-            remainingDays = (currentEnd - today).Days;
-            if (remainingDays < 0) remainingDays = 0;
-
-            totalDaysDuration = (currentEnd - currentStart).Days;
-            if (totalDaysDuration <= 0) totalDaysDuration = 1; // Prevenir división por cero
-
-            var daysPassed = (today - currentStart).TotalDays;
-    
-            progress = (daysPassed / totalDaysDuration) * 100;
-
-            // Clamping (Límites)
-            if (progress < 0) progress = 0;     // Si el plan empieza en el futuro
-            if (progress > 100) progress = 100; // Si ya venció
-        }
-        else if (isExpired)
-        {
-            progress = 100;
-            remainingDays = 0;
         }
         
         var monthsSinceJoin = ((today.Year - member.CreatedAt.Year) * 12) + today.Month - member.CreatedAt.Month;

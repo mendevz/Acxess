@@ -11,22 +11,22 @@
 
     <partial name="_Header" />
 
-    <main class="flex-1 grid grid-cols-12 gap-0 overflow-hidden">
+    <main class="flex-1 grid grid-cols-1 md:grid-cols-12 gap-0 overflow-y-auto md:overflow-hidden">
 
-        <section class="col-span-12 md:col-span-3 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 h-full flex flex-col gap-2 overflow-hidden z-10 ">
+        <section :class="selectedMemberId ? 'hidden md:flex' : 'flex'"
+                 class="md:col-span-3 bg-white dark:bg-slate-800 md:border-r border-gray-200 dark:border-slate-700 h-full flex-col gap-2 overflow-hidden z-10">
             
             <div class="p-3 bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase flex flex-col justify-between gap-2 items-center">
                 <a href="/Membership/AddRenewMember"
-                        class="group w-full bg-blue-600  hover:bg-blue-700  disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
-        
+                   class="group w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
                     <svg class="w-3 h-3 transition-transform group-hover:rotate-90 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
-        
                     <span class="text-xs font-bold tracking-wide">Nuevo Socio</span>
                 </a>
+            
                 <input type="hidden" name="StatusFilter" id="statusFilterHidden" :value="statusFilter" />
-                <div class=" w-full flex items-center bg-gray-100 dark:bg-slate-900 rounded-lg px-3 py-2 flex-1 max-w-md border border-gray-200 dark:border-slate-600 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                <div class="w-full flex items-center bg-gray-100 dark:bg-slate-900 rounded-lg px-3 py-2 flex-1 max-w-md border border-gray-200 dark:border-slate-600 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
                     <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
@@ -42,7 +42,7 @@
                            class="bg-transparent border-none outline-none text-sm text-gray-700 dark:text-white w-full placeholder-gray-400">
                 </div>
                 
-                <div class="w-full flex items-center justify-between gap-1 mt-1 bg-gray-100 dark:bg-slate-900 p-1 rounded-lg">
+                <div class="w-full grid grid-cols-2 lg:flex items-center justify-between gap-1 mt-1 bg-gray-100 dark:bg-slate-900 p-1 rounded-lg">
                     <button @@click="setFilter('all')" 
                             :class="statusFilter === 'all' ? 'bg-white dark:bg-slate-700 text-gray-800 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'"
                             class="flex-1 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all">
@@ -67,7 +67,6 @@
             </div>
             
             <div id="members-list" class="flex-1 overflow-hidden flex flex-col min-h-0">
-                
                 @if (Model.MembersResponse != null && Model.MembersResponse.Members.Any())
                 {
                     <partial name="_MembersList" model="Model" />
@@ -78,13 +77,12 @@
                         <span class="text-gray-400">Loading...</span>
                     </div>
                 }
-   
             </div>
         </section>
 
         <section id="member-detail-container" 
-                 class="col-span-12 md:col-span-6 bg-gray-50 dark:bg-[#0f1523] flex flex-col overflow-y-auto custom-scrollbar relative" 
-                 x-show="selectedMemberId">
+                 class="md:col-span-6 bg-gray-50 dark:bg-[#0f1523] flex flex-col overflow-y-visible md:overflow-y-auto custom-scrollbar relative" 
+                 x-show="selectedMemberId" x-cloak>
             @if (Model.SelectedMember != null)
             {
                 <partial name="_MemberDetails" model="Model" />
@@ -97,7 +95,9 @@
             }
         </section>
         
-        <section id="member-history-container" class="col-span-12 md:col-span-3 bg-white dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 flex flex-col z-10 h-full shadow-[0_0_15px_rgba(0,0,0,0.03)]" x-show="selectedMemberId">
+        <section id="member-history-container" 
+                 class="md:col-span-3 bg-white dark:bg-slate-800 md:border-l border-t md:border-t-0 border-gray-200 dark:border-slate-700 flex flex-col z-10 md:h-full shadow-[0_0_15px_rgba(0,0,0,0.03)]" 
+                 x-show="selectedMemberId" x-cloak>
             @if (Model.InitialMemberHistory != null)
             {
                 <partial name="_MemberHistory" model="Model.InitialMemberHistory" />
@@ -110,7 +110,7 @@
             }
         </section>
 
-        <section class="col-span-9 bg-gray-50 dark:bg-[#0f1523] flex flex-col items-center justify-center text-gray-400 dark:text-gray-600" x-show="!selectedMemberId">
+        <section class="hidden md:flex md:col-span-9 bg-gray-50 dark:bg-[#0f1523] flex-col items-center justify-center text-gray-400 dark:text-gray-600" x-show="!selectedMemberId">
             <div class="bg-white dark:bg-slate-800 p-6 rounded-full shadow-sm mb-4">
                 <svg class="w-16 h-16 text-gray-200 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
             </div>

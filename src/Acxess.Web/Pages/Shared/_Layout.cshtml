@@ -8,25 +8,24 @@
         var currentPath = Context.Request.Path.Value?.ToLower() ?? "/";
         var targetPath = path.ToLower();
         bool isActive = exact ? currentPath == targetPath : currentPath.StartsWith(targetPath) && targetPath != "/";
-
-        if (isActive)
-        {
-            return "active-module";
-        }
-        else
-        {
-            return "inactive-module";
-        }
+        
+        if (isActive) return "active-module";
+        return "inactive-module";
     }
 }
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
-
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Acxees Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>@ViewData["Title"] - Acxess Admin</title>
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png">
+    <link rel="manifest" href="~/site.webmanifest">
+    <link rel="shortcut icon" href="~/favicon.ico">
+    <meta name="theme-color" content="#0f1523">
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <script src="~/lib/alpine.min.js" defer asp-append-version="true"></script> 
@@ -36,78 +35,94 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; }
-        /* Tooltip personalizado al hacer hover en el menu */
-        .tooltip {
-            visibility: hidden; position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
-            background-color: #1e293b; color: white; padding: 4px 8px; border-radius: 4px;
-            font-size: 12px; white-space: nowrap; z-index: 50; margin-left: 10px; opacity: 0; transition: opacity 0.2s;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-        }
-        .tooltip::before {
-            content: ""; position: absolute; top: 50%; right: 100%; margin-top: -5px;
-            border-width: 5px; border-style: solid; border-color: transparent #1e293b transparent transparent;
-        }
-        .menu-item:hover .tooltip { visibility: visible; opacity: 1; }
         
-        /* Estilo para indicar módulo activo */
-        .active-module {  border-left: 4px solid #3b82f6; background-color: rgba(51, 65, 85, 0.5); color: #60a5fa; }
-        .inactive-module { border-left: 4px solid transparent; color: #94a3b8; }
+        /* Tooltip personalizado: Oculto en móviles, visible en PC */
+        .tooltip { display: none; }
+        @@media (min-width: 768px) {
+            .tooltip {
+                display: block; visibility: hidden; position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
+                background-color: #1e293b; color: white; padding: 4px 8px; border-radius: 4px;
+                font-size: 12px; white-space: nowrap; z-index: 50; margin-left: 10px; opacity: 0; transition: opacity 0.2s;
+                box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            }
+            .tooltip::before {
+                content: ""; position: absolute; top: 50%; right: 100%; margin-top: -5px;
+                border-width: 5px; border-style: solid; border-color: transparent #1e293b transparent transparent;
+            }
+            .menu-item:hover .tooltip { visibility: visible; opacity: 1; }
+        }
+        
+        /* Módulo activo: Línea arriba en móvil, línea a la izquierda en PC */
+        .active-module {  
+            background-color: rgba(51, 65, 85, 0.5); 
+            color: #60a5fa; 
+            border-top: 3px solid #3b82f6;
+        }
+        .inactive-module { 
+            border-top: 3px solid transparent; 
+            color: #94a3b8; 
+        }
         .inactive-module:hover { background-color: #1e293b; color: white; }
+
+        @@media (min-width: 768px) {
+            .active-module { border-top: none; border-left: 4px solid #3b82f6; }
+            .inactive-module { border-top: none; border-left: 4px solid transparent; }
+        }
     </style>
 </head>
 
-<body class="bg-gray-100 h-screen w-screen overflow-hidden flex"
-      x-data="{ 
-        ...layout()
-      }"
+<body class="bg-gray-100 h-screen w-screen overflow-hidden flex flex-col md:flex-row"
+      x-data="{ ...layout() }"
       @@keydown.window.ctrl.k.prevent="toggleSearch()"
       @@keydown.window.escape="searchOpen = false">
       @Html.AntiForgeryToken()
 
-    <nav class="w-20 bg-slate-900 flex flex-col items-center py-6 z-50 shadow-2xl shrink-0 h-full">
+    <nav class="w-full h-16 md:w-20 md:h-full bg-slate-900 flex flex-row md:flex-col items-center justify-between px-2 md:px-0 md:py-6 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.15)] md:shadow-2xl shrink-0 order-last md:order-first">
 
-        <div class="flex flex-col w-full gap-2">
+        <div class="flex flex-row md:flex-col w-full md:w-full h-full md:h-auto items-center justify-evenly md:justify-start md:gap-2">
             
-            <a href="/" class="menu-item group relative w-full h-12 flex items-center justify-center cursor-pointer transition-all @GetNavLinkClass("/", true)" >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            <a href="/" class="menu-item group relative flex-1 md:flex-none w-full h-full md:h-12 flex items-center justify-center cursor-pointer transition-all @GetNavLinkClass("/", true)" >
+                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 <span class="tooltip">Información General <span class="text-gray-400 text-[10px] ml-1">Ctrl+1</span></span>
             </a>
 
-            <a href="/Membership/AddRenewMember"  class="menu-item group relative w-full h-12 flex items-center justify-center cursor-pointer transition-all @GetNavLinkClass("/Membership/AddRenewMember")">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <a href="/Membership/AddRenewMember" class="menu-item group relative flex-1 md:flex-none w-full h-full md:h-12 flex items-center justify-center cursor-pointer transition-all @GetNavLinkClass("/Membership/AddRenewMember")">
+                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 <span class="tooltip">Mostrador Rápido<span class="text-gray-400 text-[10px] ml-1">Ctrl+2</span></span>
             </a>
 
-            <a href="/Membership/DigitalExpedient" class="menu-item group relative w-full h-12 flex items-center justify-center cursor-pointer transition-all @GetNavLinkClass("/Membership/DigitalExpedient")">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <a href="/Membership/DigitalExpedient" class="menu-item group relative flex-1 md:flex-none w-full h-full md:h-12 flex items-center justify-center cursor-pointer transition-all @GetNavLinkClass("/Membership/DigitalExpedient")">
+                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 <span class="tooltip">Socios<span class="text-gray-400 text-[10px] ml-1">Ctrl+3</span></span>
             </a>
 
-            <a href="/Catalog" class="menu-item group relative w-full h-12 flex items-center justify-center cursor-pointer transition-all @GetNavLinkClass("/Catalog")">
+            <a href="/Catalog" class="hidden md:flex menu-item group relative md:flex-none w-full h-full md:h-12 items-center justify-center cursor-pointer transition-all @GetNavLinkClass("/Catalog")">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
                 <span class="tooltip">Catálogos <span class="text-gray-400 text-[10px] ml-1">Ctrl+4</span></span>
             </a>
-
+            
         </div>
 
-        <div class="mt-auto mb-4 flex flex-col gap-4 items-center w-full">
-           
-            <div class=" menu-item group relative w-10 h-10 rounded-full  border-2 border-slate-700 cursor-pointer hover:border-blue-500 transition bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-hover font-bold text-xs border border-primary/20">
-                   <span> @(User.Identity?.Name?.Substring(0,1).ToUpper() ?? "U")</span>
-                    <span class="tooltip">@(User.Identity?.Name ?? "Invitado")<span class="text-gray-400 text-[10px] ml-1"></span></span>
+        <div class="flex flex-row md:flex-col items-center justify-end md:justify-center h-full md:h-auto w-auto md:w-full md:mt-auto gap-2 md:gap-4 shrink-0 px-2 md:px-0">
+            
+            <div class="w-px h-6 bg-slate-700 md:hidden mr-1"></div>
+
+            <div class="menu-item group relative w-8 h-8 md:w-10 md:h-10 rounded-full border border-slate-700 cursor-pointer hover:border-blue-500 transition bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-blue-500 dark:text-blue-400 font-bold text-xs">
+                <span>@(User.Identity?.Name?.Substring(0,1).ToUpper() ?? "U")</span>
+                <span class="tooltip">@(User.Identity?.Name ?? "Invitado")</span>
             </div>
 
-             <button type="button" @@click="toggleTheme()" class=" menu-item group relative h-12 flex items-center justify-center cursor-pointer transition-all  text-slate-400 hover:text-primary transition-colors cursor-pointer">
+            <button type="button" @@click="toggleTheme()" class="hidden md:flex menu-item group relative md:flex-none w-full md:h-12 items-center justify-center cursor-pointer transition-all text-slate-400 hover:text-blue-500 inactive-module">
                 <svg x-show="darkMode" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                 <svg x-show="!darkMode" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                <span x-show="darkMode" class="tooltip">Light Mode<span class="text-gray-400 text-[10px] ml-1"></span></span>
-                <span x-show="!darkMode" class="tooltip">Dark Mode<span class="text-gray-400 text-[10px] ml-1"></span></span>
+                <span x-show="darkMode" class="tooltip">Modo Claro</span>
+                <span x-show="!darkMode" class="tooltip">Modo Oscuro</span>
             </button>
 
-            <form asp-area="" asp-page="/Identity/LogOut" method="post" class="w-full">
-                <button  type="submit"  class="menu-item group relative w-full h-12 flex items-center justify-center cursor-pointer transition-all inactive-module">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                    <span class="tooltip">Cerrar Sesión <span class="text-gray-400 text-[10px] ml-1"></span></span>
+            <form asp-area="" asp-page="/Identity/LogOut" method="post" class="h-full md:flex-none md:w-full md:h-12">
+                <button type="submit" class="w-10 md:w-full h-full flex items-center justify-center cursor-pointer transition-all inactive-module text-slate-400 hover:text-red-500">
+                    <svg class="h-5 w-5 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    <span class="tooltip">Cerrar Sesión</span>
                 </button>
             </form>
         </div>
@@ -115,7 +130,7 @@
 
     <div class="flex-1 flex flex-col h-full overflow-hidden relative">
         <main class="flex-1 overflow-hidden">
-            <div class="h-full w-full flex items-center justify-center text-gray-400 bg-slate-300 dark:bg-[#0b0f19]">
+            <div class="h-full w-full flex text-gray-400 bg-slate-300 dark:bg-[#0b0f19]">
                 @RenderBody()
              </div>
         </main>
@@ -125,47 +140,4 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
-</html> 
-
-
-@* 
-        <div x-show="searchOpen" 
-             x-transition.opacity.duration.200ms
-             class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex justify-center items-start pt-24"
-             style="display: none;">
-            
-            <div @@click.away="searchOpen = false" class="bg-white w-[600px] rounded-xl shadow-2xl overflow-hidden flex flex-col transform transition-all">
-                
-                <div class="p-4 border-b border-gray-100 flex items-center gap-3">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <input x-ref="searchInput" type="text" placeholder="¿Qué necesitas hacer? (Ej. Buscar socio, crear plan, ver reporte...)" 
-                           class="w-full outline-none text-lg text-gray-700 placeholder-gray-400">
-                    <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded border border-gray-200">Esc</span>
-                </div>
-
-                <div class="max-h-96 overflow-y-auto p-2">
-                    <div class="px-3 py-2 text-xs font-bold text-gray-400 uppercase">Acciones Recientes</div>
-                    
-                    <a href="/Pos" class="flex items-center gap-3 px-3 py-3 hover:bg-blue-50 rounded-lg cursor-pointer group">
-                        <div class="bg-blue-100 text-blue-600 p-2 rounded group-hover:bg-blue-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-700 group-hover:text-blue-700">Ir al Punto de Venta</p>
-                            <p class="text-xs text-gray-400">Módulo Principal</p>
-                        </div>
-                    </a>
-
-                    <div class="px-3 py-2 text-xs font-bold text-gray-400 uppercase mt-2">Socios</div>
-                    <div class="flex items-center gap-3 px-3 py-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                        <div class="bg-gray-100 text-gray-500 p-2 rounded">JP</div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-700">Juan Pérez</p>
-                            <p class="text-xs text-gray-400">Ver expediente • ID 1024</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-gray-50 p-2 text-xs text-center text-gray-400 border-t">
-                    Usa las flechas para navegar, Enter para seleccionar
-                </div>
-            </div>
-        </div> *@
+</html>

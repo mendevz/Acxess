@@ -7,6 +7,7 @@ using Acxess.Billing;
 using Acxess.Billing.Infrastructure.Services;
 using Acxess.Catalog.Infrastructure.Services;
 using Acxess.Marketing;
+using Acxess.Membership.Application.Services;
 using Acxess.Shared.IntegrationEvents.Billing;
 using Acxess.Shared.IntegrationEvents.Catalog;
 using Acxess.Web.Filters;
@@ -76,6 +77,12 @@ else
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.MapPost("/api/membership/subscriptions/check-expiration", async (ISubscriptionService service) =>
+    {
+        await service.DeactivateExpiredSubscriptionsAsync(CancellationToken.None);
+        return Results.Ok(new { message = "Proceso de expiración ejecutado manualmente." });
+    })
+    .WithTags("Mantenimiento");
 
 app.UseAuthentication();
 app.UseAuthorization();

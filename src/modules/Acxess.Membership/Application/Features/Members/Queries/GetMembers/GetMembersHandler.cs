@@ -10,7 +10,7 @@ public class GetMembersHandler(
 {
     public async Task<Result<MembersResponse>> Handle(GetMembersQuery request, CancellationToken cancellationToken)
     {
-        var query = context.Members.IgnoreQueryFilters().AsNoTracking();
+        var query = context.Members.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
