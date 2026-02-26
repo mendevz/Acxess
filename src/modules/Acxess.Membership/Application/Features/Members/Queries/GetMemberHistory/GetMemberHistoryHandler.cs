@@ -29,7 +29,7 @@ public class GetMemberHistoryHandler(
         var subscriptionDates = await context.Subscriptions
             .AsNoTracking()
             .Where(s => s.SubscriptionMembers.Any(sm => sm.IdMember == request.IdMember))
-            .Select(s => new { s.EndDate, s.StartDate, s.CancelledAt, s.CreatedAt })
+            .Select(s => new { s.EndDate, s.StartDate, s.CancelledAt, s.CreatedAt,s.CancellationReason })
             .ToListAsync(cancellationToken);
         
         foreach (var sub in subscriptionDates)
@@ -67,7 +67,7 @@ public class GetMemberHistoryHandler(
                     Amount = null,
                     Type = "Expiration",
                     ColorClass = "red",
-                    Details = []
+                    Details = [sub.CancellationReason??""]
                 });
             }
             

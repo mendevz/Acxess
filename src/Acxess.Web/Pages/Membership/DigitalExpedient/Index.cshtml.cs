@@ -224,7 +224,6 @@ public class IndexModel(IMediator mediator) : PageModel
 
         Response.Headers.Append("HX-Trigger", JsonSerializer.Serialize(new { 
             memberUpdated = true, 
-            closeModal = true,
             reloadMembersList = true
         }));
 
