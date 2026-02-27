@@ -39,7 +39,7 @@ To run this project locally, you will need the Docker and [.NET 9 SDK](https://d
 
 ### 1. Clone the repository
 ```bash
-git clone [https://github.com/Maumedev/Acxess.git](https://github.com/Maumedev/Acxess.git)
+git clone https://github.com/Maumedev/Acxess.git
 cd Acxess/src
 ```
 
