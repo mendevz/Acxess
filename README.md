@@ -16,22 +16,22 @@ Built with a focus on good practices of programing such as: SOLID principles, de
 The web application is built using .NET 9 Razor Pages Web Apps and **Modular Monolith** as its software architecture, ensuring clear boundaries between entities domains while keeping development process simple.
 
 ### Backend / Frontend (Server Side Rendering)
-**Framework:** .NET 9 (C#, HTML, CSS, Javascript)
-**User interface:** App Web Razor Pages 
-**Architecture:** Clean Architecture Vertical Slice with Domain Driven Design (DDD) principles.
-**Database:** SQL Server
-**ORM:** Entity Framework Core
-**Authentication:** ASP.NET Core Identity
-**Libraries:** Tailwind CSS, HTMX & Alpine.js
+- **Framework:** .NET 9 (C#, HTML, CSS, Javascript)
+- **User interface:** App Web Razor Pages 
+- **Architecture:** Clean Architecture Vertical Slice with Domain Driven Design (DDD) principles.
+- **Database:** SQL Server
+- **ORM:** Entity Framework Core
+- **Authentication:** ASP.NET Core Identity
+- **Libraries:** Tailwind CSS, HTMX & Alpine.js
 
 ### Infrastructure
-**Server:** VPS Server
-**OS:** Ubuntu
+- **Server:** VPS Server
+- **OS:** Ubuntu
 
 ### CI/CD Github Actions, GitHub Container Registry
-**Immutable Releases:** Deployments are triggered automatically when a new GitHub Release is published.
-**Workflow:** Builds and deploys the image to GCR, connects to the VPS via SSH, and runs the Docker containers using bash scripts.
-**Rollback Strategy:** Manual rollbacks can be executed instantly via GitHub Actions Workflow Dispatch by providing a previous version tag.
+- **Immutable Releases:** Deployments are triggered automatically when a new GitHub Release is published.
+- **Workflow:** Builds and deploys the image to GCR, connects to the VPS via SSH, and runs the Docker containers using bash scripts.
+- **Rollback Strategy:** Manual rollbacks can be executed instantly via GitHub Actions Workflow Dispatch by providing a previous version tag.
 
 ## Local Development Setup
 
