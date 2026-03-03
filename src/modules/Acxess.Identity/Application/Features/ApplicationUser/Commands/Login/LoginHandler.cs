@@ -9,11 +9,14 @@ public class LoginHandler(
 {
     public async Task<Result> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var result = await signInManager.PasswordSignInAsync(request.Username, request.Password, true, false);
+        var result = await signInManager.PasswordSignInAsync(
+            request.Username, 
+            request.Password, 
+            true, 
+            false);
         
-        if (result.Succeeded)
-            return Result.Success();
-
-        return Result.Failure("Login", "Invalid credentials");
+        return result.Succeeded 
+            ? Result.Success() 
+            : Result.Failure("Login", "Invalid credentials");
     }
 }

@@ -57,8 +57,9 @@ public static class IdentityModuleExtensions
         {
             options.LoginPath = "/Identity/Login"; 
             options.LogoutPath = "/Identity/Logout";
-            options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+            options.ExpireTimeSpan = TimeSpan.FromDays(30);
             options.SlidingExpiration = true;
+            options.Cookie.HttpOnly = true;
             options.AccessDeniedPath = "/Identity/AccessDenied";
         });
 

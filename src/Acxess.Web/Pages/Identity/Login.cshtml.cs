@@ -46,13 +46,13 @@ public class LoginModel(
 
         var result = await mediator.Send(new LoginCommand(Input.Username, Input.Password));
 
-        if (result.IsFailure)
+        if (result.IsSuccess)
         {
-            ModelState.AddModelError(string.Empty, result.Error.Description);
-            return Page();
+            return LocalRedirect(returnUrl);
         }
-
-        return LocalRedirect(returnUrl);
+        
+        ModelState.AddModelError(string.Empty, result.Error.Description);
+        return Page();
     }
 
 
