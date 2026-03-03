@@ -38,7 +38,7 @@ public class IndexModel(IMediator mediator) : PageModel
     public string? SearchTerm { get; set; } = string.Empty;
     
     [BindProperty(SupportsGet = true)]
-    public string StatusFilter { get; set; } = "all";
+    public string? StatusFilter { get; set; } = "all";
     
     public MembersResponse? MembersResponse { get; set; }
     
@@ -67,7 +67,7 @@ public class IndexModel(IMediator mediator) : PageModel
 
     public async Task<IActionResult> OnGetMembersAsync()
     {
-        var queryMembers = new GetMembersQuery(SearchTerm, StatusFilter);
+        var queryMembers = new GetMembersQuery(SearchTerm, StatusFilter??"all");
         var result = await mediator.Send(queryMembers);
 
         if (result.IsFailure) return Partial("_ErrorState", result.Error.Description);

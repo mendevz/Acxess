@@ -123,7 +123,7 @@
             <h3 class="font-bold text-gray-700 dark:text-gray-300 text-xs sm:text-sm uppercase tracking-wide">
                 @if(m.HasActiveSubscription) { <span>Membresía Activa</span> }
                 else if(m.IsSubscriptionCancelled) { <span class="text-red-500 flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Cancelada</span> }
-                else if(m.IsInGracePeriod) { <span class="text-orange-500">⚠️ Periodo de Gracia Activo</span> }
+                else if(m.IsInGracePeriod) { <span class="text-orange-500">⚠ Vencido</span> }
                 else { <span>Membresía Vencida</span> }
             </h3>
             @if(m.HasActiveSubscription)
