@@ -86,7 +86,7 @@ public class BillingIntegrationService(BillingModuleContext context) : IBillingI
             .OrderByDescending(t => t.TransactionDate)
             .Take(count)
             .Select(t => new RecentActivityDto(
-                "Pago Recibido",
+                t.Notes ?? "Pago Recibido",
                 t.Member ?? "",
                 t.Total,
                 t.TransactionDate,

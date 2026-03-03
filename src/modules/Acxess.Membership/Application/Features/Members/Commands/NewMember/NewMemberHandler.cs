@@ -105,6 +105,7 @@ public class NewMemberHandler(
             request.PaymentMethodId,
             request.AmountPaid,
             $"{mainMember.FirstName}  {mainMember.LastName}",
+            true,
             addOnItems
         );
         

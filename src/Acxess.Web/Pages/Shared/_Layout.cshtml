@@ -1,8 +1,12 @@
-﻿@using Microsoft.AspNetCore.Identity
+﻿@using System.Reflection
+@using Microsoft.AspNetCore.Identity
 @using Acxess.Identity.Domain.Entities
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @{
+    var appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "1.0.0-dev";
+    appVersion = appVersion.Split('+')[0];
+    
     string GetNavLinkClass(string path, bool exact = false)
     {
         var currentPath = Context.Request.Path.Value?.ToLower() ?? "/";
@@ -126,6 +130,9 @@
                     <span class="tooltip">Cerrar Sesión</span>
                 </button>
             </form>
+            <div class="hidden md:flex w-full items-center justify-center mt-auto pb-2">
+                <span class="text-[9px] text-slate-600 font-mono select-all" title="Versión del sistema">v@(appVersion)</span>
+            </div>
         </div>
     </nav>
 

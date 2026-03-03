@@ -108,6 +108,7 @@ public class RenewMemberHandler(
             request.PaymentMethodId,
             request.AmountPaid,
             $"{mainMember.FirstName } {mainMember.LastName}",
+            false,
             addOnItems
         );
         

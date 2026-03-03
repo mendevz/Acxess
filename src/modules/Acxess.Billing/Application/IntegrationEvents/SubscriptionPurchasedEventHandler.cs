@@ -19,7 +19,7 @@ public class SubscriptionPurchasedEventHandler(
             notification.IdPaymentMethod,
             notification.AmountReceived,
             notification.CreatedByUserId,
-            "Subscription Purchased");
+            notification.IsNewMember ? "Nuevo Socio" : "Renovación Socio");
         
         transaction.AddSubscriptionItem(
             notification.IdSubscription, 

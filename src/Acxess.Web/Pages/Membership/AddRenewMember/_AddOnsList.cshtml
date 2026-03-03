@@ -1,5 +1,11 @@
 @using Acxess.Catalog.Domain.Constants
 @model IndexModel
+@if (Model.AddOnsItems.Count(addOn => 
+         addOn.AddOnKey != AddOnDefaults.Inscription.Key 
+         && addOn.AddOnKey != AddOnDefaults.Visit.Key) > 0)
+{
+    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Complementos</h4>
+}
 @foreach (var addOn in Model.AddOnsItems.Where(addOn => addOn.AddOnKey != AddOnDefaults.Inscription.Key))
 {
     var isVisitFlag = addOn.IsVisit.ToString().ToLower();

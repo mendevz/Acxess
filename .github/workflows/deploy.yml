@@ -55,6 +55,8 @@ jobs:
           file: src/Acxess.Web/DOCKERFILE
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            APP_VERSION=${{ env.APP_VERSION }}
 
   # ==========================================
   # FASE 2: Despliegue Continuo (CD)

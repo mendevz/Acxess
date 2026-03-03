@@ -1,11 +1,11 @@
 @using System.Globalization
 @model Acxess.Membership.Application.Features.Members.Queries.GetMemberHistory.MemberHistoryDto
 
-<div class="p-3 sm:p-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 sticky top-0 z-20 backdrop-blur-sm">
+<div class="p-3 sm:p-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 sticky top-0 z-20 backdrop-blur-sm shrink-0">
     <h3 class="text-[10px] sm:text-xs font-bold text-gray-700 dark:text-gray-400 uppercase tracking-wider">Historial de Actividad</h3>
 </div>
 
-<div class="flex-1 overflow-y-auto p-4 sm:p-5 custom-scrollbar">
+<div class="flex-1 overflow-y-auto p-4 sm:p-5 custom-scrollbar min-h-0">
     
     @if (!Model.Items.Any())
     {
@@ -25,7 +25,6 @@
                 var iconColor = isPayment ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400";
                 
                 <div class="pl-10 sm:pl-12 pb-5 sm:pb-8 relative group">
-                    
                     <div class="absolute left-0 top-0 p-1 sm:p-1.5 rounded-full border z-10 @iconBg">
                         @if (isPayment)
                         {
@@ -82,12 +81,12 @@
     }
 </div>
 
-<div class="p-2 sm:p-3 border-t border-gray-200 dark:border-slate-700 text-center bg-white dark:bg-slate-800 z-20">
+<div class="p-2 sm:p-3 border-t border-gray-200 dark:border-slate-700 text-center bg-white dark:bg-slate-800 shrink-0 sticky bottom-0 z-20">
     <button 
         hx-get="@Url.Page("Index", "FullHistory", new { id = Model.MemberId})" 
         hx-target="#modal-container" 
         hx-swap="innerHTML"
-        class="text-[10px] sm:text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors py-1">
+        class="w-full text-[10px] sm:text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors py-2 bg-gray-50/50 dark:bg-slate-700/30 rounded-lg">
         Ver historial completo
     </button>
 </div>

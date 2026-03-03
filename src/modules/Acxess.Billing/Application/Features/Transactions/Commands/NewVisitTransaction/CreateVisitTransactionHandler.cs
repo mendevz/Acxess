@@ -24,7 +24,7 @@ public class CreateVisitTransactionHandler(
             request.PaymentMethodId,
             request.AmountPaid,
             request.UserId,
-            "Pase de Visita / Mostrador" 
+            "Pase de Visita" 
         );
 
         foreach (var addOnId in request.AddOnIds)

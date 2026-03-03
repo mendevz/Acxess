@@ -12,6 +12,7 @@ public record SubcriptionPurchasedDomainEvent(
     int IdPaymentMethod,
     decimal AmountReceived,
     string Member,
+    bool IsNewMember,
     List<PurchasedAddOnItem> AddOns
     ) : INotification;
     

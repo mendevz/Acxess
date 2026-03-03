@@ -1,7 +1,8 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('addRenewMemberApp', (inscAddon, preselectedMember) => ({
         mode: 'new', 
-        selectedMember: null, 
+        selectedMember: null,
+        omitInscription: false,
         customer: {
             Id: 0,
             FirstName: '',
@@ -47,6 +48,9 @@ document.addEventListener('alpine:init', () => {
                 setTimeout(() => document.getElementById('plans-items-list')?.scrollIntoView({behavior: 'smooth'}), 500);
             } else if (modeParam === 'renew') {
                 this.setMode('renew');
+            }
+            else if (modeParam === 'visit') {
+                this.setMode('visit');
             } else {
                 this.setMode('new');
             }
@@ -56,6 +60,7 @@ document.addEventListener('alpine:init', () => {
             this.resetCustomerForm();
 
             if (this.mode === 'new') {
+                this.omitInscription = false;
                 this.addSystemAddon(this.inscAddon);
                 document.getElementById("first-name-input")?.focus();
             } else if (this.mode === 'renew') {
@@ -141,6 +146,13 @@ document.addEventListener('alpine:init', () => {
         },
         removeSystemAddon(addonId) {
             this.cartAddons = this.cartAddons.filter(a => a.IdAddOn != addonId);
+        },
+        toggleInscription() {
+            if (this.omitInscription) {
+                this.removeSystemAddon(this.inscAddon.IdAddOn);
+            } else {
+                this.addSystemAddon(this.inscAddon);
+            }
         },
         resetAll() {
             this.setMode('new');
