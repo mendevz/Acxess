@@ -31,6 +31,10 @@
     <link rel="manifest" href="~/manifest.json">
     <link rel="shortcut icon" href="~/favicon.ico">
     <meta name="theme-color" content="#0f1523">
+    <meta name="theme-color" content="#0f1523" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0b0f19" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <script src="~/lib/alpine.min.js" defer asp-append-version="true"></script> 
@@ -81,7 +85,7 @@
       @@keydown.window.escape="searchOpen = false">
       @Html.AntiForgeryToken()
 
-      <nav class="w-full h-14 md:w-20 md:h-full bg-slate-900 flex flex-row md:flex-col items-center justify-between px-2 md:px-0 md:py-6 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.3)] md:shadow-2xl shrink-0 order-last md:order-first border-t border-slate-800 md:border-t-0">
+      <nav class="w-full h-16 md:w-20 md:h-full bg-slate-900 flex flex-row md:flex-col items-center justify-between px-2 md:px-0 md:py-6 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.3)] md:shadow-2xl shrink-0 order-first border-t border-slate-800 md:border-t-0">
 
         <div class="flex flex-row md:flex-col w-full md:w-full h-full md:h-auto items-center justify-evenly md:justify-start md:gap-2">
             
