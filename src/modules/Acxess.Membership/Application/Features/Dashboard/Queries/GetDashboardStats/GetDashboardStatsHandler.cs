@@ -27,14 +27,22 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
             .Select(sm => sm.IdMember)
             .Distinct()
             .CountAsync(cancellationToken);
-        
+        var thirtyDaysAgo = today.AddDays(-30);
         // 3. Vencidos (Total - Activos es una aprox, pero mejor consultamos los que vencieron recientemente y no renovaron)
         // Definamos "Vencidos" como aquellos cuya última suscripción terminó antes de hoy.
         // Por simplicidad y rendimiento en dashboard, a veces se muestra "Vencidos este mes".
         // Usaremos: Socios con suscripción que venció y no tienen una nueva futura.
-        var expiredMembers = totalMembers - activeMembers; // Aritmética simple para dashboard rápido
-        // 1. Creamos una consulta base reutilizable para el conteo y la tabla
+        var expiredMembers = totalMembers - activeMembers; 
         var baseExpiringQuery = context.Members
+            .AsNoTracking()
+            .Where(m => !m.IsDeleted)
+            .Where(m => m.SubscriptionMemberships.Any(sm => 
+                sm.Subscription.EndDate >= thirtyDaysAgo && 
+                sm.Subscription.EndDate <= threeDaysFromNow))
+            .Where(m => !m.SubscriptionMemberships.Any(sm => 
+                sm.Subscription.EndDate > threeDaysFromNow));
+        
+        var expiringQuery = context.Members
             .AsNoTracking()
             .Where(m => !m.IsDeleted) // Descartar a los eliminados
             .Where(m => m.SubscriptionMemberships.Any(sm => 
@@ -47,28 +55,23 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
                 sm.Subscription.IsActive && 
                 sm.Subscription.EndDate > threeDaysFromNow));
 
-       // 4. Por Vencer (Conteo real de PERSONAS en riesgo de no renovar)
-        var expiringSoon = await baseExpiringQuery.CountAsync(cancellationToken);
+        var expiringSoon = await expiringQuery.CountAsync(cancellationToken);
 
-            // 5. Tabla Top 5 Por Vencer
         var topExpiring = await baseExpiringQuery
             .Select(m => new 
             {
                 m.IdMember,
                 m.FirstName,
                 m.LastName,
-                // Buscamos cuál es exactamente la suscripción que está a punto de vencer
                 ExpiringSub = m.SubscriptionMemberships
-                    .Where(sm => sm.Subscription.IsActive && 
-                                 sm.Subscription.EndDate >= today && 
+                    .Where(sm =>  sm.Subscription.EndDate >= thirtyDaysAgo && 
                                  sm.Subscription.EndDate <= threeDaysFromNow)
                     .Select(sm => sm.Subscription)
                     .OrderByDescending(s => s.EndDate)
                     .FirstOrDefault()
             })
-            // Ordenamos por los que vencen primero (los más urgentes arriba)
+            .Where(x => x.ExpiringSub != null)
             .OrderBy(x => x.ExpiringSub!.EndDate)
-            .Take(5)
             .Select(x => new ExpiringMemberItem(
                 x.IdMember,
                 $"{x.FirstName} {x.LastName}",
@@ -86,8 +89,7 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
             ExpiredMembers = expiredMembers,
             ExpiringSoon = expiringSoon,
             TopExpiringMembers = topExpiring,
-            // GrowthPercentage se puede calcular si traes datos del mes pasado (tarea opcional para v2)
-            GrowthPercentage = 12.5 // Hardcodeado por ahora para no complicar el query inicial
+            GrowthPercentage = 0
         });
     }
 }

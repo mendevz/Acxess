@@ -58,7 +58,6 @@ public class GetMemberDetailHandler(
             .OrderByDescending(s => s.EndDate)
             .FirstOrDefault(); 
         
-        
         var chainStartDate = activeOrFutureSubs.Count != 0
             ? activeOrFutureSubs.Min(s => s.StartDate) 
             : lastSubscription?.StartDate;
@@ -168,10 +167,10 @@ public class GetMemberDetailHandler(
             }
             else if (inGracePeriod)
             {
-                statusLabel = "EN PRÓRROGA";
+                statusLabel = "VENCIDO";
                 statusColor = "yellow"; 
                 colorSubscription = "text-orange-500";
-                renewalMsg = $"¡Cuidado! Renueva antes del {gracePeriodEnd:dd/MMM} para conservar su antigüedad.";
+                renewalMsg = $"Renueva antes del {gracePeriodEnd:dd/MMM} para conservar su antigüedad.";
             }
             else
             {

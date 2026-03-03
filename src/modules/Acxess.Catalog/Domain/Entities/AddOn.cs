@@ -18,7 +18,7 @@ public class AddOn : IHasTenant
     public bool IsVisit { get; private set; }
     public bool IsActive { get; private set; } = true;
 
-    private AddOn(int tenantId, string addOnKey, string name, decimal price, bool isVisit, bool isActive, bool showInCheckout = false)
+    private AddOn(int tenantId, string addOnKey, string name, decimal price, bool isVisit, bool isActive, bool showInCheckout)
     {
         IdTenant = tenantId;
         AddOnKey = addOnKey;
@@ -29,7 +29,7 @@ public class AddOn : IHasTenant
         ShowInCheckout = showInCheckout;
     }
 
-    public static AddOn Create(int tenantId, string addOnKey, string name, decimal price,  bool showInCheckout = false, bool isVisit = false)
+    public static AddOn Create(int tenantId, string addOnKey, string name, decimal price,  bool showInCheckout, bool isVisit = false)
     {
         return new AddOn(tenantId, addOnKey, name, price, isVisit, true, showInCheckout);
     }
