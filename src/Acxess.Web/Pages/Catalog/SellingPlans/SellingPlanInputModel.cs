@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using Acxess.Catalog.Domain.Enums;
+using Acxess.Web.Utils.Validators;
+
+namespace Acxess.Web.Pages.Catalog.SellingPlans;
 
 public class SellingPlanInputModel
 {
