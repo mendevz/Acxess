@@ -22,6 +22,10 @@
         hasMultipleCameras: false,
 
         init() {
+
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            this.isFrontCamera = !isMobile;
+
             if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
                 navigator.mediaDevices.enumerateDevices().then(devices => {
                     const videoInputs = devices.filter(device => device.kind === 'videoinput');
@@ -48,6 +52,11 @@
                     audio: false
                 });
                 this.$refs.videoElement.srcObject = this.stream;
+
+                navigator.mediaDevices.enumerateDevices().then(devices => {
+                    const videoInputs = devices.filter(device => device.kind === 'videoinput');
+                    this.hasMultipleCameras = videoInputs.length > 1;
+                });
             } catch (err) {
                 console.error("Error al acceder a la cámara: ", err);
                 alert("No se pudo acceder a la cámara. Por favor revisa los permisos del navegador.");
