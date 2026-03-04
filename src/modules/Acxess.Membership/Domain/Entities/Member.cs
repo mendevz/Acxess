@@ -14,6 +14,7 @@ public class Member : IHasTenant
     public string LastName { get; private set; } = string.Empty;
     public string? Email { get; private set; }
     public string? Phone { get; private set; }
+    public string? PhotoUrl { get; private set; }
     public bool IsDeleted { get; private set; }
     public DateTime CreatedAt { get; private set; } = DateTime.Now;
     public DateTime UpdatedAt { get; private set; } = DateTime.Now;
@@ -27,16 +28,16 @@ public class Member : IHasTenant
     
     private Member()
     {
-        
     }
 
-    private Member(int idTenant, string firstName, string lastName, int createdByUser, string? email, string? phone)
+    private Member(int idTenant, string firstName, string lastName, int createdByUser, string? email, string? phone, string? photoUrl)
     {
         IdTenant = idTenant;
         FirstName = firstName;
         LastName = lastName;
         Email = email;
         Phone = phone;
+        PhotoUrl = photoUrl;
         CreatedByUser = createdByUser;
         
         CreatedAt = DateTime.Now;
@@ -49,7 +50,8 @@ public class Member : IHasTenant
         string lastName, 
         int createdByUser,
         string? phone = null,
-        string? email = null )
+        string? email = null,
+        string? photoUrl = null)
     {
         var member =  new Member(
             tenantId, 
@@ -57,7 +59,8 @@ public class Member : IHasTenant
             lastName, 
             createdByUser, 
             email, 
-            phone);
+            phone,
+            photoUrl);
         
         return member;
     }
@@ -83,6 +86,12 @@ public class Member : IHasTenant
         LastName = lastName;
         Phone = phone;
         Email = email;
+        UpdatedAt = DateTime.Now;
+    }
+    
+    public void UpdatePhoto(string photoUrl)
+    {
+        PhotoUrl = photoUrl;
         UpdatedAt = DateTime.Now;
     }
 

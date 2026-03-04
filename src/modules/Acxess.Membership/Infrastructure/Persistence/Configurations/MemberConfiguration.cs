@@ -22,6 +22,9 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
         builder.Property(t => t.FirstName)
         .HasMaxLength(80)
         .IsRequired();
+
+        builder.Property(t => t.PhotoUrl)
+            .HasMaxLength(500);
       
         builder.Property(t => t.LastName)
         .HasMaxLength(150)
