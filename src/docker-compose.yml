@@ -72,6 +72,8 @@ services:
     networks:
       - acxess-network
     profiles: ["app"]
+    volumes:
+      - ../src/Acxess.Web/wwwroot/uploads:/app/wwwroot/uploads
 
 volumes:
   sql_data:

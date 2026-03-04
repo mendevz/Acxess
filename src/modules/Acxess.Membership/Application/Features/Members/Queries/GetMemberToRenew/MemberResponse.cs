@@ -10,4 +10,5 @@ public sealed record MemberResponse(
     DateTime? LastExpirationDate,
     string? LastPlanName, 
     bool IsSubscriptionActive,
-    bool IsProrrogation); 
+    bool IsProrrogation,
+    string? PhotoUrl); 

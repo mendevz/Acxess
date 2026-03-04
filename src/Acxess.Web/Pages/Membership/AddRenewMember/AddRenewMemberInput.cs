@@ -9,4 +9,6 @@ public class AddRenewMemberInput
     public string? LastName { get; set; }  = string.Empty;
     public string? Email { get; set; }  = string.Empty;
     public string? Phone { get; set; }   = string.Empty;
+    public string? PhotoUrl { get; set; }
+    public string? PhotoBase64 { get; set; }
 }

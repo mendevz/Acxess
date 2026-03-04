@@ -64,7 +64,8 @@ internal sealed class GetMemberToRenewHandler(MembershipModuleContext context)
                 x.LatestSubscription != null ? (DateTime?)x.LatestSubscription.EndDate.Date : null,
                 x.LatestSubscription != null ? x.LatestSubscription.SellingPlanName : null,
                 x.LatestSubscription != null ,
-                x.LatestSubscription != null && x.LatestSubscription.EndDate < today && x.LatestSubscription.EndDate >= limitDate
+                x.LatestSubscription != null && x.LatestSubscription.EndDate < today && x.LatestSubscription.EndDate >= limitDate,
+                x.Member.PhotoUrl
             ))
             .ToListAsync(cancellationToken);
 
