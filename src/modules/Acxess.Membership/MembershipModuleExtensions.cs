@@ -1,5 +1,4 @@
 using Acxess.Membership.Application.Services;
-using Acxess.Membership.Domain.Abstractions;
 using Acxess.Membership.Infrastructure.BackgroundJobs;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
@@ -24,8 +23,6 @@ public static class MembershipModuleExtensions
         });
 
         services.AddScoped<IDataSeeder, MembershipSeeder>();
-        services.AddScoped<IMembershipUnitOfWork, MembershipUnitOfWork>();
-        
         services.AddScoped<ISubscriptionService, SubscriptionService>();
         services.AddHostedService<SubscriptionExpirationWorker>();
 

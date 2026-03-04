@@ -1,5 +1,4 @@
 using Acxess.Membership.Application.Features.Members.DTOs;
-using Acxess.Membership.Domain.Abstractions;
 using Acxess.Membership.Domain.Entities;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.IntegrationEvents.Membership;
@@ -12,7 +11,6 @@ namespace Acxess.Membership.Application.Features.Members.Commands.NewMember;
 public class NewMemberHandler(
     MembershipModuleContext context,
     ICatalogIntegrationService catalogService,
-    IMembershipUnitOfWork unitOfWork,
     IMediator mediator) : IRequestHandler<NewMemberCommand, Result<UpdatedSubMemberResponse>>
 {
     public async Task<Result<UpdatedSubMemberResponse>> Handle(NewMemberCommand request, CancellationToken cancellationToken)
@@ -38,7 +36,7 @@ public class NewMemberHandler(
         
         if (newBeneficiaries.Count != 0)
         {
-            await unitOfWork.SaveChangesAsync(cancellationToken); 
+            await context.SaveChangesAsync(cancellationToken); 
         }
         
         // combine beneficiaries
@@ -67,13 +65,8 @@ public class NewMemberHandler(
 
         context.Members.Add(mainMember);
         
-        var resultSave = await unitOfWork.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
-        if (resultSave.IsFailure )
-        {
-            return Result<UpdatedSubMemberResponse>.Failure(resultSave.Error);
-        }
-        
         var addOnItems = addOnsWithPrice.Select(a => 
                 new PurchasedAddOnItem(a.Id, a.Name, a.Price)
         ).ToList();
@@ -94,6 +87,8 @@ public class NewMemberHandler(
         
         await mediator.Publish(integrationBilling, cancellationToken);
 
-        return new UpdatedSubMemberResponse("Subscripción registrada correctamente.", mainMember.IdMember);
+        return new UpdatedSubMemberResponse(
+            "Subscripción registrada correctamente.", 
+            mainMember.IdMember);
     }
 }

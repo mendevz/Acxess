@@ -1,4 +1,3 @@
-using Acxess.Membership.Domain.Abstractions;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.ResultManager;
 using MediatR;
@@ -7,8 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Acxess.Membership.Application.Features.Subscriptions.Commands.CancelSubscription;
 
 public class CancelSubscriptionHandler(
-    MembershipModuleContext context,
-    IMembershipUnitOfWork unitOfWork) : IRequestHandler<CancelSubscriptionCommand, Result<string>>
+    MembershipModuleContext context) : IRequestHandler<CancelSubscriptionCommand, Result<string>>
 {
     public async Task<Result<string>> Handle(CancelSubscriptionCommand request, CancellationToken cancellationToken)
     {
@@ -20,10 +18,8 @@ public class CancelSubscriptionHandler(
 
         subscription.Cancel(request.Reason, request.UserId);
 
-        var result = await unitOfWork.SaveChangesAsync(cancellationToken);
+       await context.SaveChangesAsync(cancellationToken);
 
-        return result.IsSuccess
-            ? "Subscription cancelled."
-            : Result<string>.Failure(result.Error);
+        return  "Subscription cancelled.";
     }
 }

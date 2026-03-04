@@ -1,4 +1,3 @@
-using Acxess.Membership.Domain.Abstractions;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.ResultManager;
 using MediatR;
@@ -6,9 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Acxess.Membership.Application.Features.Members.Commands.UpdateMember;
 
-public class UpdateMemberHandler(
-    MembershipModuleContext context,
-    IMembershipUnitOfWork unitOfWork): IRequestHandler<UpdateMemberCommand, Result<string>>
+public class UpdateMemberHandler(MembershipModuleContext context): IRequestHandler<UpdateMemberCommand, Result<string>>
 {
     public async Task<Result<string>> Handle(UpdateMemberCommand request, CancellationToken cancellationToken)
     {
@@ -20,10 +17,8 @@ public class UpdateMemberHandler(
         
         member.UpdateInformation(request.FirstName, request.LastName, request.Phone, request.Email);
 
-        var result = await unitOfWork.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
-        return result.IsSuccess 
-            ? "Información actualizada"
-            : Result<string>.Failure(result.Error);
+        return "Información actualizada";
     }
 }

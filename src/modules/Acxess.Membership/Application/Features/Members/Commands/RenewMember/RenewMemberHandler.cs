@@ -1,5 +1,4 @@
 using Acxess.Membership.Application.Features.Members.DTOs;
-using Acxess.Membership.Domain.Abstractions;
 using Acxess.Membership.Domain.Entities;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.IntegrationEvents.Membership;
@@ -13,7 +12,6 @@ namespace Acxess.Membership.Application.Features.Members.Commands.RenewMember;
 public class RenewMemberHandler(
     MembershipModuleContext context,
     ICatalogIntegrationService catalogService,
-    IMembershipUnitOfWork unitOfWork,
     IMediator mediator) : IRequestHandler<RenewMemberCommand, Result<UpdatedSubMemberResponse>>
 {
     public async Task<Result<UpdatedSubMemberResponse>> Handle(RenewMemberCommand request, CancellationToken cancellationToken)
@@ -50,7 +48,7 @@ public class RenewMemberHandler(
         
         if (newBeneficiaries.Count != 0)
         {
-            await unitOfWork.SaveChangesAsync(cancellationToken); 
+            await context.SaveChangesAsync(cancellationToken); 
         }
         
         // combine beneficiaries
@@ -68,12 +66,9 @@ public class RenewMemberHandler(
             finalBeneficiaryIds, addOnsWithPrice);
         
         
-        var resultSave = await unitOfWork.SaveChangesAsync(cancellationToken);
+         await context.SaveChangesAsync(cancellationToken);
 
-        if (resultSave.IsFailure)
-        {
-            return Result<UpdatedSubMemberResponse>.Failure(resultSave.Error);
-        }
+
         
         var addOnItems = addOnsWithPrice.Select(a => 
             new PurchasedAddOnItem(a.Id, a.Name, a.Price)
