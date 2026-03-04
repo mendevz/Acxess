@@ -21,6 +21,9 @@ namespace Acxess.Web.Pages.Membership.DigitalExpedient;
 
 public class IndexModel(IMediator mediator) : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public int? MemberId { get; set; }
+    
     [BindProperty]
     public int AssignCouponMemberId { get; set; }
     
@@ -45,21 +48,37 @@ public class IndexModel(IMediator mediator) : PageModel
     
     public async Task OnGet()
     {
-        if (string.IsNullOrWhiteSpace(SearchTerm)) return;
-        
-        var membersResult = await mediator.Send(new GetMembersQuery(SearchTerm));
-        if (membersResult.IsFailure || !membersResult.Value.Members.Any())  return; 
-        
-        MembersResponse = membersResult.Value;
-        var firstMember = MembersResponse.Members.First();
-        
-        var detailResult = await mediator.Send(new GetMemberDetailQuery(firstMember.IdMember));
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            var membersResult = await mediator.Send(new GetMembersQuery(SearchTerm));
+            if (membersResult.IsFailure || !membersResult.Value.Members.Any()) return; 
+            
+            MembersResponse = membersResult.Value;
+            await LoadMemberDetailAndHistory(MembersResponse.Members.First().IdMember);
+        }
+        else if (MemberId is > 0)
+        {
+            var membersResult = await mediator.Send(new GetMembersQuery("", "all"));
+            if (membersResult.IsSuccess) MembersResponse = membersResult.Value;
+            
+            await LoadMemberDetailAndHistory(MemberId.Value);
+        }
+        else
+        {
+            var membersResult = await mediator.Send(new GetMembersQuery("", "all"));
+            if (membersResult.IsSuccess) MembersResponse = membersResult.Value;
+        }
+    }
+    
+    private async Task LoadMemberDetailAndHistory(int idMember)
+    {
+        var detailResult = await mediator.Send(new GetMemberDetailQuery(idMember));
         if (detailResult.IsSuccess)
         {
             SelectedMember = detailResult.Value;
         }
         
-        var historyResult = await mediator.Send(new GetMemberHistoryQuery(firstMember.IdMember, ShowAll: false));
+        var historyResult = await mediator.Send(new GetMemberHistoryQuery(idMember, ShowAll: false));
         if (historyResult.IsSuccess)
         {
             InitialMemberHistory = historyResult.Value;
@@ -279,8 +298,6 @@ public class IndexModel(IMediator mediator) : PageModel
             memberUpdated = true, 
             reloadMembersList = true 
         }));
-
-        // Retornamos vacío porque HTMX recargará las partes solas
         return Content(""); 
     }
 }

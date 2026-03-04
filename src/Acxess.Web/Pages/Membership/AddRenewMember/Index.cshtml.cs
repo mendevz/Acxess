@@ -28,6 +28,9 @@ public class IndexModel(
     [BindProperty(SupportsGet = true)]
     public string? SearchMember { get; set; } = string.Empty;
     
+    [BindProperty(SupportsGet = true)]
+    public int? MemberId { get; set; }
+    
     public List<SellingPlanDto> PlanItems = [];
     public List<AddOnDto> AddOnsItems = [];
     public List<MemberResponse> Members = [];
@@ -46,7 +49,21 @@ public class IndexModel(
             InscriptionJson = JsonSerializer.Serialize(result.Value);   
         }
         
-        if (!string.IsNullOrWhiteSpace(SearchMember))
+        if (MemberId is > 0)
+        {
+            var memberQuery = new GetMemberToRenewQuery(MemberId.Value.ToString());
+            var resultMember = await mediator.Send(memberQuery);
+
+            if (resultMember is { IsSuccess: true, Value.Count: > 0 })
+            {
+                var memberToSelect = resultMember.Value.FirstOrDefault(m => m.Id == MemberId.Value);
+                if (memberToSelect != null)
+                {
+                    PreselectedMemberJson = JsonSerializer.Serialize(memberToSelect);
+                }
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(SearchMember))
         {
             var memberQuery = new GetMemberToRenewQuery(SearchMember);
             var resultMember = await mediator.Send(memberQuery);
@@ -176,7 +193,7 @@ public class IndexModel(
         if (result.IsFailure)
             return Feedback(errorMessage: result.Error.Description);
 
-        var targetUrl = Url.Page("/Membership/DigitalExpedient/Index", new { SearchTerm = result.Value.IdMember });
+        var targetUrl = Url.Page("/Membership/DigitalExpedient/Index", new { memberId = result.Value.IdMember });
         return Feedback(successMessage: result.Value.Mensaje, targetUrl: targetUrl);
     }
     

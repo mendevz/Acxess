@@ -27,7 +27,7 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
             .Select(sm => sm.IdMember)
             .Distinct()
             .CountAsync(cancellationToken);
-        var thirtyDaysAgo = today.AddDays(-30);
+        var fifteen = today.AddDays(-15);
         // 3. Vencidos (Total - Activos es una aprox, pero mejor consultamos los que vencieron recientemente y no renovaron)
         // Definamos "Vencidos" como aquellos cuya última suscripción terminó antes de hoy.
         // Por simplicidad y rendimiento en dashboard, a veces se muestra "Vencidos este mes".
@@ -37,7 +37,7 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
             .AsNoTracking()
             .Where(m => !m.IsDeleted)
             .Where(m => m.SubscriptionMemberships.Any(sm => 
-                sm.Subscription.EndDate >= thirtyDaysAgo && 
+                sm.Subscription.EndDate >= fifteen && 
                 sm.Subscription.EndDate <= threeDaysFromNow))
             .Where(m => !m.SubscriptionMemberships.Any(sm => 
                 sm.Subscription.EndDate > threeDaysFromNow));
@@ -65,7 +65,7 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
                 m.LastName,
                 m.PhotoUrl,
                 ExpiringSub = m.SubscriptionMemberships
-                    .Where(sm =>  sm.Subscription.EndDate >= thirtyDaysAgo && 
+                    .Where(sm =>  sm.Subscription.EndDate >= fifteen && 
                                  sm.Subscription.EndDate <= threeDaysFromNow)
                     .Select(sm => sm.Subscription)
                     .OrderByDescending(s => s.EndDate)

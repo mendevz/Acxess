@@ -1,0 +1,15 @@
+info:
+  name: check-expiration
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:5124/api/membership/subscriptions/check-expiration
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
