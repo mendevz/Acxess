@@ -228,7 +228,7 @@ document.addEventListener('alpine:init', () => {
             let finalDate = new Date(baseDate);
 
             const duration = this.selectedPlan.durationInValue || this.selectedPlan.DurationInValue || 0;
-            const unit = this.selectedPlan.durationUnit || this.selectedPlan.DurationUnit; 
+            const unit = this.selectedPlan.durationSubscriptionUnit || this.selectedPlan.durationSubscriptionUnit; 
 
             if (unit === 1) { 
                 finalDate.setDate(finalDate.getDate() + duration);

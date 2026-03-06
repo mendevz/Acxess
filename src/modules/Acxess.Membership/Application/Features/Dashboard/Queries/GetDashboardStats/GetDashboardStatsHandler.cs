@@ -12,7 +12,7 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
         var today = DateTime.Now.Date;
         var startOfToday = today;
         var endOfToday = today.AddDays(1).AddTicks(-1);
-        var threeDaysFromNow = today.AddDays(3);
+        var daysFromNow = today.AddDays(2);
         
         var newToday = await context.Members.CountAsync(m => m.CreatedAt >= startOfToday && m.CreatedAt <= endOfToday, cancellationToken);
         
@@ -38,9 +38,9 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
             .Where(m => !m.IsDeleted)
             .Where(m => m.SubscriptionMemberships.Any(sm => 
                 sm.Subscription.EndDate >= fifteen && 
-                sm.Subscription.EndDate <= threeDaysFromNow))
+                sm.Subscription.EndDate <= daysFromNow))
             .Where(m => !m.SubscriptionMemberships.Any(sm => 
-                sm.Subscription.EndDate > threeDaysFromNow));
+                sm.Subscription.EndDate > daysFromNow));
         
         var expiringQuery = context.Members
             .AsNoTracking()
@@ -48,12 +48,12 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
             .Where(m => m.SubscriptionMemberships.Any(sm => 
                 sm.Subscription.IsActive && // Solo planes activos/vigentes
                 sm.Subscription.EndDate >= today && 
-                sm.Subscription.EndDate <= threeDaysFromNow))
+                sm.Subscription.EndDate <= daysFromNow))
             // 2. LA MAGIA CONTRA DUPLICADOS/PRONTO PAGO:
             // Excluir a los socios que ya tengan otra suscripción que venza DESPUÉS de estos 3 días
             .Where(m => !m.SubscriptionMemberships.Any(sm => 
                 sm.Subscription.IsActive && 
-                sm.Subscription.EndDate > threeDaysFromNow));
+                sm.Subscription.EndDate > daysFromNow));
 
         var expiringSoon = await expiringQuery.CountAsync(cancellationToken);
 
@@ -66,7 +66,7 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
                 m.PhotoUrl,
                 ExpiringSub = m.SubscriptionMemberships
                     .Where(sm =>  sm.Subscription.EndDate >= fifteen && 
-                                 sm.Subscription.EndDate <= threeDaysFromNow)
+                                 sm.Subscription.EndDate <= daysFromNow)
                     .Select(sm => sm.Subscription)
                     .OrderByDescending(s => s.EndDate)
                     .FirstOrDefault()
