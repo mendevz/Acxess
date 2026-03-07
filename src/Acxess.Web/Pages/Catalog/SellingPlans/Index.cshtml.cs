@@ -4,6 +4,7 @@ using Acxess.Catalog.Application.Features.SellingPlans.Commands.NewSellingPlan;
 using Acxess.Catalog.Application.Features.SellingPlans.Commands.UpdateSellingPlan;
 using Acxess.Catalog.Application.Features.SellingPlans.Queries.GetSellingPlanById;
 using Acxess.Catalog.Application.Features.SellingPlans.Queries.GetSellingPlans;
+using Acxess.Shared.Abstractions;
 using Acxess.Shared.Enums;
 using Acxess.Shared.ResultManager;
 using MediatR;
@@ -13,7 +14,9 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace Acxess.Web.Pages.Catalog.SellingPlans;
 
-public class IndexModel(IMediator mediator) : PageModel
+public class IndexModel(
+    IMediator mediator,
+    ICurrentTenant currentTenant) : PageModel
 {
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; } = string.Empty;
@@ -134,6 +137,7 @@ public class IndexModel(IMediator mediator) : PageModel
         if (Input.IdSellingPlan == 0)
         {
              var command =  new NewSellingPlanCommand(
+                 currentTenant.Id ?? 0,
                 Input.TotalMembers,
                 Input.DurationInValue,
                 (DurationSubscriptionUnit)Input.DurationUnit,

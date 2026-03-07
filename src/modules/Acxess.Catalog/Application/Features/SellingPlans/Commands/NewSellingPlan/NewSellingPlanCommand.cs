@@ -6,6 +6,7 @@ namespace Acxess.Catalog.Application.Features.SellingPlans.Commands.NewSellingPl
 
 public record NewSellingPlanCommand
 (
+    int IdTenant,
     int TotalMembers,
     int Duration,
     DurationSubscriptionUnit DurationSubscriptionUnit,
