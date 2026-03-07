@@ -2,6 +2,7 @@ using Acxess.Catalog.Application.Features.AccessTiers.Commands.AddAccessTier;
 using Acxess.Catalog.Application.Features.AccessTiers.Commands.UpdateAccessTier;
 using Acxess.Catalog.Application.Features.AccessTiers.Queries.GetAccessTiers;
 using Acxess.Catalog.Application.Features.AccessTiers.Queries.GetAccesTierById;
+using Acxess.Shared.Abstractions;
 using Acxess.Shared.ResultManager;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -9,15 +10,17 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace Acxess.Web.Pages.Catalog.AccessTiers;
-public class IndexModel(IMediator sender) : PageModel
+public class IndexModel(
+    IMediator sender,
+    ICurrentTenant currentTenant) : PageModel
 {
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; } = string.Empty;
-
-    public List<AccessTierDto> Items { get; private set; } = new();
-
+    
     [BindProperty]
     public AccessTierInput Input {get; set;}= new();
+
+    public List<AccessTierDto> Items { get; private set; } = [];
 
     public void OnGet()
     {
@@ -52,7 +55,7 @@ public class IndexModel(IMediator sender) : PageModel
                 break;
             default:
             {
-                var query = new GetAccesTierByIdQuery(id ?? 0);
+                var query = new GetAccesTierByIdQuery((int)id);
                 
                 var result = await sender.Send(query);
                 
@@ -79,7 +82,10 @@ public class IndexModel(IMediator sender) : PageModel
         
         if (Input.IdAccessTier == 0)
         {
-            var command = new AddAccessTierCommand(Input.Name, Input.Description);
+            var command = new AddAccessTierCommand(
+                Input.Name, 
+                currentTenant.Id ?? 0,
+                Input.Description);
             resultSaved = await sender.Send(command);
         }
         else
