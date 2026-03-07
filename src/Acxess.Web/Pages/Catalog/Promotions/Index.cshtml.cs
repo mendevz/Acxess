@@ -6,6 +6,7 @@ using Acxess.Marketing.Application.Features.Promotions.Queries.GetPromotionById;
 using Acxess.Marketing.Application.Features.Promotions.Queries.GetPromotions;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.ResultManager;
+using Acxess.Web.Pages.Catalog.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -15,29 +16,13 @@ namespace Acxess.Web.Pages.Catalog.Promotions;
 
 public class IndexModel(
     IMediator mediator,
-    ICurrentTenant currentTenant) : PageModel
+    ICurrentTenant currentTenant) : BaseCatalogPageModel<PromotionInputModel, PromotionDto>
 {
-    
-    [BindProperty(SupportsGet = true)]
-    public string? Search { get; set; } = string.Empty;
-
-    public List<PromotionDto> Items { get; private set; } = [];
-    [BindProperty] public PromotionInputModel Input { get; set; } = new();
-    
-    public void OnGet()
-    {
-        
-    }
-
     public async Task<IActionResult> OnGetItemsAsync()
     {
-        var query = new GetPromotionsQuery(true);
-        var result = await mediator.Send(query);
+        var result = await mediator.Send(new GetPromotionsQuery(true));
         
-        if (result.IsFailure)
-        {
-            return Partial("_ErrorState", result.Error.Description);
-        }
+        if (result.IsFailure)  return ErrorState(result.Error.Description);
         
         Items = string.IsNullOrEmpty(Search) 
             ? result.Value 
@@ -48,61 +33,44 @@ public class IndexModel(
     
     public async Task<IActionResult> OnGetFormAsync(int? id)
     {   
-        await Task.Delay(200);
         switch (id)
         {
             case null:
-                return Partial("/Pages/Catalog/Shared/_NoSelectedItem.cshtml");
+                return NoSelectedItem();
             case 0:
                 Input = new PromotionInputModel();
-                break;
-            default:
-            {
-                var query = new GetPromotionByIdQuery(id ?? 0);
-                var result = await mediator.Send(query);
-
-                if (result.IsFailure) return Partial("_ErrorState", result.Error.Description);
-                
-                var item = result.Value;
-                
-                Input = new PromotionInputModel()
-                {
-                    IdPromotion = item.IdPromotion,
-                    Name =  item.Name,
-                    DiscountType =  item.DiscountType,
-                    Discount =  item.Discount,
-                    AutoApply =  item.AutoApply,
-                    IsActive =  item.IsActive,  
-                    AvailableFrom =  item.AvailableFrom,
-                    AvailableTo =  item.AvailableTo,    
-                    RequiresCoupon =   item.RequiresCoupon
-                };
-                break;
-            }
+                return FormView();
         }
+        
+        var result = await mediator.Send(new GetPromotionByIdQuery((int)id));
+        if (result.IsFailure) return ErrorState(result.Error.Description);
+                
+        var item = result.Value;
+                
+        Input = new PromotionInputModel()
+        {
+            IdPromotion = item.IdPromotion,
+            Name =  item.Name,
+            DiscountType =  item.DiscountType,
+            Discount =  item.Discount,
+            AutoApply =  item.AutoApply,
+            IsActive =  item.IsActive,  
+            AvailableFrom =  item.AvailableFrom,
+            AvailableTo =  item.AvailableTo,    
+            RequiresCoupon =   item.RequiresCoupon
+        };
 
-        return Form();
+        return FormView();
     }
 
     public async Task<IActionResult> OnPostSaveAsync()
     {
-        if (!ModelState.IsValid) return Form();
+        if (!ModelState.IsValid) return FormView();
         
-        Result<string> resultSaved;
-
-        if (Input.IdPromotion == 0)
-        {
-            if (!currentTenant.IsAvailable)
-            {
-                return Partial("_ErrorState", "No estas autenticado");
-            }
-            
-            var userNumberString = User.FindFirstValue("UserNumber");
-            var userNumber = int.TryParse(userNumberString, out var val) ? val : 0;
-
-            if (userNumber == 0)  return Partial("_ErrorState", "No estas autenticado");
-
-            var command = new NewPromotionCommand(
+        if (!currentTenant.IsAvailable)  return ErrorState("No estas autenticado");
+    
+        IRequest<Result<string>> command = Input.IdPromotion == 0
+            ? new NewPromotionCommand(
                 currentTenant.Id ?? 0,
                 Input.Name,
                 Input.DiscountType,
@@ -112,13 +80,8 @@ public class IndexModel(
                 Input.IsActive,
                 Input.AvailableFrom,
                 Input.AvailableTo,
-                CreatedByUser: userNumber);
-            
-            resultSaved = await mediator.Send(command);
-        }
-        else
-        {
-            var command = new UpdatePromotionCommand(
+                CreatedByUser: GetUserNumber())
+            :  new UpdatePromotionCommand(
                 Input.IdPromotion,
                 Input.Name,
                 Input.DiscountType,
@@ -128,41 +91,21 @@ public class IndexModel(
                 Input.IsActive,
                 Input.AvailableFrom,
                 Input.AvailableTo);
-            
-            resultSaved = await mediator.Send(command);
-        }
+
+        var resultSaved = await mediator.Send(command);
 
         if (resultSaved.IsFailure)
         {
-            return Form(errorMessage: resultSaved.Error.Description);
+            return FormView(errorMessage: resultSaved.Error.Description);
         }
-        
-        Response.Headers.Append("HX-Trigger", "refreshItems");
 
-        if (Input.IdPromotion != 0) return Form(successMessage: resultSaved.Value);
+        TriggerHtmxRefresh();
+
+        if (Input.IdPromotion != 0) return FormView(successMessage: resultSaved.Value);
         Input = new PromotionInputModel();
         ModelState.Clear();
-        return Form(successMessage: resultSaved.Value);
+        return FormView(successMessage: resultSaved.Value);
     }
 
-    private PartialViewResult Form(string? successMessage = null, string? errorMessage = null)
-    {
-        var partialView = new PartialViewResult
-        {
-            ViewName = "_Form",
-            ViewData = new ViewDataDictionary<PromotionInputModel>(ViewData, Input)
-        };
 
-        if (!string.IsNullOrWhiteSpace(successMessage))
-        {
-            partialView.ViewData["SuccessMessage"] = successMessage;
-        }
-        
-        if (!string.IsNullOrWhiteSpace(errorMessage))
-        {
-            partialView.ViewData["ErrorMessage"] = errorMessage;
-        }
-
-        return partialView;
-    }
 }

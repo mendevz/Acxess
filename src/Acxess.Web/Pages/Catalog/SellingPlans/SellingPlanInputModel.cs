@@ -17,8 +17,6 @@ public class SellingPlanInputModel
     [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor a 0")]
     public decimal Price { get; set; }
     public bool IsActive { get; set; } = true;
-
-    [Range(1, 5, ErrorMessage = "Rango mínimo de valor 1 - 5")]
     public int DurationInValue { get; set; } = 1;
     public int DurationUnit { get; set; } = 2;
 

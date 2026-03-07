@@ -1,40 +1,28 @@
-using System.Security.Claims;
 using Acxess.Catalog.Application.Features.AccessTiers.Queries.GetAccessTiers;
 using Acxess.Catalog.Application.Features.SellingPlans.Commands.NewSellingPlan;
 using Acxess.Catalog.Application.Features.SellingPlans.Commands.UpdateSellingPlan;
 using Acxess.Catalog.Application.Features.SellingPlans.Queries.GetSellingPlanById;
 using Acxess.Catalog.Application.Features.SellingPlans.Queries.GetSellingPlans;
+using Acxess.Shared.Abstractions;
 using Acxess.Shared.Enums;
 using Acxess.Shared.ResultManager;
+using Acxess.Web.Pages.Catalog.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace Acxess.Web.Pages.Catalog.SellingPlans;
 
-public class IndexModel(IMediator mediator) : PageModel
+public class IndexModel(
+    IMediator mediator,
+    ICurrentTenant currentTenant) : BaseCatalogPageModel<SellingPlanInputModel, SellingPlanDto>
 {
-    [BindProperty(SupportsGet = true)]
-    public string? Search { get; set; } = string.Empty;
 
     public List<AccessTierDto> AccessTiers = [];
-    public List<SellingPlanDto> Items = [];
-
-    [BindProperty]
-    public SellingPlanInputModel Input {get; set;} = new();
-
-    public void OnGet() { }
 
     public async Task<IActionResult> OnGetItemsAsync()
     {
-        var query = new GetSellingPlanQuery(true);
-        var result = await mediator.Send(query);
-        
-        if (result.IsFailure)
-        {
-            return Partial("_ErrorState", result.Error.Description);
-        }
+        var result = await mediator.Send( new GetSellingPlanQuery(true));
+        if (result.IsFailure)  return ErrorState(result.Error.Description);
         
         Items = string.IsNullOrEmpty(Search) 
             ? result.Value 
@@ -45,109 +33,67 @@ public class IndexModel(IMediator mediator) : PageModel
 
     public async Task LoadAccessTiers()
     {
-        
         var resultAccessTiers = await mediator.Send(new GetAccessTiersQuery(false));
 
         if (resultAccessTiers.IsSuccess)
         {
             AccessTiers = resultAccessTiers.Value;
         }
-
     }
 
     public async Task<IActionResult> OnGetFormAsync(int? id)
     {   
-        if (id is null) return Partial("/Pages/Catalog/Shared/_NoSelectedItem.cshtml");
+        if (id is null) return NoSelectedItem();
 
         await LoadAccessTiers();
 
         if (id == 0)
         {
             Input = new SellingPlanInputModel();
-        }
-        else
-        {
-            var query = new GetSellingPlanByIdQuery(id??0);
-            var result = await mediator.Send(query);
-
-            if (result.IsFailure)
-            {
-                return Partial("_ErrorState", result.Error.Description);
-            }
-
-            var item = result.Value;
-            
-            Input = new SellingPlanInputModel 
-            { 
-                IdSellingPlan = item.IdSellingPlan,
-                Name = item.Name,
-                TotalMembers = item.TotalMembers,
-                Price = item.Price,
-                IsActive = item.IsActive,
-                DurationInValue = item.DurationInValue,
-                DurationUnit = (int)item.DurationSubscriptionUnit,
-                AccessTiersIds = item.AccessTiersIds
-            };
-        }
-
-        return Form();
-    }
-
-    private PartialViewResult Form(string? successMessage = null, string? errorMessage = null)
-    {
-        var partialView = new PartialViewResult
-        {
-            ViewName = "_Form",
-            ViewData = new ViewDataDictionary<SellingPlanInputModel>(ViewData, Input)
-        };
-
-        partialView.ViewData.TemplateInfo.HtmlFieldPrefix = "Input";
-        partialView.ViewData["AvailableTiers"] = AccessTiers;
-
-        if (!string.IsNullOrWhiteSpace(successMessage))
-        {
-            partialView.ViewData["SuccessMessage"] = successMessage;
+            return FormView();
         }
         
-        if (!string.IsNullOrWhiteSpace(errorMessage))
-        {
-            partialView.ViewData["ErrorMessage"] = errorMessage;
-        }
+        var query = new GetSellingPlanByIdQuery(id??0);
+        var result = await mediator.Send(query);
 
-        return partialView;
+        if (result.IsFailure)  return ErrorState(result.Error.Description);
+
+        var item = result.Value;
+            
+        Input = new SellingPlanInputModel 
+        { 
+            IdSellingPlan = item.IdSellingPlan,
+            Name = item.Name,
+            TotalMembers = item.TotalMembers,
+            Price = item.Price,
+            IsActive = item.IsActive,
+            DurationInValue = item.DurationInValue,
+            DurationUnit = (int)item.DurationSubscriptionUnit,
+            AccessTiersIds = item.AccessTiersIds
+        };
+
+        return FormView();
     }
-
 
     public async Task<IActionResult> OnPostSaveAsync()
     {
         await LoadAccessTiers();
 
-        if (!ModelState.IsValid)  return Form();
+        if (!ModelState.IsValid)  return FormView();
 
-        var userNumberString = User.FindFirstValue("UserNumber");
-        var userNumber = int.TryParse(userNumberString, out var val) ? val : 0;
 
-        if (userNumber == 0)  return Unauthorized(); 
-
-        Result<string> resultSaved;
-
-        if (Input.IdSellingPlan == 0)
-        {
-             var command =  new NewSellingPlanCommand(
+        IRequest<Result<string>> command = Input.IdSellingPlan == 0 
+            ? new NewSellingPlanCommand(
+                currentTenant.Id ?? 0,
                 Input.TotalMembers,
                 Input.DurationInValue,
                 (DurationSubscriptionUnit)Input.DurationUnit,
                 Input.Name,
                 Input.Price,
-                userNumber,
+                GetUserNumber(),
                 Input.AccessTiersIds
-            );
-
-            resultSaved = await mediator.Send(command);
-        }
-        else
-        {
-            var command =  new UpdateSellingPlanCommand(
+            )
+            : new UpdateSellingPlanCommand(
                 Input.IdSellingPlan,
                 Input.TotalMembers,
                 Input.DurationInValue,
@@ -157,20 +103,31 @@ public class IndexModel(IMediator mediator) : PageModel
                 Input.AccessTiersIds,
                 Input.IsActive
             );
-            resultSaved =  await mediator.Send(command);
-        }
+
+        var resultSaved = await mediator.Send(command);
+
 
         if (resultSaved.IsFailure)
         {
-            return Form(errorMessage: resultSaved.Error.Description);
+            return FormView(errorMessage: resultSaved.Error.Description);
         }
 
-        Response.Headers.Append("HX-Trigger", "refreshItems");
+        TriggerHtmxRefresh();
 
-        if (Input.IdSellingPlan != 0) return Form(successMessage: resultSaved.Value);
+        if (Input.IdSellingPlan != 0) return FormView(successMessage: resultSaved.Value);
         Input = new SellingPlanInputModel();
         ModelState.Clear();
-        return Form(successMessage: resultSaved.Value);
+        return FormView(successMessage: resultSaved.Value);
+    }
+    
+    protected override PartialViewResult FormView(string? successMessage = null, string? errorMessage = null, string viewName = "_Form")
+    {
+        var partialView = base.FormView(successMessage, errorMessage, viewName);
+
+        partialView.ViewData.TemplateInfo.HtmlFieldPrefix = "Input";
+        partialView.ViewData["AvailableTiers"] = AccessTiers;
+
+        return partialView;
     }
 }
 

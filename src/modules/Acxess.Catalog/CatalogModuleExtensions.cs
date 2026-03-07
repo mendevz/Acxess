@@ -1,6 +1,4 @@
-using Acxess.Catalog.Domain.Abstractions;
 using Acxess.Catalog.Infrastructure.Persistence;
-using Acxess.Catalog.Infrastructure.Persistence.Repositories;
 using Acxess.Shared.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -22,10 +20,6 @@ public static class CatalogModuleExtensions
         });
 
         services.AddScoped<IDataSeeder, CatalogSeeder>();
-
-        services.AddScoped<IAddOnRepository, AddOnRepository>();
-        services.AddScoped<ISellingPlanRepository, SellingPlanRepository>();
-        services.AddScoped<IAccessTierRepository, AccessTierRepository>();
 
         return services;
     }

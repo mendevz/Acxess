@@ -1,4 +1,5 @@
 using Acxess.Catalog.Application.Features.AddOns.Queries.GetAddOns;
+using Acxess.Catalog.Domain.Errors;
 using Acxess.Catalog.Infrastructure.Persistence;
 using Acxess.Shared.ResultManager;
 using MediatR;
@@ -13,10 +14,7 @@ public class GetAddOnHandler(
     {
         var entity = await context.AddOns.FindAsync([request.IdAddOn], cancellationToken);
 
-        if (entity == null)
-        {
-            return Result<AddOnDto>.Failure("NotFound", "AddOn not found.");
-        }
+        if (entity == null) return Result<AddOnDto>.Failure(AddOnsErrors.NotFound);
 
         var dto = new AddOnDto
         (

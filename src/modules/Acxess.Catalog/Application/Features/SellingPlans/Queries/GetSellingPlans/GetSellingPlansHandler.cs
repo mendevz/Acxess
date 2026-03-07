@@ -1,4 +1,3 @@
-using System;
 using Acxess.Catalog.Infrastructure.Persistence;
 using Acxess.Shared.Enums;
 using Acxess.Shared.ResultManager;

@@ -23,7 +23,7 @@ public class GetAccessTiersHandler(
             a.Name,
             a.Description!,
             a.IsActive
-        )).ToListAsync();
+        )).ToListAsync(cancellationToken);
 
         return items;
     }

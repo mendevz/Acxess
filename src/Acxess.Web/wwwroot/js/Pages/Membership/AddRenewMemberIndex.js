@@ -70,10 +70,12 @@ document.addEventListener('alpine:init', () => {
 
             if (this.mode === 'new') {
                 this.omitInscription = false;
+                this.removeSystemAddon(this.visitAddon.IdAddOn);
                 this.addSystemAddon(this.inscAddon);
                 document.getElementById("first-name-input")?.focus();
             } else if (this.mode === 'renew') {
                 this.removeSystemAddon(this.inscAddon.IdAddOn);
+                this.removeSystemAddon(this.visitAddon.IdAddOn);
                 // document.getElementById("search-member-input")?.focus();
             } else {
                 // MODO VISITA

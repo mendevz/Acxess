@@ -4,27 +4,16 @@ using Acxess.Catalog.Application.Features.AddOns.Queries.GetAddOnById;
 using Acxess.Catalog.Application.Features.AddOns.Queries.GetAddOns;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.ResultManager;
+using Acxess.Web.Pages.Catalog.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace Acxess.Web.Pages.Catalog.AddOns;
 public class IndexModel(
     IMediator mediator,
     ICurrentTenant currentTenant
-) : PageModel
+) : BaseCatalogPageModel<AddOnInput,AddOnDto>
 {
-    [BindProperty(SupportsGet = true)]
-    public string? Search { get; set; } = string.Empty;
-    public List<AddOnDto> Items {get; private set;} = [];
-
-    [BindProperty]
-    public AddOnInput Input {get; set;}= new();
-    public void OnGet()
-    {
-    }
-
     public async Task<IActionResult> OnGetItemsAsync()
     {
         var query = new GetAddOnsQuery(true);
@@ -46,61 +35,45 @@ public class IndexModel(
         switch (id)
         {
             case null:
-                return Partial("/Pages/Catalog/Shared/_NoSelectedItem.cshtml");
+                return NoSelectedItem();
             case 0:
                 Input = new AddOnInput();
-                break;
-            default:
-            {
-                var query = new GetAddOnQuery(id??0);
-                var result = await mediator.Send(query);
-
-                if (result.IsFailure)
-                {
-                    return Form(errorMessage: result.Error.Description);
-                }
-
-                var item = result.Value;
-            
-                Input = new AddOnInput 
-                { 
-                    IdAddOn = item.IdAddOn,
-                    AddOnKey = item.AddOnKey, 
-                    Name = item.Name, 
-                    Price = item.Price, 
-                    IsActive = item.IsActive,
-                    ShowInCheckout = item.ShowInCheckout ,
-                    IsVisit = item.IsVisit
-                };
-                break;
-            }
+                return FormView();
         }
+        
+        var result = await mediator.Send(new GetAddOnQuery(id??0));
+        if (result.IsFailure) return FormView(errorMessage: result.Error.Description);
 
-        return Form();
+        var item = result.Value;
+            
+        Input = new AddOnInput 
+        { 
+            IdAddOn = item.IdAddOn,
+            AddOnKey = item.AddOnKey, 
+            Name = item.Name, 
+            Price = item.Price, 
+            IsActive = item.IsActive,
+            ShowInCheckout = item.ShowInCheckout ,
+            IsVisit = item.IsVisit
+        };
+
+        return FormView();
     }
 
     public async Task<IActionResult> OnPostSaveAsync()
     {
-        if (!ModelState.IsValid) return Form();
+        if (!ModelState.IsValid) return FormView();
 
-        Result<string> resultSaved;
-
-
-        if (Input.IdAddOn == 0)
-        {
-            var command = new NewAddOnCommand(
+        IRequest<Result<string>> command = Input.IdAddOn == 0 
+            ? new NewAddOnCommand(
                 currentTenant.Id??0, 
                 Input.AddOnKey,
                 Input.Name,
                 Input.Price,
                 false,
-                Input.IsActive);
-
-            resultSaved = await mediator.Send(command);
-        }
-        else
-        {
-            var commandUpd = new UpdateAddOnCommand(
+                Input.IsActive)
+            
+            : new UpdateAddOnCommand(
                 Input.IdAddOn, 
                 Input.AddOnKey,
                 Input.Name, 
@@ -108,47 +81,22 @@ public class IndexModel(
                 Input.ShowInCheckout,
                 Input.IsVisit,
                 Input.IsActive
-                );
+            );
 
-            resultSaved = await mediator.Send(commandUpd);
-        }
-
+        var resultSaved = await mediator.Send(command);
         if (resultSaved.IsFailure)
         {
-            return Form(errorMessage: resultSaved.Error.Description);
+            return FormView(errorMessage: resultSaved.Error.Description);
         }
 
-        Response.Headers.Append("HX-Trigger", "refreshItems");
+        TriggerHtmxRefresh();
 
-        if (Input.IdAddOn != 0) return Form(successMessage: resultSaved.Value);
+        if (Input.IdAddOn != 0) return FormView(successMessage: resultSaved.Value);
         
         Input = new AddOnInput(); 
         
         ModelState.Clear();
         
-        return Form(successMessage: resultSaved.Value);
-
+        return FormView(successMessage: resultSaved.Value);
     }
-    
-    private PartialViewResult Form(string? successMessage = null, string? errorMessage = null)
-    {
-        var partialView = new PartialViewResult
-        {
-            ViewName = "_Form",
-            ViewData = new ViewDataDictionary<AddOnInput>(ViewData, Input)
-        };
-
-        if (!string.IsNullOrWhiteSpace(successMessage))
-        {
-            partialView.ViewData["SuccessMessage"] = successMessage;
-        }
-        
-        if (!string.IsNullOrWhiteSpace(errorMessage))
-        {
-            partialView.ViewData["ErrorMessage"] = errorMessage;
-        }
-
-        return partialView;
-    }
-
 }

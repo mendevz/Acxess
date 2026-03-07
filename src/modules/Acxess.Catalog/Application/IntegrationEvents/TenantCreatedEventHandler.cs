@@ -43,8 +43,8 @@ public class TenantCreatedEventHandler(
 
         var commandAccessTIer = new AddAccessTierCommand(
             AccessTiersDefaults.GeneralAccessTiers.Name,
-            AccessTiersDefaults.GeneralAccessTiers.Description,
-            notification.TenantId);
+            notification.TenantId, 
+            AccessTiersDefaults.GeneralAccessTiers.Description);
         
         var resultAccessTIer = await mediator.Send(commandAccessTIer, cancellationToken);
         

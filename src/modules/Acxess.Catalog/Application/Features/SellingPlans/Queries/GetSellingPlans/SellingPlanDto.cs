@@ -1,6 +1,8 @@
 
 using Acxess.Shared.Enums;
 
+namespace Acxess.Catalog.Application.Features.SellingPlans.Queries.GetSellingPlans;
+
 public record SellingPlanDto(
     int IdSellingPlan,
     string Name,

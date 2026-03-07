@@ -9,6 +9,7 @@ public record UpdateAddOnCommand(
  string Name,
  decimal Price,
  bool ShowInCheckout,
- bool IsVisit, bool IsActive)  : IRequest<Result<string>>;
+ bool IsVisit, 
+ bool IsActive)  : IRequest<Result<string>>;
 
 
