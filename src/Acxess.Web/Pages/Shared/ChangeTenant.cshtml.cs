@@ -24,6 +24,7 @@ public class ChangeTenantModel(
             .Include(tu => tu.Tenant)
             .Where(tu => tu.UserNumber == user.UserNumber && tu.IdTenant == newTenantId && tu.Tenant.IsActive)
             .Select(tu => tu.Tenant)
+            .OrderByDescending(t => t.IdTenant)
             .FirstOrDefaultAsync();
 
         if (tenantToSwitch == null) 
