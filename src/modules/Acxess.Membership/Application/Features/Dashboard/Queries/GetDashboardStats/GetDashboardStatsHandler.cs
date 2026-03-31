@@ -15,7 +15,7 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
         
         // Ventanas de tiempo
         var daysFromNow = today.AddDays(2); // Para "Por Vencer"
-        var fifteenDaysAgo = today.AddDays(-15); // Para "Vencidos recientes"
+        var fifteenDaysAgo = today.AddDays(-60); // Para "Vencidos recientes"
 
         // 1. Nuevos Hoy
         var newToday = await context.Members

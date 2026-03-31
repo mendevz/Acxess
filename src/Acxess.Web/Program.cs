@@ -26,6 +26,7 @@ try
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
         .MinimumLevel.Information()
         .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
         .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
@@ -88,13 +89,20 @@ try
                     path.EndsWith(".css") || 
                     path.EndsWith(".js") || 
                     path.EndsWith(".png") || 
+                    path.EndsWith(".jpg") ||     
+                    path.EndsWith(".jpeg") ||    
                     path.EndsWith(".ico") || 
                     path.EndsWith(".map") || 
-                    path == "/sw.js") || path == "/" && httpContext.Response.StatusCode < 400)
+                    path.EndsWith(".json") ||    
+                    path.StartsWith("/uploads/") || 
+                    (path.StartsWith("/identity/login") && httpContext.Request.Method == "GET") ||
+                    path == "/sw.js") || 
+                (path == "/" && httpContext.Response.StatusCode < 400))
             {
                 return Serilog.Events.LogEventLevel.Debug; 
             }
 
+            
             return Serilog.Events.LogEventLevel.Information;
         };
     });
