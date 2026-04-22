@@ -15,7 +15,7 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
         
         // Ventanas de tiempo
         var daysFromNow = today.AddDays(2); // Para "Por Vencer"
-        var fifteenDaysAgo = today.AddDays(-60); // Para "Vencidos recientes"
+        var daysAgo = today.AddDays(-8); // Para "Vencidos recientes"
 
         // 1. Nuevos Hoy
         var newToday = await context.Members
@@ -52,8 +52,8 @@ public class GetDashboardStatsHandler(MembershipModuleContext context) : IReques
                 RelevantSub = m.SubscriptionMemberships
                     .Select(sm => sm.Subscription)
                     .Where(s => 
-                        (!s.CancelledAt.HasValue && s.EndDate >= fifteenDaysAgo && s.EndDate <= daysFromNow) ||
-                        (s.CancelledAt.HasValue && s.CancelledAt >= fifteenDaysAgo && s.CancelledAt <= daysFromNow)
+                        (!s.CancelledAt.HasValue && s.EndDate >= daysAgo && s.EndDate <= daysFromNow) ||
+                        (s.CancelledAt.HasValue && s.CancelledAt >= daysAgo && s.CancelledAt <= daysFromNow)
                     )
                     .OrderByDescending(s => s.CancelledAt ?? s.EndDate)
                     .FirstOrDefault(),

@@ -22,6 +22,7 @@ public class ApplicationUserClaimsPrincipalFactory(
         
       var availableTenants = await context.Set<TenantsUsers>()
             .Include(tu => tu.Tenant)
+            .AsSplitQuery()
             .Where(tu => tu.UserNumber == user.UserNumber && tu.Tenant.IsActive)
             .Select(tu => new { id = tu.Tenant.IdTenant, name = tu.Tenant.Name })
             .ToListAsync();

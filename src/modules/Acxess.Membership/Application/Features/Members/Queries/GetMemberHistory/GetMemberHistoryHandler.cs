@@ -37,15 +37,25 @@ public class GetMemberHistoryHandler(
             timeline.Add(new TimelineItemDto
             {
                 Title = "Membresía Activada", 
-                Date = sub.CreatedAt,
+                Date = sub.StartDate,
                 Amount = null,
                 Type = "SubscriptionStart", // Nuevo Tipo
                 ColorClass = "blue",
                 Details = [] // O el nombre del plan si lo tienes
             });
-
-            // 2. Evento: Vencimiento (Solo si ya venció)
-            if (sub.EndDate < DateTime.Now.Date)
+            if (sub.CancelledAt.HasValue)
+            {
+                timeline.Add(new TimelineItemDto
+                {
+                    Title = "Membresía Cancelada",
+                    Date = sub.CancelledAt.Value,
+                    Amount = null,
+                    Type = "Expiration", 
+                    ColorClass = "red",
+                    Details = [sub.CancellationReason ?? "Sin motivo especificado"]
+                });
+            }
+            else if (sub.EndDate < DateTime.Now.Date)
             {
                 timeline.Add(new TimelineItemDto
                 {
@@ -57,20 +67,6 @@ public class GetMemberHistoryHandler(
                     Details = []
                 });
             }
-
-            if (sub.CancelledAt.HasValue)
-            {
-                timeline.Add(new TimelineItemDto
-                {
-                    Title = "Membresía Cancelada",
-                    Date = sub.CancelledAt.Value,
-                    Amount = null,
-                    Type = "Expiration",
-                    ColorClass = "red",
-                    Details = [sub.CancellationReason??""]
-                });
-            }
-            
         }
         
         var sortedTimeline = timeline.OrderByDescending(x => x.Date).ToList();

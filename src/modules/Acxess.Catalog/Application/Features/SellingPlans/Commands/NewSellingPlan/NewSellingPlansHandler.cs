@@ -7,10 +7,8 @@ namespace Acxess.Catalog.Application.Features.SellingPlans.Commands.NewSellingPl
 
 public class NewSellingPlansHandler(CatalogModuleContext context) : IRequestHandler<NewSellingPlanCommand, Result<string>>
 {
-    
     public async Task<Result<string>> Handle(NewSellingPlanCommand request, CancellationToken cancellationToken)
     {
-
        var sellingPlan = SellingPlan.Create(
            request.IdTenant,
            request.Name,
@@ -20,14 +18,8 @@ public class NewSellingPlansHandler(CatalogModuleContext context) : IRequestHand
            request.Price,
            request.CreatedBy
        );
-
-       if (request.AccessTiersIds.Count != 0)
-       {
-           foreach (var tierId in request.AccessTiersIds)
-           {
-               sellingPlan.AddAccessTier(tierId);
-           }
-       }
+       
+       sellingPlan.AddAccessTiers(request.AccessTiersIds);
 
        context.SellingPlans.Add(sellingPlan);
 
