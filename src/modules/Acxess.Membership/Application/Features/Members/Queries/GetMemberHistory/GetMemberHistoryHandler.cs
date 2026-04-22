@@ -37,7 +37,7 @@ public class GetMemberHistoryHandler(
             timeline.Add(new TimelineItemDto
             {
                 Title = "Membresía Activada", 
-                Date = sub.StartDate,
+                Date = sub.CreatedAt,
                 Amount = null,
                 Type = "SubscriptionStart", // Nuevo Tipo
                 ColorClass = "blue",
