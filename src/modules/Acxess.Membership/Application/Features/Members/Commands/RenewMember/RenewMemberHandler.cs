@@ -26,7 +26,8 @@ public class RenewMemberHandler(
         var mainMember = await context.Members
             .Include(m => m.SubscriptionMemberships)
             .ThenInclude(sm => sm.Subscription)
-            .Include(m => m.OwnedSubscriptions) 
+            .Include(m => m.OwnedSubscriptions)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.IdMember == request.IdMember, cancellationToken);
         
         if (mainMember is null)

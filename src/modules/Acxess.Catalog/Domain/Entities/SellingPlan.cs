@@ -72,13 +72,24 @@ public class SellingPlan : IHasTenant
         Price = price;
         IsActive = isActive;
     }
-    public void AddAccessTier(int accessTierId)
+    private void AddAccessTier(int accessTierId)
     {
         if (AccessTiers.Any(x => x.IdAccessTier == accessTierId)) return;
 
         var link =  PlanAccessTiers.Create(this.IdTenant, accessTierId, this.IdSellingPlan);
         
         AccessTiers.Add(link);
+    }
+    
+    
+    public void AddAccessTiers(List<int>? accessTierIds)
+    {
+        if (accessTierIds == null || accessTierIds.Count == 0) return;
+
+        foreach (var tierId in accessTierIds)
+        {
+            AddAccessTier(tierId);
+        }
     }
 
     public void SyncAccessTiers(List<int> newTierIds)

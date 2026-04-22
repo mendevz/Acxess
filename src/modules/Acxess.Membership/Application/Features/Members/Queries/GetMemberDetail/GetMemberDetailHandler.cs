@@ -101,25 +101,23 @@ public class GetMemberDetailHandler(
         
         var isSubscriptionCancelled = displaySub != null && !displaySub.IsActive &&
                                       displaySub.CancelledAt.HasValue;
-        var isExpired = absoluteEndDate < today || isSubscriptionCancelled;; 
+        var isExpired = absoluteEndDate < today || isSubscriptionCancelled;
 
         if (displaySub != null && !isExpired && displaySub.IsActive)
         {
-            // Usamos estrictamente las fechas del ciclo que se está mostrando (displaySub)
-            var currentStart = displaySub.StartDate.Date;
-            var currentEnd = displaySub.EndDate.Date;
-
+            var currentStart = chainStartDate!.Value.Date;
+            var currentEnd = absoluteEndDate!.Value.Date;
+            
             remainingDays = (currentEnd - today).Days;
             if (remainingDays < 0) remainingDays = 0;
 
             totalDaysDuration = (currentEnd - currentStart).Days;
-            if (totalDaysDuration <= 0) totalDaysDuration = 1; // Prevenir división por cero
+            if (totalDaysDuration <= 0) totalDaysDuration = 1;
 
             var daysPassed = (today - currentStart).TotalDays;
     
             progress = (daysPassed / totalDaysDuration) * 100;
 
-            // Clamping (Límites)
             if (progress < 0) progress = 0;     // Si el plan empieza en el futuro
             if (progress > 100) progress = 100; // Si ya venció
         }

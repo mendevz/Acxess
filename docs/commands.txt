@@ -34,3 +34,5 @@ newgrp docker
 
 
 docker compose --profile tools up --build
+
+ssh -L 1434:127.0.0.1:1433 root@178.156.225.238

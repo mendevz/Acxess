@@ -150,7 +150,7 @@
                             Cambiar Sucursal
                         </div>
                         
-                        <form method="post" action="Shared/ChangeTenant" id="tenant-form" class="space-y-1">
+                        <form method="post" asp-page="/Shared/ChangeTenant" id="tenant-form" class="space-y-1">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="returnUrl" value="@currentUrl" />
                             <input type="hidden" name="newTenantId" id="newTenantId" value="" />

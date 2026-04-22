@@ -21,9 +21,11 @@ public class ChangeTenantModel(
         if (user == null) return Unauthorized();
 
         var tenantToSwitch = await context.Set<TenantsUsers>()
-            .Include(tu => tu.Tenant)
-            .Where(tu => tu.UserNumber == user.UserNumber && tu.IdTenant == newTenantId && tu.Tenant.IsActive)
-            .Select(tu => tu.Tenant)
+            .Where(tu => tu.UserNumber == user.UserNumber 
+                         && tu.IdTenant == newTenantId 
+                         && tu.Tenant.IsActive)
+            .Select(tu => tu.Tenant) // EF hará el JOIN automáticamente aquí
+            .OrderByDescending(t => t.IdTenant)
             .FirstOrDefaultAsync();
 
         if (tenantToSwitch == null) 
