@@ -14,23 +14,21 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
     {
         logger.LogError(exception, "Error no controlado: {Message}", exception.Message);
 
-        if (IsApiRequest(httpContext))
+        if (!IsApiRequest(httpContext)) return true;
+        
+        var problemDetails = new ProblemDetails
         {
-            var problemDetails = new ProblemDetails
-            {
-                Status = StatusCodes.Status500InternalServerError,
-                Title = "Error del Servidor",
-                Detail = "Ocurrió un error interno al procesar su solicitud.",
-                Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1"
-            };
+            Status = StatusCodes.Status500InternalServerError,
+            Title = "Error del Servidor",
+            Detail = "Ocurrió un error interno al procesar su solicitud.",
+            Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1"
+        };
 
-            httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
-
-            return true; 
-        }
+        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
 
         return true;
+
     }
 
     private static bool IsApiRequest(HttpContext httpContext)

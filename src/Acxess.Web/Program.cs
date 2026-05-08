@@ -20,7 +20,6 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     Log.Information("Starting Acxess Web");
-    
     var builder = WebApplication.CreateBuilder(args);
 
     builder.Host.UseSerilog((context, services, configuration) => configuration
@@ -79,9 +78,10 @@ try
         options.GetLevel = (httpContext, elapsed, ex) =>
         {
             if (ex != null || httpContext.Response.StatusCode > 499)
-            {
                 return Serilog.Events.LogEventLevel.Error;
-            }
+            
+            if (httpContext.Response.StatusCode == 404)
+                return Serilog.Events.LogEventLevel.Debug;
 
             var path = httpContext.Request.Path.Value?.ToLower();
 
@@ -97,12 +97,10 @@ try
                     path.StartsWith("/uploads/") || 
                     (path.StartsWith("/identity/login") && httpContext.Request.Method == "GET") ||
                     path == "/sw.js") || 
-                (path == "/" && httpContext.Response.StatusCode < 400))
+                    (path == "/" && httpContext.Response.StatusCode < 400))
             {
                 return Serilog.Events.LogEventLevel.Debug; 
             }
-
-            
             return Serilog.Events.LogEventLevel.Information;
         };
     });
@@ -129,11 +127,11 @@ try
     app.UseRouting();
     
     app.MapPost("/api/membership/subscriptions/check-expiration", async (ISubscriptionService service) =>
-        {
-            await service.DeactivateExpiredSubscriptionsAsync(CancellationToken.None);
-            return Results.Ok(new { message = "Expiration process executed manually." });
-        })
-        .WithTags("Maintenance");
+    {
+        await service.DeactivateExpiredSubscriptionsAsync(CancellationToken.None);
+        return Results.Ok(new { message = "Expiration process executed manually." });
+    })
+    .WithTags("Maintenance");
 
     app.UseAuthentication();
     app.UseAuthorization();
@@ -144,7 +142,7 @@ try
 
     app.Run();
 }
-catch (Exception ex) when (ex is not HostAbortedException) // Ignora el error falso al correr herramientas de EF Core
+catch (Exception ex) when (ex is not HostAbortedException) 
 {
     Log.Fatal(ex, "The Access application crashed and shut down");
 }
