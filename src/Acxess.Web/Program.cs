@@ -12,6 +12,7 @@ using Acxess.Membership.Application.Services;
 using Acxess.Shared.IntegrationServices.Billing;
 using Acxess.Shared.IntegrationServices.Catalog;
 using Acxess.Web.Filters;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -55,6 +56,7 @@ try
                 .AddSource("Acxess.Application")
                 .AddOtlpExporter(options =>
                 {
+                    options.Protocol = OtlpExportProtocol.HttpProtobuf;
                     var otelEndpoint = builder.Configuration["OpenTelemetry:Endpoint"];
                     var otelToken = builder.Configuration["OpenTelemetry:Token"];
 
