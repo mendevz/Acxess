@@ -12,6 +12,8 @@ using Acxess.Membership.Application.Services;
 using Acxess.Shared.IntegrationServices.Billing;
 using Acxess.Shared.IntegrationServices.Catalog;
 using Acxess.Web.Filters;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -20,7 +22,6 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     Log.Information("Starting Acxess Web");
-    
     var builder = WebApplication.CreateBuilder(args);
 
     builder.Host.UseSerilog((context, services, configuration) => configuration
@@ -32,6 +33,43 @@ try
         .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
         .MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information)
     );
+    
+    builder.Services.AddOpenTelemetry()
+        .ConfigureResource(resource => resource
+        .AddService(serviceName: "AcxessWeb", serviceVersion: "1.0.0"))
+        .WithTracing(tracing =>
+        {
+            tracing
+                .AddAspNetCoreInstrumentation(options =>
+                {
+                    options.Filter = context => 
+                    {
+                        var path = context.Request.Path.Value?.ToLower();
+                        return path != null && !path.Contains(".") && path != "/" && !path.Contains("health");
+                    };
+                })
+                .AddEntityFrameworkCoreInstrumentation(options => 
+                {
+                    options.SetDbStatementForText = true; 
+                })
+                .AddSource("Acxess.Application")
+                .AddOtlpExporter(options =>
+                {
+                    var otelEndpoint = builder.Configuration["OpenTelemetry:Endpoint"];
+                    var otelToken = builder.Configuration["OpenTelemetry:Token"];
+
+                    if (!string.IsNullOrWhiteSpace(otelEndpoint))
+                    {
+                        options.Endpoint = new Uri(otelEndpoint);
+                    }
+                    if (!string.IsNullOrWhiteSpace(otelToken))
+                    {
+                        options.Headers = $"Authorization=Bearer {otelToken}";
+                    }
+                });
+        });
+    
+    
 
     builder.Services
         .AddExceptionHandler<GlobalExceptionHandler>()
@@ -79,9 +117,10 @@ try
         options.GetLevel = (httpContext, elapsed, ex) =>
         {
             if (ex != null || httpContext.Response.StatusCode > 499)
-            {
                 return Serilog.Events.LogEventLevel.Error;
-            }
+            
+            if (httpContext.Response.StatusCode == 404)
+                return Serilog.Events.LogEventLevel.Debug;
 
             var path = httpContext.Request.Path.Value?.ToLower();
 
@@ -97,12 +136,10 @@ try
                     path.StartsWith("/uploads/") || 
                     (path.StartsWith("/identity/login") && httpContext.Request.Method == "GET") ||
                     path == "/sw.js") || 
-                (path == "/" && httpContext.Response.StatusCode < 400))
+                    (path == "/" && httpContext.Response.StatusCode < 400))
             {
                 return Serilog.Events.LogEventLevel.Debug; 
             }
-
-            
             return Serilog.Events.LogEventLevel.Information;
         };
     });
@@ -129,11 +166,11 @@ try
     app.UseRouting();
     
     app.MapPost("/api/membership/subscriptions/check-expiration", async (ISubscriptionService service) =>
-        {
-            await service.DeactivateExpiredSubscriptionsAsync(CancellationToken.None);
-            return Results.Ok(new { message = "Expiration process executed manually." });
-        })
-        .WithTags("Maintenance");
+    {
+        await service.DeactivateExpiredSubscriptionsAsync(CancellationToken.None);
+        return Results.Ok(new { message = "Expiration process executed manually." });
+    })
+    .WithTags("Maintenance");
 
     app.UseAuthentication();
     app.UseAuthorization();
@@ -144,7 +181,7 @@ try
 
     app.Run();
 }
-catch (Exception ex) when (ex is not HostAbortedException) // Ignora el error falso al correr herramientas de EF Core
+catch (Exception ex) when (ex is not HostAbortedException) 
 {
     Log.Fatal(ex, "The Access application crashed and shut down");
 }

@@ -2,13 +2,19 @@ using Acxess.Billing.Domain.Entities;
 using Acxess.Billing.Infrastructure.Persistence;
 using Acxess.Shared.IntegrationEvents.Membership;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Acxess.Billing.Application.IntegrationEvents;
 
 public class SubscriptionPurchasedEventHandler(
-    BillingModuleContext billingContext) : INotificationHandler<SubscriptionPurchasedIntegrationEvent> {
+    BillingModuleContext billingContext,
+    ILogger<SubscriptionPurchasedEventHandler> logger) : INotificationHandler<SubscriptionPurchasedIntegrationEvent> {
     public async Task Handle(SubscriptionPurchasedIntegrationEvent notification, CancellationToken cancellationToken)
     {
+        logger.LogInformation(
+            "Processing subscription purchase for Member {MemberId}. ", 
+            notification.IdMember);
+        
         var transaction = MemberTransaction.Create(
             notification.IdTenant,
             notification.IdMember,
@@ -36,5 +42,8 @@ public class SubscriptionPurchasedEventHandler(
         
         billingContext.MemberTransactions.Add(transaction);
         await billingContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "Successfully registered transaction {TransactionId} for Member {MemberId}. Amount: {Amount}", 
+            transaction.IdMemberTransaction, notification.IdMember, notification.AmountReceived);
     }
 }

@@ -19,7 +19,9 @@ public class GetSellingPlansHandler(
             query = query.Where(p => p.IsActive);
         }
 
-        var items = await query.Select(p=> new SellingPlanDto(
+        var items = await query
+            .AsSplitQuery()
+            .Select(p=> new SellingPlanDto(
             p.IdSellingPlan,
             p.Name,
             p.TotalMembers,

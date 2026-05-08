@@ -6,11 +6,13 @@ using Acxess.Shared.IntegrationEvents.Membership;
 using Acxess.Shared.IntegrationServices.Catalog;
 using Acxess.Shared.ResultManager;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Acxess.Membership.Application.Features.Members.Commands.NewMember;
 
 public class NewMemberHandler(
     MembershipModuleContext context,
+    ILogger<NewMemberHandler> logger,
     ICatalogIntegrationService catalogService,
     IMediator mediator,
     IImageStorageService imageStorage) : IRequestHandler<NewMemberCommand, Result<UpdatedSubMemberResponse>>
@@ -19,7 +21,14 @@ public class NewMemberHandler(
     {
         var planInfo = await catalogService.GetPlanInfoAsync(request.SellingPlanId, cancellationToken);
         if (planInfo == null)
-            return Result<UpdatedSubMemberResponse>.Failure("Plan.NotFound", "El plan seleccionado no existe o no está activo.");
+        {
+            logger.LogWarning(
+                "New member registration failed. SellingPlanId: {SellingPlanId} not found or inactive.", 
+                request.SellingPlanId);
+            
+            return Result<UpdatedSubMemberResponse>
+                .Failure("Plan.NotFound", "Plan not found or is not active.");
+        }
         
         // get addOns info
         var addOnsResult = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
@@ -48,6 +57,10 @@ public class NewMemberHandler(
         if (newBeneficiaries.Count != 0)
         {
             await context.SaveChangesAsync(cancellationToken); 
+            var savedBeneficiaryIds = newBeneficiaries.Select(b => b.IdMember).ToList();
+            logger.LogInformation(
+                "Successfully created {BeneficiaryCount} new beneficiaries: {BeneficiaryIds}", 
+                newBeneficiaries.Count, savedBeneficiaryIds);
         }
         
         // combine beneficiaries
@@ -87,6 +100,10 @@ public class NewMemberHandler(
         context.Members.Add(mainMember);
         
         await context.SaveChangesAsync(cancellationToken);
+        
+        logger.LogInformation(
+            "New member successfully created and subscribed. MemberId: {MemberId}, SellingPlanId: {SellingPlanId}, TotalBeneficiaries: {TotalBeneficiaries}",
+            mainMember.IdMember, request.SellingPlanId, finalBeneficiaryIds.Count);
 
         var addOnItems = addOnsWithPrice.Select(a => 
                 new PurchasedAddOnItem(a.Id, a.Name, a.Price)
@@ -107,6 +124,10 @@ public class NewMemberHandler(
         );
         
         await mediator.Publish(integrationBilling, cancellationToken);
+        
+        logger.LogInformation(
+            "Published billing integration event for SubscriptionId: {SubscriptionId}, MemberId: {MemberId}, Amount: {AmountPaid}", 
+            integrationBilling.IdSubscription, mainMember.IdMember, request.AmountPaid);
 
         return new UpdatedSubMemberResponse(
             "Subscripción registrada correctamente.", 

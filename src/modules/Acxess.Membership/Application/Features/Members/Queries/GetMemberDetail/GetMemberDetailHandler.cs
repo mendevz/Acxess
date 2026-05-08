@@ -19,6 +19,7 @@ public class GetMemberDetailHandler(
         var today = DateTime.Now.Date;
         var member = await context.Members
             .AsNoTracking()
+            .AsSplitQuery()
             .Where(m => m.IdMember == request.IdMember)
             .Select(m => new
             {
