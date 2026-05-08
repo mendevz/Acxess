@@ -12,6 +12,8 @@ using Acxess.Membership.Application.Services;
 using Acxess.Shared.IntegrationServices.Billing;
 using Acxess.Shared.IntegrationServices.Catalog;
 using Acxess.Web.Filters;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -31,6 +33,43 @@ try
         .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
         .MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information)
     );
+    
+    builder.Services.AddOpenTelemetry()
+        .ConfigureResource(resource => resource
+        .AddService(serviceName: "AcxessWeb", serviceVersion: "1.0.0"))
+        .WithTracing(tracing =>
+        {
+            tracing
+                .AddAspNetCoreInstrumentation(options =>
+                {
+                    options.Filter = context => 
+                    {
+                        var path = context.Request.Path.Value?.ToLower();
+                        return path != null && !path.Contains(".") && path != "/" && !path.Contains("health");
+                    };
+                })
+                .AddEntityFrameworkCoreInstrumentation(options => 
+                {
+                    options.SetDbStatementForText = true; 
+                })
+                .AddSource("Acxess.Application")
+                .AddOtlpExporter(options =>
+                {
+                    var otelEndpoint = builder.Configuration["OpenTelemetry:Endpoint"];
+                    var otelToken = builder.Configuration["OpenTelemetry:Token"];
+
+                    if (!string.IsNullOrWhiteSpace(otelEndpoint))
+                    {
+                        options.Endpoint = new Uri(otelEndpoint);
+                    }
+                    if (!string.IsNullOrWhiteSpace(otelToken))
+                    {
+                        options.Headers = $"Authorization=Bearer {otelToken}";
+                    }
+                });
+        });
+    
+    
 
     builder.Services
         .AddExceptionHandler<GlobalExceptionHandler>()

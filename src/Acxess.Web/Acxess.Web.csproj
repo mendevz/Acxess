@@ -18,6 +18,10 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+		<PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" />
 		<PackageReference Include="Serilog.AspNetCore" />
 		<PackageReference Include="Serilog.Sinks.Async" />
 		<PackageReference Include="Serilog.Sinks.Seq" />
@@ -30,6 +34,8 @@
     <ProjectReference Include="..\modules\Acxess.Membership\Acxess.Membership.csproj" />
     <ProjectReference Include="..\modules\Acxess.Billing\Acxess.Billing.csproj" />
     <ProjectReference Include="..\modules\Acxess.Marketing\Acxess.Marketing.csproj" />
+    
+    
   </ItemGroup>
   
   <ItemGroup>
