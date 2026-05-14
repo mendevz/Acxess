@@ -4,4 +4,6 @@ using MediatR;
 namespace Acxess.Membership.Application.Features.Members.Queries.GetMembers;
 
 public sealed record GetMembersQuery(
-    string? SearchTerm, string StatusFilter = "all") : IRequest<Result<MembersResponse>>;
+    string? SearchTerm, 
+    int PageNumber,
+    string StatusFilter = "all") : IRequest<Result<MembersResponse>>;
