@@ -1,17 +1,21 @@
 using Acxess.Membership.Infrastructure.Persistence;
+using Acxess.Shared.Constants;
 using Acxess.Shared.ResultManager;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Acxess.Membership.Application.Features.Members.Queries.GetMembers;
 
 public class GetMembersHandler(
-    MembershipModuleContext context) : IRequestHandler<GetMembersQuery, Result<MembersResponse>>
+    MembershipModuleContext context,
+    ILogger<GetMembersHandler> logger) : IRequestHandler<GetMembersQuery, Result<MembersResponse>>
 {
     public async Task<Result<MembersResponse>> Handle(GetMembersQuery request, CancellationToken cancellationToken)
     {
         var searchTerm = request.SearchTerm?.Trim() ?? string.Empty;
         var now = DateTime.Now;
+        var pageSize = request.PageSize > 0 ? request.PageSize : PaginationValues.PageSize;
         var baseGetMembersQuery = context.Members.AsNoTracking();
         
         if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -19,9 +23,11 @@ public class GetMembersHandler(
             if (int.TryParse(searchTerm, out var id))
                 baseGetMembersQuery = baseGetMembersQuery.Where(m => m.IdMember == id);
             else
-                baseGetMembersQuery = baseGetMembersQuery.Where(m =>
-                    m.FirstName.Contains(searchTerm) ||
-                    m.LastName.Contains(searchTerm));
+            {
+                var searchTerms = searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                baseGetMembersQuery = searchTerms.Aggregate(baseGetMembersQuery, (current, term) => current.Where(m => m.FirstName.Contains(term) || m.LastName.Contains(term)));
+            }
+                
         }
         
         var statsMembers = await  baseGetMembersQuery
@@ -34,7 +40,7 @@ public class GetMembersHandler(
                     !member.IsDeleted && 
                     member.SubscriptionMemberships.Any(sm => 
                         sm.Subscription.IsActive && sm.Subscription.EndDate >= now))
-            }).FirstOrDefaultAsync(cancellationToken)?? new { TotalMembers = 0, DeletedMembers = 0, ActiveMembers = 0 };
+            }).SingleOrDefaultAsync(cancellationToken)?? new { TotalMembers = 0, DeletedMembers = 0, ActiveMembers = 0 };
 
         var expiredMembers = (statsMembers.TotalMembers - statsMembers.DeletedMembers) - statsMembers.ActiveMembers;
 
@@ -46,7 +52,7 @@ public class GetMembersHandler(
             _ => baseGetMembersQuery.Where(m => !m.IsDeleted)
         };
         
-        const int pageSize = 15; 
+
         var skip = (request.PageNumber - 1) * pageSize;
 
         var results = await query
@@ -77,6 +83,10 @@ public class GetMembersHandler(
             m.Phone ?? string.Empty,
             m.PhotoUrl
         )).ToList();
+        
+        logger.LogInformation(
+            "Query completed. Returns {Count}  out of a total {Total}", 
+            memberItems.Count, statsMembers.TotalMembers);
 
         return new MembersResponse(
             statsMembers.TotalMembers, 

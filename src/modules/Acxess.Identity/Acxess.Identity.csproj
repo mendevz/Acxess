@@ -5,6 +5,8 @@
   </ItemGroup>
   <ItemGroup>
 
+    <PackageReference Include="Destructurama.Attributed" />
+
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />

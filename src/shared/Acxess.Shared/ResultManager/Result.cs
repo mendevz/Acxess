@@ -1,6 +1,12 @@
 namespace Acxess.Shared.ResultManager;
 
-public class Result
+
+public interface IResult 
+{
+    bool IsFailure { get; }
+    Error Error { get; } 
+}
+public class Result : IResult
 {
     protected Result(bool isSuccess, Error error)
     {
