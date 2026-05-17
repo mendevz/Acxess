@@ -1,6 +1,8 @@
 using System.Globalization;
+using Acxess.Membership.Application.Formatters;
 using Acxess.Membership.Domain.Constants;
 using Acxess.Membership.Domain.Errors;
+using Acxess.Membership.Domain.ValueObjects;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.IntegrationServices.Billing;
 using Acxess.Shared.IntegrationServices.Catalog;
@@ -90,116 +92,32 @@ public class GetMemberDetailHandler(
                 addOnNames.AddRange(names);
             }
         }
-        
-        double progress = 0;
-        var remainingDays = 0;
-        var totalDaysDuration = 1; 
-        
-        var isSubscriptionCancelled = displaySub != null 
-                                      && !displaySub.IsActive 
-                                      && displaySub.CancelledAt.HasValue;
-        
-        var isExpired = absoluteEndDate < today || isSubscriptionCancelled;
 
-        var hasSubscriptionActive = displaySub != null && !isExpired && displaySub.IsActive;
+        var isSubscriptionCancelled = displaySub != null && !displaySub.IsActive && displaySub.CancelledAt.HasValue;
         
-        if (hasSubscriptionActive)
-        {
-            var currentStart = chainStartDate!.Value.Date;
-            var currentEnd = absoluteEndDate!.Value.Date;
-            
-            remainingDays = (currentEnd - today).Days;
-            if (remainingDays < 0) remainingDays = 0;
+        var metrics = SubscriptionMetrics.Calculate(
+            currentDate: today,
+            joinedDate: member.CreatedAt,
+            chainStartDate: chainStartDate,
+            absoluteEndDate: absoluteEndDate,
+            isDisplaySubActive: displaySub?.IsActive ?? false,
+            isSubscriptionCancelled: isSubscriptionCancelled,
+            gracePeriodDaysConfig: Configurations.PRORROGA_DAYS 
+        );
 
-            totalDaysDuration = (currentEnd - currentStart).Days;
-            if (totalDaysDuration <= 0) totalDaysDuration = 1;
-
-            var daysPassed = (today - currentStart).TotalDays;
-    
-            progress = (daysPassed / totalDaysDuration) * 100;
-
-            if (progress < 0) progress = 0;     // Subscription starts in the future
-            if (progress > 100) progress = 100; //  Subscription expired
-        }
-        else if (isExpired)
-        {
-            progress = 100;
-            remainingDays = 0;
-        }
-       
-        var inGracePeriod = false;
-        DateTime? gracePeriodEnd = null;
+        var displayInfoToFront = MemberDetailDisplayFormatter.GetStatusDisplay(
+            isDeleted: member.IsDeleted, 
+            hasPlan: displaySub != null, 
+            isSubscriptionCancelled: isSubscriptionCancelled,
+            metrics: metrics
+        );
         
-        var statusLabel = "ACTIVO";
-        var statusColor = "green";
-        var colorSubscription = "text-blue-600";
-        var renewalMsg = "Tu membresía está al corriente.";
-        
-        if (member.IsDeleted)
-        {
-            statusLabel = "BAJA / ELIMINADO";
-            statusColor = "gray"; // U opacity-50
-            colorSubscription = "text-red-500";
-            renewalMsg = "Este miembro ha sido dado de baja.";
-        }
-        else if (displaySub == null)
-        {
-            statusLabel = "NUEVO / SIN PLAN";
-            statusColor = "yellow";
-            colorSubscription = "text-orange-500";
-            renewalMsg = "Selecciona 'Renovar' para asignar el primer plan.";
-        }
-        else if (!hasSubscriptionActive)
-        {
-            gracePeriodEnd = absoluteEndDate!.Value.AddDays(Configurations.PRORROGA_DAYS);
-            inGracePeriod = today <= gracePeriodEnd;
-
-            if (isSubscriptionCancelled)
-            {
-                statusLabel = "CANCELADA";
-                statusColor = "red";
-                renewalMsg = "La membresía ha sido cancelada por el administrador.";
-                colorSubscription = "text-red-500";
-            }
-            else if (inGracePeriod)
-            {
-                statusLabel = "VENCIDO";
-                statusColor = "yellow"; 
-                colorSubscription = "text-orange-500";
-                renewalMsg = $"Renueva antes del {gracePeriodEnd:dd/MMM} para conservar su antigüedad.";
-            }
-            else
-            {
-                statusLabel = "VENCIDO";
-                statusColor = "red";
-                renewalMsg = "La membresía venció. Al renovar, la fecha de corte se reiniciará.";
-                colorSubscription = "text-red-500";
-            }
-        }
-        
-        var monthsSinceJoin = ((today.Year - member.CreatedAt.Year) * 12) + today.Month - member.CreatedAt.Month;
-
-        var loyaltyLabel = monthsSinceJoin switch
-        {
-            >= 7 => "Socio Fiel",
-            >= 3 => "Recurrente",
-            _ => "Nuevo Ingreso"
-        };
-
         var billingInfo = await billingService.GetMemberStatsAsync(member.IdMember, cancellationToken);
         var cultureMx = new CultureInfo("es-MX");
-        
         var datePart = cultureMx.TextInfo.ToTitleCase(member.CreatedAt.ToString("dd MMM yyyy", cultureMx));
-        var memberSinceLabel = $"{datePart}";
-        
-        var activeSub = activeSubscriptions
-            .OrderBy(s => s.StartDate)
-            .SingleOrDefault();
+        var activeSub = activeSubscriptions.OrderBy(s => s.StartDate).FirstOrDefault();
 
-        var nameMember = $"{member.FirstName} {member.LastName}";
-        logger.LogInformation("Query completed. Detail member obtained successfully. IdMember: {idMember} Name: {nameMember}", 
-            member.IdMember, 
-            nameMember);
+        logger.LogInformation("Query completed. Detail member obtained successfully. IdMember: {idMember}", member.IdMember);
         
         return Result<MemberDetailDto>.Success(new MemberDetailDto
         {
@@ -211,11 +129,11 @@ public class GetMemberDetailHandler(
             Initials = GetInitials(member.FirstName, member.LastName),
             
             IsDeleted = member.IsDeleted,
-            StatusLabel = statusLabel,
-            StatusColor = statusColor,
+            StatusLabel = displayInfoToFront.Label,
+            StatusColor = displayInfoToFront.Color,
             CanRenew = !member.IsDeleted, 
             
-            HasActiveMembership = !isExpired,
+            HasActiveMembership = !metrics.IsExpired,
             PlanName = planName,
             ActiveAddOns = addOnNames,
             
@@ -223,24 +141,24 @@ public class GetMemberDetailHandler(
             StartDate = chainStartDate,
             AbsoluteExpirationDate = absoluteEndDate,
             
-            RemainingDays = remainingDays,
-            TotalDays = totalDaysDuration,
-            ProgressPercentage =(int)progress,
+            RemainingDays = metrics.RemainingDays,
+            TotalDays = metrics.TotalDays,
+            ProgressPercentage = metrics.ProgressPercentage,
             
-            IsInGracePeriod = inGracePeriod,
-            GracePeriodEndDate = gracePeriodEnd,
-            RenewalMessage = renewalMsg,
+            IsInGracePeriod = metrics.IsInGracePeriod,
+            GracePeriodEndDate = metrics.GracePeriodEndDate,
+            RenewalMessage = displayInfoToFront.Msg,
             
-            MemberSinceLabel = memberSinceLabel,
+            MemberSinceLabel = datePart,
             TotalSpentLabel = billingInfo.TotalSpent.ToString("C", cultureMx),
             PaymentBehaviorLabel = billingInfo.PaymentBehaviorLabel,
             PaymentBehaviorColor = billingInfo.PaymentBehaviorColor,
-            LoyaltyLabel = loyaltyLabel,
+            LoyaltyLabel = metrics.LoyaltyLabel,
             
             CurrentSubscriptionId = activeSub?.IdSubscription,
-            HasActiveSubscription = hasSubscriptionActive,
+            HasActiveSubscription = metrics.HasActiveSubscription,
             IsSubscriptionCancelled = isSubscriptionCancelled,
-            ColorSubscription = colorSubscription
+            ColorSubscription = displayInfoToFront.TextColor,
         });
     }
     
