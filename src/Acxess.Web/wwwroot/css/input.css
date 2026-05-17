@@ -40,3 +40,43 @@ body { font-family: 'Inter', sans-serif; }
 }
 
 
+
+/* ==========================================================================
+   CUSTOM SCROLLBAR 
+   ========================================================================== */
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;  /* Vertical */
+    height: 6px; /* Horizontal */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1; 
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8; 
+}
+
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #475569;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b;
+}
+
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.dark .custom-scrollbar {
+    scrollbar-color: #475569 transparent;
+}
