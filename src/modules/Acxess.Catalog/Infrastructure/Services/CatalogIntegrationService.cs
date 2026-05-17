@@ -46,23 +46,18 @@ public class CatalogIntegrationService(CatalogModuleContext context) : ICatalogI
         return addOns;
     }
 
-    public async Task<Result<List<string>>> GetAddOnNamesAsync(List<int> addOnIds, bool includesInscription, CancellationToken ct = default)
+    public async Task<List<string>> GetAddOnNamesAsync(List<int> addOnIds, CancellationToken ct = default)
     {
-        
         var query = context.AddOns
             .AsNoTracking()
             .Where(a => addOnIds.Contains(a.IdAddOn));
-        
-        if (!includesInscription)
-        {
-            query = query.Where(a => a.AddOnKey != AddOnDefaults.Inscription.Key);
-        }
+       
+        query = query.Where(a => a.AddOnKey != AddOnDefaults.Inscription.Key);
         
         var addOnNames = await query
             .Select(a => a.Name)
             .ToListAsync(ct);
 
         return addOnNames;
-
     }
 }
