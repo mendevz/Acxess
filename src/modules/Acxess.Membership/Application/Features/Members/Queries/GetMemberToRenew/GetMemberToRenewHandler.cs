@@ -4,18 +4,17 @@ using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.ResultManager;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Acxess.Membership.Application.Features.Members.Queries.GetMemberToRenew;
 
-internal sealed class GetMemberToRenewHandler(MembershipModuleContext context)
-    : IRequestHandler<GetMemberToRenewQuery, Result<List<MemberResponse>>>
+internal sealed class GetMemberToRenewHandler(
+    MembershipModuleContext context,
+    ILogger<GetMemberToRenewHandler> logger) : IRequestHandler<GetMemberToRenewQuery, Result<List<MemberResponse>>>
 {
     public async Task<Result<List<MemberResponse>>> Handle(GetMemberToRenewQuery request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.SearchTerm))
-        {
-            return new List<MemberResponse>();
-        }
+        if (string.IsNullOrWhiteSpace(request.SearchTerm)) return new List<MemberResponse>();
         
         var query = context.Members.AsNoTracking();
         var today = DateTime.Now.Date;
@@ -36,7 +35,7 @@ internal sealed class GetMemberToRenewHandler(MembershipModuleContext context)
         var limitDate = today.AddDays(-gracePeriodDays);
 
         var members = await query
-            .Take(15)
+            .OrderBy(m => m.IdMember)
             .Select(m => new
             {
                 m.IdMember,
@@ -58,6 +57,7 @@ internal sealed class GetMemberToRenewHandler(MembershipModuleContext context)
                     })
                     .FirstOrDefault()
             })
+            .Take(15)
             .Select(x => new MemberResponse(
                 x.IdMember,
                 x.FirstName,
@@ -72,6 +72,8 @@ internal sealed class GetMemberToRenewHandler(MembershipModuleContext context)
                 x.PhotoUrl
             ))
             .ToListAsync(cancellationToken);
+        
+        logger.LogInformation("Query completed. Members to renew obtained. MembersId: {@MemberId}", members.Select(m => m.Id));
         return members;
     }
 }

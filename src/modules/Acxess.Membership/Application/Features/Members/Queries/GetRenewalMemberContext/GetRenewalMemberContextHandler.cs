@@ -1,81 +1,86 @@
+using Acxess.Membership.Domain.Errors;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.ResultManager;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Acxess.Membership.Application.Features.Members.Queries.GetRenewalMemberContext;
 
 public class GetRenewalMemberContextHandler(
-    MembershipModuleContext context): IRequestHandler<GetRenewalMemberContextQuery, Result<RenewalContextDto>>
+    MembershipModuleContext context,
+    ILogger<GetRenewalMemberContextHandler> logger): IRequestHandler<GetRenewalMemberContextQuery, Result<RenewalContextDto>>
 {
     public async Task<Result<RenewalContextDto>> Handle(GetRenewalMemberContextQuery request, CancellationToken cancellationToken)
     {
         var today = DateTime.Now.Date;
-
-        var requestingMember = await context.Members
+        
+        var memberContext = await context.Members
             .AsNoTracking()
-            .FirstOrDefaultAsync(m => m.IdMember == request.MemberId, cancellationToken);
-            
-        if (requestingMember is null) 
-            return Result<RenewalContextDto>.Failure(Error.NotFound("Member.NotFound", "Socio no encontrado"));
-            
-        // 1. OBTENEMOS TODAS LAS SUSCRIPCIONES DEL SOCIO PRINCIPAL (El que está renovando)
-        var sharedSubscriptionIds = await context.SubscriptionMembers
-            .AsNoTracking()
-            .Where(sm => sm.IdMember == request.MemberId)
-            .Select(sm => sm.IdSubscription)
-            .ToListAsync(cancellationToken);
-
-        var lastGroupSub = await context.SubscriptionMembers
-            .AsNoTracking()
-            .Where(sm => sm.IdMember == request.MemberId)
-            .OrderByDescending(sm => sm.Subscription.EndDate)
-            .Select(sm => new { sm.IdSubscription, sm.Subscription.IdSellingPlan }) 
+            .Where(m => m.IdMember == request.MemberId)
+            .Select(m => new
+            {
+                m.IdMember,
+                m.FirstName,
+                m.LastName,
+                LastGroupSub = m.SubscriptionMemberships
+                    .OrderByDescending(sm => sm.Subscription.EndDate)
+                    .Select(sm => new { sm.IdSubscription, sm.Subscription.IdSellingPlan })
+                    .FirstOrDefault()
+            })
             .FirstOrDefaultAsync(cancellationToken);
+        
+        if (memberContext is null) 
+            return Result<RenewalContextDto>.Failure(MemberError.NotFound);
             
         List<SuggestedBeneficiaryDto> suggestions = [];
             
-        if (lastGroupSub != null)
+        if (memberContext.LastGroupSub != null)
         {
             var previousMembersRaw = await context.SubscriptionMembers
                 .AsNoTracking()
-                .Where(sm => sm.IdSubscription == lastGroupSub.IdSubscription && sm.IdMember != request.MemberId)
+                .Where(sm => sm.IdSubscription == memberContext.LastGroupSub.IdSubscription && sm.IdMember != request.MemberId)
                 .Select(sm => new 
                 {
                     sm.IdMember,
                     sm.Member.FirstName,
                     sm.Member.LastName,
-                    Phone = sm.Member.Phone ?? "",
-                    Email = sm.Member.Email ?? "",
-                    
-                    // 2. LA MAGIA: Buscamos si tiene una suscripción activa que NO esté en la lista compartida
-                    ConflictingSub = sm.Member.SubscriptionMemberships
-                        .Where(subLink => 
+                    Phone = sm.Member.Phone ?? string.Empty,
+                    Email = sm.Member.Email ?? string.Empty,
+                    HasConflictingSub = sm.Member.SubscriptionMemberships
+                        .Any(subLink => 
                             subLink.Subscription.IsActive &&
-                            subLink.Subscription.EndDate >= today && 
-                            !sharedSubscriptionIds.Contains(subLink.IdSubscription) // <- REGLA CORREGIDA
-                        )
-                        .Select(subLink => subLink.Subscription.EndDate)
-                        .OrderByDescending(d => d)
-                        .FirstOrDefault() 
+                            subLink.Subscription.EndDate >= today && subLink.Subscription.SubscriptionMembers.All(peer => peer.IdMember != request.MemberId))
                 })
                 .ToListAsync(cancellationToken);
 
-            suggestions.AddRange(from item in previousMembersRaw
-                let hasConflict = item.ConflictingSub != default
-                let isEligible = !hasConflict
-                let reason = isEligible
-                    ? "Disponible"
-                    : $"Tiene otro plan activo "
-                select new SuggestedBeneficiaryDto(item.IdMember, item.FirstName, item.LastName, item.Phone, item.Email, isEligible, reason));
+            
+            suggestions.AddRange(previousMembersRaw.Select(item => new SuggestedBeneficiaryDto(
+                item.IdMember, 
+                item.FirstName, 
+                item.LastName, 
+                item.Phone, 
+                item.Email, 
+                !item.HasConflictingSub, 
+                // !item.HasConflictingSub ? "AVAILABLE" : "HAS_ACTIVE_PLAN" // Código semántico, no UI
+                !item.HasConflictingSub ? "Disponible" : "Tiene otro plan activo" 
+            )));
         }
+        
+        logger.LogInformation("Member to renew context retrieved. {@MemberToRenew}", new
+        {
+            MemberId = memberContext.IdMember,
+            FullName = $"{memberContext.FirstName} {memberContext.LastName}",
+            LastPlanId =  memberContext.LastGroupSub?.IdSubscription,
+            LastBeneficiaries = suggestions.Count
+        });
         
         return Result<RenewalContextDto>.Success(new RenewalContextDto
         {
-            MemberId = requestingMember.IdMember,
-            FullName = $"{requestingMember.FirstName} {requestingMember.LastName}",
-            LastSubscriptionId = lastGroupSub?.IdSubscription,
-            LastPlanName = lastGroupSub != null ? $"Plan anterior ({lastGroupSub.IdSellingPlan})" : null,
+            MemberId = memberContext.IdMember,
+            FullName = $"{memberContext.FirstName} {memberContext.LastName}",
+            LastSubscriptionId = memberContext.LastGroupSub?.IdSubscription,
+            LastPlanName = memberContext.LastGroupSub != null ? $"Plan anterior ({memberContext.LastGroupSub.IdSellingPlan})" : null,
             SuggestedBeneficiaries = suggestions
         });
                 
