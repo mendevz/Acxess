@@ -4,13 +4,12 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @{
-    var appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "1.0.0-dev";
-    appVersion = appVersion.Split('+')[0];
+    var appVersion = Assembly
+        .GetExecutingAssembly()
+        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+        ?.InformationalVersion ?? "1.0.0-dev";
     
-    var currentTenantId = User.FindFirst("IdTenant")?.Value;
-    var currentTenantName = User.FindFirst("TenantName")?.Value ?? "N/A";
-    var availableTenantsJson = User.FindFirst("AvailableTenants")?.Value ?? "[]";
-    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+    appVersion = appVersion.Split('+')[0];
     
     string GetNavLinkClass(string path, bool exact = false)
     {
@@ -46,42 +45,6 @@
     <script src="~/lib/htmx.min.js" asp-append-version="true"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <meta name="htmx-config" content='{"includeAspNetAntiforgeryToken": true}' />
-
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        
-        /* Tooltip personalizado: Oculto en móviles, visible en PC */
-        .tooltip { display: none; }
-        @@media (min-width: 768px) {
-            .tooltip {
-                display: block; visibility: hidden; position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
-                background-color: #1e293b; color: white; padding: 4px 8px; border-radius: 4px;
-                font-size: 12px; white-space: nowrap; z-index: 50; margin-left: 10px; opacity: 0; transition: opacity 0.2s;
-                box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            }
-            .tooltip::before {
-                content: ""; position: absolute; top: 50%; right: 100%; margin-top: -5px;
-                border-width: 5px; border-style: solid; border-color: transparent #1e293b transparent transparent;
-            }
-            .menu-item:hover .tooltip { visibility: visible; opacity: 1; }
-        }
-        
-        /* Módulo activo: Línea arriba en móvil, línea a la izquierda en PC */
-        .active-module {
-            background-color: rgba(51, 65, 85, 0.3);
-            color: #60a5fa;
-            border-top: 3px solid #3b82f6; /* Línea arriba en móvil */
-        }
-        .inactive-module {
-            border-top: 3px solid transparent;
-            color: #94a3b8;
-        }
-
-        @@media (min-width: 768px) {
-        .active-module { border-top: none; border-left: 4px solid #3b82f6; }
-        .inactive-module { border-top: none; border-left: 4px solid transparent; }
-        }
-    </style>
     
     <script>
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -131,55 +94,7 @@
                 <svg x-show="!darkMode" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
             </button>
 
-            <div x-data='{ open: false, tenants: @Html.Raw(availableTenantsJson) }' 
-                 class="relative" 
-                 @@click.away="open = false">
-                
-                <button @@click="open = !open" 
-                        type="button" 
-                        class="menu-item group relative w-8 h-8 md:w-10 md:h-10 rounded-full border border-slate-700 flex items-center justify-center text-blue-500 font-bold text-xs bg-slate-800 hover:ring-2 hover:ring-blue-500 transition-all cursor-pointer">
-                    <span>@(currentTenantName.Substring(0,1).ToUpper())</span>
-                    <span class="tooltip">@currentTenantName</span>
-                </button>
-
-                <div x-show="open"
-                     x-transition:enter="transition ease-out duration-100"
-                     x-transition:enter-start="transform opacity-0 scale-95"
-                     x-transition:enter-end="transform opacity-100 scale-100"
-                     x-transition:leave="transition ease-in duration-75"
-                     x-transition:leave-start="transform opacity-100 scale-100"
-                     x-transition:leave-end="transform opacity-0 scale-95"
-                     class="absolute z-[60] w-56 rounded-xl shadow-2xl bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 border border-gray-200 dark:border-slate-700 top-full right-0 mt-2 md:top-auto md:bottom-0 md:right-auto md:left-full md:ml-4 md:mt-0"
-                     style="display: none;"
-                     x-cloak>
-                    
-                    <div class="py-2 px-2" role="menu">
-                        <div class="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-slate-700 mb-2">
-                            Cambiar Sucursal
-                        </div>
-                        
-                        <form method="post" asp-page="/Shared/ChangeTenant" id="tenant-form" class="space-y-1">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="returnUrl" value="@currentUrl" />
-                            <input type="hidden" name="newTenantId" id="newTenantId" value="" />
-                            
-                            <template x-for="tenant in tenants" :key="tenant.id">
-                                <button type="button" 
-                                        @@click="document.getElementById('newTenantId').value = tenant.id; document.getElementById('tenant-form').submit();"
-                                        :class="tenant.id.toString() === '@currentTenantId' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'"
-                                        class="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex items-center justify-between group">
-                                    
-                                    <span x-text="tenant.name"></span>
-                                    
-                                    <svg x-show="tenant.id.toString() === '@currentTenantId'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                    </svg>
-                                </button>
-                            </template>
-                        </form>
-                    </div>
-                </div>
-            </div>
+            <partial name="Shared/_TenantSwitcher" />
 
             <form asp-area="" asp-page="/Identity/LogOut" method="post" class="flex items-center">
                 <button type="submit" class="text-slate-500 hover:text-red-500 transition-colors">
