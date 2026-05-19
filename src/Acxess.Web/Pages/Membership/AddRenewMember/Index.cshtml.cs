@@ -115,7 +115,7 @@ public class IndexModel(
         
         return result.IsFailure 
             ? Feedback(errorMessage: result.Error.Description)
-            : Feedback(successMessage: result.Value, targetUrl: Url.Page("/Membership/AddRenewMember/Index"));
+            : Feedback(successMessage: result.Value);
     }
     
     private async Task<IActionResult> ProcessNewMemberAsync(int idTenant, int paymentMethodId, int userNumber, List<NewMemberDto> beneficiaries)

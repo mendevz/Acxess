@@ -12,11 +12,23 @@ public class GetMemberHistoryHandler(
 {
     public async Task<Result<MemberHistoryDto>> Handle(GetMemberHistoryQuery request, CancellationToken cancellationToken)
     {
+        
+        var today = DateTime.Now.Date;
+        var takeCount = request.ShowAll ? int.MaxValue : 5;
+        
         var transactions = await billingService.GetMemberTransactionsAsync(request.IdMember, cancellationToken);
 
+        var subscriptionDates = await context.Subscriptions
+            .AsNoTracking()
+            .Where(s => s.SubscriptionMembers.Any(sm => sm.IdMember == request.IdMember))
+            .Select(s => new { s.EndDate, s.StartDate, s.CancelledAt, s.CreatedAt,s.CancellationReason })
+            .OrderByDescending(s => s.CreatedAt)
+            .Take(takeCount)
+            .ToListAsync(cancellationToken);
+        
         var timeline = transactions.Select(tx => new TimelineItemDto
         {
-            Title = "Pago Recibido", // O podrías poner "Renovación" si detectas que es un plan
+            Title = "Pago Recibido", 
             Date = tx.Date,
             Amount = tx.TotalAmount,
             Type = "Payment",
@@ -26,11 +38,7 @@ public class GetMemberHistoryHandler(
         })
         .ToList();
 
-        var subscriptionDates = await context.Subscriptions
-            .AsNoTracking()
-            .Where(s => s.SubscriptionMembers.Any(sm => sm.IdMember == request.IdMember))
-            .Select(s => new { s.EndDate, s.StartDate, s.CancelledAt, s.CreatedAt,s.CancellationReason })
-            .ToListAsync(cancellationToken);
+       
         
         foreach (var sub in subscriptionDates)
         {
@@ -39,9 +47,9 @@ public class GetMemberHistoryHandler(
                 Title = "Membresía Activada", 
                 Date = sub.CreatedAt,
                 Amount = null,
-                Type = "SubscriptionStart", // Nuevo Tipo
+                Type = "SubscriptionStart", 
                 ColorClass = "blue",
-                Details = [] // O el nombre del plan si lo tienes
+                Details = [] 
             });
             if (sub.CancelledAt.HasValue)
             {
@@ -69,11 +77,10 @@ public class GetMemberHistoryHandler(
             }
         }
         
-        var sortedTimeline = timeline.OrderByDescending(x => x.Date).ToList();
-        
-        var finalItems = request.ShowAll 
-            ? sortedTimeline 
-            : sortedTimeline.Take(5).ToList();
+        var finalItems = timeline
+            .OrderByDescending(x => x.Date)
+            .Take(takeCount)
+            .ToList();
         
         return Result<MemberHistoryDto>.Success(new MemberHistoryDto { MemberId = request.IdMember, Items = finalItems });
     }

@@ -1,0 +1,56 @@
+@{
+    var currentTenantId = User.FindFirst("IdTenant")?.Value;
+    var currentTenantName = User.FindFirst("TenantName")?.Value ?? "N/A";
+    var availableTenantsJson = User.FindFirst("AvailableTenants")?.Value ?? "[]";
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div x-data='{ open: false, tenants: @Html.Raw(availableTenantsJson) }' 
+     class="relative" 
+     @@click.away="open = false">
+    
+    <button @@click="open = !open" 
+            type="button" 
+            class="menu-item group relative w-8 h-8 md:w-10 md:h-10 rounded-full border border-slate-700 flex items-center justify-center text-blue-500 font-bold text-xs bg-slate-800 hover:ring-2 hover:ring-blue-500 transition-all cursor-pointer">
+        <span>@(currentTenantName.Substring(0,1).ToUpper())</span>
+        <span class="tooltip">@currentTenantName</span>
+    </button>
+
+    <div x-show="open"
+         x-transition:enter="transition ease-out duration-100"
+         x-transition:enter-start="transform opacity-0 scale-95"
+         x-transition:enter-end="transform opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-75"
+         x-transition:leave-start="transform opacity-100 scale-100"
+         x-transition:leave-end="transform opacity-0 scale-95"
+         class="absolute z-[60] w-56 rounded-xl shadow-2xl bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 border border-gray-200 dark:border-slate-700 top-full right-0 mt-2 md:top-auto md:bottom-0 md:right-auto md:left-full md:ml-4 md:mt-0"
+         style="display: none;"
+         x-cloak>
+        
+        <div class="py-2 px-2" role="menu">
+            <div class="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-slate-700 mb-2">
+                Cambiar Sucursal
+            </div>
+            
+            <form method="post" asp-page="/Shared/ChangeTenant" id="tenant-form" class="space-y-1">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@currentUrl" />
+                <input type="hidden" name="newTenantId" id="newTenantId" value="" />
+                
+                <template x-for="tenant in tenants" :key="tenant.id">
+                    <button type="button" 
+                            @@click="document.getElementById('newTenantId').value = tenant.id; document.getElementById('tenant-form').submit();"
+                            :class="tenant.id.toString() === '@currentTenantId' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'"
+                            class="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex items-center justify-between group">
+                        
+                        <span x-text="tenant.name"></span>
+                        
+                        <svg x-show="tenant.id.toString() === '@currentTenantId'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </button>
+                </template>
+            </form>
+        </div>
+    </div>
+</div>

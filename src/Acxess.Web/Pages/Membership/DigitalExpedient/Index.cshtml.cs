@@ -12,6 +12,7 @@ using Acxess.Membership.Application.Features.Members.Queries.GetMemberDetail;
 using Acxess.Membership.Application.Features.Members.Queries.GetMemberHistory;
 using Acxess.Membership.Application.Features.Members.Queries.GetMembers;
 using Acxess.Membership.Application.Features.Subscriptions.Commands.CancelSubscription;
+using Acxess.Shared.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -42,15 +43,19 @@ public class IndexModel(IMediator mediator) : PageModel
     public string? SearchTerm { get; set; } = string.Empty;
     
     [BindProperty(SupportsGet = true)]
+    public int CurrentPage { get; set; } = 1;
+    
+    [BindProperty(SupportsGet = true)]
     public string? StatusFilter { get; set; } = "all";
     
     public MembersResponse? MembersResponse { get; set; }
     
     public async Task OnGet()
     {
+        CurrentPage = 1;
         if (!string.IsNullOrWhiteSpace(SearchTerm))
         {
-            var membersResult = await mediator.Send(new GetMembersQuery(SearchTerm));
+            var membersResult = await mediator.Send(new GetMembersQuery(SearchTerm, CurrentPage));
             if (membersResult.IsFailure || !membersResult.Value.Members.Any()) return; 
             
             MembersResponse = membersResult.Value;
@@ -58,14 +63,25 @@ public class IndexModel(IMediator mediator) : PageModel
         }
         else if (MemberId is > 0)
         {
-            var membersResult = await mediator.Send(new GetMembersQuery("", "all"));
+            var membersResult = await mediator.Send(
+                new GetMembersQuery(
+                    string.Empty, 
+                    CurrentPage,
+                    PaginationValues.PageSize,
+                    "all"));
+            
             if (membersResult.IsSuccess) MembersResponse = membersResult.Value;
             
             await LoadMemberDetailAndHistory(MemberId.Value);
         }
         else
         {
-            var membersResult = await mediator.Send(new GetMembersQuery("", "all"));
+            var membersResult = await mediator.Send(
+                new GetMembersQuery(
+                    string.Empty, 
+                    CurrentPage,
+                    PaginationValues.PageSize,
+                    "all"));
             if (membersResult.IsSuccess) MembersResponse = membersResult.Value;
         }
     }
@@ -87,14 +103,18 @@ public class IndexModel(IMediator mediator) : PageModel
 
     public async Task<IActionResult> OnGetMembersAsync()
     {
-        var queryMembers = new GetMembersQuery(SearchTerm, StatusFilter??"all");
+        var queryMembers = new GetMembersQuery(
+            SearchTerm, 
+            CurrentPage,
+            PaginationValues.PageSize,
+            StatusFilter??"all");
+        
         var result = await mediator.Send(queryMembers);
 
         if (result.IsFailure) return Partial("_ErrorState", result.Error.Description);
         
         MembersResponse = result.Value;
         return Partial("_MembersList", this);
-
     }
     
     public async Task<IActionResult> OnGetMemberDetailAsync(int id)

@@ -5,6 +5,7 @@ using Acxess.Shared.ResultManager;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using IResult = Acxess.Shared.ResultManager.IResult;
 
 namespace Acxess.Infrastructure.BehaviorsMediatR;
 
@@ -31,7 +32,7 @@ public class LoggingBehavior<TRequest, TResponse>(
 
         using (logger.BeginScope(logProperties))
         {
-            logger.LogInformation("Executing Command/Query: {RequestName}", requestName);
+            logger.LogInformation("Executing Command/Query: {RequestName} with Payload: {@Request}", requestName, request);
         
             var timer = Stopwatch.StartNew();
             
@@ -41,24 +42,17 @@ public class LoggingBehavior<TRequest, TResponse>(
             
                 timer.Stop();
             
-                if (typeof(Result).IsAssignableFrom(typeof(TResponse)))
+                if (response is IResult { IsFailure: true } result)
                 {
-                    var isFailureProperty = typeof(TResponse).GetProperty("IsFailure") ?? typeof(Result).GetProperty("IsFailure");
-                    var isFailure = (bool)(isFailureProperty?.GetValue(response) ?? false);
 
-                    if (isFailure)
-                    {
-                        var errorProperty = typeof(TResponse).GetProperty("Error") ?? typeof(Result).GetProperty("Error");
-                        var error = errorProperty?.GetValue(response);
-
-                        logger.LogWarning("Command/Query rejected by Domain: {RequestName} in {ElapsedMilliseconds} ms. Details: {@Error}", 
-                            requestName, timer.ElapsedMilliseconds, error);
-                        
-                        return response;
-                    }
+                    logger.LogWarning(
+                        "Command/Query rejected by Domain: {RequestName} in {ElapsedMilliseconds} ms. Details: {@Error}", 
+                        requestName, timer.ElapsedMilliseconds, result.Error);
+                    
+                    return response;
                 }
             
-                logger.LogInformation("Completed: {RequestName} in {ElapsedMilliseconds} ms", 
+                logger.LogInformation("Command/Query Completed: {RequestName} in {ElapsedMilliseconds} ms", 
                     requestName, timer.ElapsedMilliseconds);
                 
                 return response;
@@ -69,14 +63,8 @@ public class LoggingBehavior<TRequest, TResponse>(
             
                 logger.LogError(ex, "System Exception in {RequestName} after {ElapsedMilliseconds} ms", 
                     requestName, timer.ElapsedMilliseconds);
-                
                 throw; 
             }
-            
         }
-
- 
-        
-        
     }
 }

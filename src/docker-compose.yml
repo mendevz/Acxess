@@ -44,6 +44,23 @@ services:
     networks:
       - acxess-network
     profiles: ["tools", "app"]
+    
+
+  seq:
+    image: datalust/seq:latest
+    container_name: seq_acxess
+    restart: unless-stopped
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORD=${SYSTEM_USER_PASSWORD}
+    ports:
+      - "8081:80"
+      - "5341:5341"
+    volumes:
+      - seq_data:/data
+    networks:
+      - acxess-network
+    profiles: ["tools", "app"]
 
   # ==============================
   #  App Web
@@ -77,6 +94,7 @@ services:
 
 volumes:
   sql_data:
+  seq_data:
 
 networks:
   acxess-network:

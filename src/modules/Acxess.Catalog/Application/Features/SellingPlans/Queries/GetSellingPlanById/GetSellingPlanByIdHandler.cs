@@ -15,21 +15,39 @@ public class GetSellingPlanByIdHandler(CatalogModuleContext context ) : IRequest
         var query = context.SellingPlans.AsNoTracking()
             .Where(p => p.IdSellingPlan == request.IdSellingPlan);
 
-        var item = await query
-            .Select(p => new SellingPlanDto(
-                p.IdSellingPlan,
-                p.Name,
-                p.TotalMembers,
-                p.DurationInValue,
-                p.DurationUnit,
-                p.Price,
-                p.IsActive,
-                p.AccessTiers.Select(link => link.IdAccessTier).ToList(),
-                string.Join(", ", p.AccessTiers.Select(link => link.AccessTier.Name)), // concat access tiers
-                $"{p.DurationInValue} {p.DurationUnit.ToFriendlyName(p.DurationInValue)}" // format duration
-            ))
-            .FirstOrDefaultAsync(cancellationToken);
+        var planData = await context.SellingPlans.AsNoTracking()
+        .Where(p => p.IdSellingPlan == request.IdSellingPlan)
+        .Select(p => new
+        {
+            p.IdSellingPlan,
+            p.Name,
+            p.TotalMembers,
+            p.DurationInValue,
+            p.DurationUnit,
+            p.Price,
+            p.IsActive,
+            Tiers = p.AccessTiers.Select(link => new { link.IdAccessTier, link.AccessTier.Name }).ToList()
+        })
+        .FirstOrDefaultAsync(cancellationToken);
 
-        return item ?? Result<SellingPlanDto>.Failure(SellingPlansErrors.NotFound);
+        if (planData is null)
+        {
+            return Result<SellingPlanDto>.Failure(SellingPlansErrors.NotFound);
+        }
+
+        var dto = new SellingPlanDto(
+            planData.IdSellingPlan,
+            planData.Name,
+            planData.TotalMembers,
+            planData.DurationInValue,
+            planData.DurationUnit,
+            planData.Price,
+            planData.IsActive,
+            [.. planData.Tiers.Select(t => t.IdAccessTier)],
+            string.Join(", ", planData.Tiers.Select(t => t.Name)),
+            $"{planData.DurationInValue} {planData.DurationUnit.ToFriendlyName(planData.DurationInValue)}"
+        );
+
+        return dto;
     }
 }

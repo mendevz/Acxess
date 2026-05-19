@@ -2,16 +2,20 @@ using System.Globalization;
 using Acxess.Billing.Infrastructure.Persistence;
 using Acxess.Shared.IntegrationServices.Billing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Acxess.Billing.Infrastructure.Services;
 
-public class BillingIntegrationService(BillingModuleContext context) : IBillingIntegrationService
+public class BillingIntegrationService(
+    BillingModuleContext context,
+    ILogger<BillingIntegrationService> logger) : IBillingIntegrationService
 {
     public async Task<MemberFinancialStatsDto> GetMemberStatsAsync(int memberId, CancellationToken cancellationToken = default)
     {
         var transactions = await context.MemberTransactions
             .AsNoTracking()
             .Where(t => t.IdMember == memberId)
+            .OrderBy(t => t.TransactionDate)
             .Select(t => new { t.Total, t.TransactionDate })
             .ToListAsync(cancellationToken);
 
@@ -38,17 +42,11 @@ public class BillingIntegrationService(BillingModuleContext context) : IBillingI
         }
 
         if (gaps.Count <= 0) return new MemberFinancialStatsDto(totalSpent, avgTicket, totalTx, behavior, color);
-        
-        var avgGap = gaps.Average();
-            
-        var recentGaps = gaps.TakeLast(3).ToList();
-        var latePayments = recentGaps.Count(g => g > 35); 
+        var latePayments = gaps.TakeLast(3).Count(g => g > 35);
 
         switch (latePayments)
         {
             case 0:
-                behavior = "Puntual";
-                color = "green";
                 break;
             case 1:
                 behavior = "Regular";
@@ -60,6 +58,7 @@ public class BillingIntegrationService(BillingModuleContext context) : IBillingI
                 break;
         }
 
+        logger.LogInformation("Stats billing member obtained. MemberId: {MemberId}", memberId);
         return new MemberFinancialStatsDto(totalSpent, avgTicket, totalTx, behavior, color);
     }
 

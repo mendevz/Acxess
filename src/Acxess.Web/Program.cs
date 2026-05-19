@@ -11,10 +11,9 @@ using Acxess.Marketing;
 using Acxess.Membership.Application.Services;
 using Acxess.Shared.IntegrationServices.Billing;
 using Acxess.Shared.IntegrationServices.Catalog;
+using Acxess.Web;
 using Acxess.Web.Filters;
-using OpenTelemetry.Exporter;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+using Destructurama;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -29,49 +28,14 @@ try
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
         .Enrich.FromLogContext()
+        .Destructure.UsingAttributes()
         .MinimumLevel.Information()
         .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
         .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
         .MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information)
     );
     
-    builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource => resource
-        .AddService(serviceName: "AcxessWeb", serviceVersion: "1.0.0"))
-        .WithTracing(tracing =>
-        {
-            tracing
-                .AddAspNetCoreInstrumentation(options =>
-                {
-                    options.Filter = context => 
-                    {
-                        var path = context.Request.Path.Value?.ToLower();
-                        return path != null && !path.Contains(".") && path != "/" && !path.Contains("health");
-                    };
-                })
-                .AddEntityFrameworkCoreInstrumentation(options => 
-                {
-                    options.SetDbStatementForText = true; 
-                })
-                .AddSource("Acxess.Application")
-                .AddOtlpExporter(options =>
-                {
-                    options.Protocol = OtlpExportProtocol.HttpProtobuf;
-                    var otelEndpoint = builder.Configuration["OpenTelemetry:Endpoint"];
-                    var otelToken = builder.Configuration["OpenTelemetry:Token"];
-
-                    if (!string.IsNullOrWhiteSpace(otelEndpoint))
-                    {
-                        options.Endpoint = new Uri(otelEndpoint);
-                    }
-                    if (!string.IsNullOrWhiteSpace(otelToken))
-                    {
-                        options.Headers = $"Authorization=Bearer {otelToken}";
-                    }
-                });
-        });
-    
-    
+    builder.Services.AddAcxessTelemetry(builder.Configuration);
 
     builder.Services
         .AddExceptionHandler<GlobalExceptionHandler>()
@@ -113,39 +77,7 @@ try
     builder.Services.AddScoped<IBillingIntegrationService, BillingIntegrationService>();
 
     var app = builder.Build();
-
-    app.UseSerilogRequestLogging(options =>
-    {
-        options.GetLevel = (httpContext, elapsed, ex) =>
-        {
-            if (ex != null || httpContext.Response.StatusCode > 499)
-                return Serilog.Events.LogEventLevel.Error;
-            
-            if (httpContext.Response.StatusCode == 404)
-                return Serilog.Events.LogEventLevel.Debug;
-
-            var path = httpContext.Request.Path.Value?.ToLower();
-
-            if (path != null && (
-                    path.EndsWith(".css") || 
-                    path.EndsWith(".js") || 
-                    path.EndsWith(".png") || 
-                    path.EndsWith(".jpg") ||     
-                    path.EndsWith(".jpeg") ||    
-                    path.EndsWith(".ico") || 
-                    path.EndsWith(".map") || 
-                    path.EndsWith(".json") ||    
-                    path.StartsWith("/uploads/") || 
-                    (path.StartsWith("/identity/login") && httpContext.Request.Method == "GET") ||
-                    path == "/sw.js") || 
-                    (path == "/" && httpContext.Response.StatusCode < 400))
-            {
-                return Serilog.Events.LogEventLevel.Debug; 
-            }
-            return Serilog.Events.LogEventLevel.Information;
-        };
-    });
-
+    
     if (args.Contains("--migrate-only"))
     {
         Log.Information("--> Starting MIGRATION mode...");
@@ -153,7 +85,6 @@ try
         Log.Information("--> Migration completed. Closing process.");
         return;
     }
-
     if (!app.Environment.IsDevelopment())
     {
         app.UseExceptionHandler("/Error");
@@ -165,22 +96,37 @@ try
     }
 
     app.UseHttpsRedirection();
+    app.UseStaticFiles();
     app.UseRouting();
     
+    app.UseSerilogRequestLogging(options =>
+    {
+        options.GetLevel = (httpContext, elapsed, ex) =>
+        {
+            if (ex != null || httpContext.Response.StatusCode > 499) return Serilog.Events.LogEventLevel.Error;
+            if (httpContext.Response.StatusCode == 404) return Serilog.Events.LogEventLevel.Debug;
+            
+            var path = httpContext.Request.Path.Value?.ToLower();
+            if (path == "/" || (path?.StartsWith("/identity/login") == true && httpContext.Request.Method == "GET"))
+            {
+                return Serilog.Events.LogEventLevel.Debug; 
+            }
+            return Serilog.Events.LogEventLevel.Information;
+        };
+    });
+    
+    app.UseAuthentication();
+    app.UseAuthorization();
+    
+    app.MapRazorPages();
+
     app.MapPost("/api/membership/subscriptions/check-expiration", async (ISubscriptionService service) =>
     {
         await service.DeactivateExpiredSubscriptionsAsync(CancellationToken.None);
         return Results.Ok(new { message = "Expiration process executed manually." });
     })
     .WithTags("Maintenance");
-
-    app.UseAuthentication();
-    app.UseAuthorization();
-
-    app.UseStaticFiles();
-
-    app.MapRazorPages();
-
+    
     app.Run();
 }
 catch (Exception ex) when (ex is not HostAbortedException) 

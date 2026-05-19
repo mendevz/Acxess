@@ -34,10 +34,10 @@
                            name="SearchTerm" value="@Model.SearchTerm"
                            placeholder="Buscar por nombre o ID" 
                            hx-get="@Url.Page("Index", pageHandler: "Members")"
-                           hx-trigger="load, keyup changed delay:500ms, reloadMembersList from:body"
+                           hx-trigger="keyup changed delay:500ms, reloadMembersList from:body"
                            hx-target="#members-list"
                            hx-include="#statusFilterHidden"
-                           x-swap="innerHTML"
+                           hx-swap="innerHTML"
                            @@focus="$el.select()"
                            class="bg-transparent border-none outline-none text-sm text-gray-700 dark:text-white w-full placeholder-gray-400">
                 </div>

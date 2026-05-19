@@ -1,65 +1,64 @@
 using Acxess.Membership.Infrastructure.Persistence;
+using Acxess.Shared.Constants;
 using Acxess.Shared.ResultManager;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Acxess.Membership.Application.Features.Members.Queries.GetMembers;
 
 public class GetMembersHandler(
-    MembershipModuleContext context) : IRequestHandler<GetMembersQuery, Result<MembersResponse>>
+    MembershipModuleContext context,
+    ILogger<GetMembersHandler> logger) : IRequestHandler<GetMembersQuery, Result<MembersResponse>>
 {
     public async Task<Result<MembersResponse>> Handle(GetMembersQuery request, CancellationToken cancellationToken)
     {
-        var baseQuery = context.Members.AsNoTracking();
-
-        // 1. Aplicar búsqueda por texto (Aplica a TODOS los estados)
-        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        var searchTerm = request.SearchTerm?.Trim() ?? string.Empty;
+        var now = DateTime.Now;
+        var pageSize = request.PageSize > 0 ? request.PageSize : PaginationValues.PageSize;
+        var baseGetMembersQuery = context.Members.AsNoTracking();
+        
+        if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            var term = request.SearchTerm.Trim();
-            if (int.TryParse(term, out var id))
-            {
-                baseQuery = baseQuery.Where(m => m.IdMember == id);
-            }
+            if (int.TryParse(searchTerm, out var id))
+                baseGetMembersQuery = baseGetMembersQuery.Where(m => m.IdMember == id);
             else
             {
-                baseQuery = baseQuery.Where(m =>
-                    m.FirstName.Contains(term) ||
-                    m.LastName.Contains(term));
+                var searchTerms = searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                baseGetMembersQuery = searchTerms.Aggregate(baseGetMembersQuery, (current, term) => current.Where(m => m.FirstName.Contains(term) || m.LastName.Contains(term)));
             }
+                
         }
-
-        var now = DateTime.Now;
-
-        // 2. Calcular contadores GLOBALES (basados en la búsqueda, si la hay)
-        var totalCount = await baseQuery.CountAsync(cancellationToken);
         
-        var deletedCount = await baseQuery.CountAsync(m => m.IsDeleted, cancellationToken);
-        
-        // No eliminados
-        var activeBase = baseQuery.Where(m => !m.IsDeleted);
+        var statsMembers = await  baseGetMembersQuery
+            .GroupBy(_ => 1)
+            .Select(m => new
+            {
+                TotalMembers = m.Count(),
+                DeletedMembers = m.Count(member => member.IsDeleted),
+                ActiveMembers = m.Count(member => 
+                    !member.IsDeleted && 
+                    member.SubscriptionMemberships.Any(sm => 
+                        sm.Subscription.IsActive && sm.Subscription.EndDate >= now))
+            }).SingleOrDefaultAsync(cancellationToken)?? new { TotalMembers = 0, DeletedMembers = 0, ActiveMembers = 0 };
 
-        // Tienen suscripción activa que vence en el futuro o hoy
-        var activeCount = await activeBase.CountAsync(m => 
-            m.SubscriptionMemberships.Any(sm => sm.Subscription.EndDate >= now && sm.Subscription.IsActive), 
-            cancellationToken);
+        var expiredMembers = (statsMembers.TotalMembers - statsMembers.DeletedMembers) - statsMembers.ActiveMembers;
 
-        // Vencidos (No eliminados y que NO cumplen la condición de activos)
-        // Por matemáticas: expired = (Total - eliminados) - activos
-        var expiredCount = (totalCount - deletedCount) - activeCount;
-
-        // 3. Aplicar Filtro de Estado para la LISTA a devolver
         var query = request.StatusFilter?.ToLower() switch
         {
-            "active" => activeBase.Where(m => m.SubscriptionMemberships.Any(sm => sm.Subscription.EndDate >= now && sm.Subscription.IsActive)),
-            "expired" => activeBase.Where(m => !m.SubscriptionMemberships.Any(sm => sm.Subscription.EndDate >= now && sm.Subscription.IsActive)),
-            "deleted" => baseQuery.Where(m => m.IsDeleted),
-            _ => activeBase // "all" o default: mostrar no eliminados
+            "active" => baseGetMembersQuery.Where(m => !m.IsDeleted && m.SubscriptionMemberships.Any(sm => sm.Subscription.EndDate >= now && sm.Subscription.IsActive)),
+            "expired" => baseGetMembersQuery.Where(m => !m.IsDeleted && !m.SubscriptionMemberships.Any(sm => sm.Subscription.EndDate >= now && sm.Subscription.IsActive)),
+            "deleted" => baseGetMembersQuery.Where(m => m.IsDeleted),
+            _ => baseGetMembersQuery.Where(m => !m.IsDeleted)
         };
+        
 
-        // 4. Obtener resultados de la lista filtrada
+        var skip = (request.PageNumber - 1) * pageSize;
+
         var results = await query
             .OrderByDescending(m => m.UpdatedAt)
-            // .Take(50) // ¡Te recomiendo MUCHO paginar esto o limitarlo en el futuro!
+            .Skip(skip)
+            .Take(pageSize)
             .Select(m => new
             {
                 m.IdMember,
@@ -84,14 +83,18 @@ public class GetMembersHandler(
             m.Phone ?? string.Empty,
             m.PhotoUrl
         )).ToList();
+        
+        logger.LogInformation(
+            "Query completed. Returns {Count}  out of a total {Total}", 
+            memberItems.Count, statsMembers.TotalMembers);
 
         return new MembersResponse(
-            totalCount, 
+            statsMembers.TotalMembers, 
             memberItems.Count, 
             memberItems,
-            activeCount,
-            expiredCount,
-            deletedCount
+            statsMembers.ActiveMembers,
+            expiredMembers,
+            statsMembers.DeletedMembers
         );
     }
     
