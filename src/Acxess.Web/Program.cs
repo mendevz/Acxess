@@ -138,3 +138,5 @@ finally
     Log.Information("Shutting down Acxess safely...");
     Log.CloseAndFlush(); 
 }
+
+public partial class Program { }
