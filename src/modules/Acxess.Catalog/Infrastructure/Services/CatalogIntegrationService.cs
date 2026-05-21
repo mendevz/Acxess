@@ -1,15 +1,20 @@
 using Acxess.Catalog.Domain.Constants;
+using Acxess.Catalog.Domain.Errors;
 using Acxess.Catalog.Infrastructure.Persistence;
 using Acxess.Shared.IntegrationServices.Catalog;
+using Acxess.Shared.ResultManager;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Acxess.Catalog.Infrastructure.Services;
 
-public class CatalogIntegrationService(CatalogModuleContext context) : ICatalogIntegrationService
+public class CatalogIntegrationService(
+    CatalogModuleContext context,
+    ILogger<CatalogIntegrationService> logger) : ICatalogIntegrationService
 {
-    public async Task<PlanIntegrationDto?> GetPlanInfoAsync(int planId, CancellationToken ct = default)
+    public async Task<Result<PlanIntegrationDto>> GetPlanInfoAsync(int planId, CancellationToken ct = default)
     {
-        return await context.SellingPlans
+        var sellingPlan = await context.SellingPlans
             .AsNoTracking()
             .Where(p => p.IdSellingPlan == planId)
             .Select(p => new PlanIntegrationDto(
@@ -20,6 +25,14 @@ public class CatalogIntegrationService(CatalogModuleContext context) : ICatalogI
                 p.DurationUnit,
                 p.TotalMembers))
             .FirstOrDefaultAsync(ct);
+
+        if (sellingPlan is null)
+        {
+            logger.LogWarning( "SellingPlanId: {SellingPlanId} not found or inactive.", planId);
+            return Result<PlanIntegrationDto>.Failure(SellingPlansErrors.NotFound);
+        }
+
+        return sellingPlan;
     }
 
     public async Task<List<AddOnIntegrationDto>> GetAddOnPriceBatchAsync(List<int> addOnIds,

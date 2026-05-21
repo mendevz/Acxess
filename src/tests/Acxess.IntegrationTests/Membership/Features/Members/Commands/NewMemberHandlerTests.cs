@@ -1,4 +1,5 @@
-﻿using Acxess.IntegrationTests.Setup;
+﻿using Acxess.Catalog.Domain.Errors;
+using Acxess.IntegrationTests.Setup;
 using Acxess.Membership.Application.Features.Members.Commands.NewMember;
 using Acxess.Membership.Application.Features.Members.DTOs;
 using Acxess.Membership.Infrastructure.Persistence;
@@ -102,7 +103,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IClass
 
         catalogMock
             .Setup(x => x.GetPlanInfoAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((PlanIntegrationDto?)null);
+            .ReturnsAsync(Result<PlanIntegrationDto>.Failure(SellingPlansErrors.NotFound));
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MembershipModuleContext>();
@@ -127,7 +128,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IClass
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Code.Should().Be("Plan.NotFound");
+        result.Error.Should().Be(SellingPlansErrors.NotFound);
 
         var miembrosEnBD = dbContext.Members.ToList();
         miembrosEnBD.Should().BeEmpty();

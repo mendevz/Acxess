@@ -21,16 +21,10 @@ public class RenewMemberHandler(
     public async Task<Result<UpdatedSubMemberResponse>> Handle(RenewMemberCommand request,
         CancellationToken cancellationToken)
     {
-        var planInfo = await catalogService.GetPlanInfoAsync(request.SellingPlanId, cancellationToken);
+        var planInfoResult = await catalogService.GetPlanInfoAsync(request.SellingPlanId, cancellationToken);
+        if (planInfoResult.IsFailure) return Result<UpdatedSubMemberResponse>.Failure(planInfoResult.Error);
 
-        if (planInfo == null)
-        {
-            logger.LogWarning(
-                "Renewal failed: Plan not found. SellingPlanId: {SellingPlanId}",
-                request.SellingPlanId);
-            return Result<UpdatedSubMemberResponse>.Failure("Plan.NotFound",
-                "El plan seleccionado no existe o no está activo.");
-        }
+        var planInfo = planInfoResult.Value;
 
         var mainMember = await context.Members
             .Include(m => m.SubscriptionMemberships)

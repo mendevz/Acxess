@@ -19,17 +19,11 @@ public class NewMemberHandler(
 {
     public async Task<Result<UpdatedSubMemberResponse>> Handle(NewMemberCommand request, CancellationToken cancellationToken)
     {
-        var planInfo = await catalogService.GetPlanInfoAsync(request.SellingPlanId, cancellationToken);
-        if (planInfo == null)
-        {
-            logger.LogWarning(
-                "New member registration failed. SellingPlanId: {SellingPlanId} not found or inactive.", 
-                request.SellingPlanId);
-            
-            return Result<UpdatedSubMemberResponse>
-                .Failure("Plan.NotFound", "Plan not found or is not active.");
-        }
-        
+        var planInfoResult = await catalogService.GetPlanInfoAsync(request.SellingPlanId, cancellationToken);
+        if (planInfoResult.IsFailure) return Result<UpdatedSubMemberResponse>.Failure(planInfoResult.Error);
+
+        var planInfo = planInfoResult.Value;
+
         // get addOns info
         var addOns = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
         
