@@ -1,8 +1,6 @@
 using Acxess.Catalog.Domain.Constants;
 using Acxess.Catalog.Infrastructure.Persistence;
-using Acxess.Shared.Enums;
 using Acxess.Shared.IntegrationServices.Catalog;
-using Acxess.Shared.ResultManager;
 using Microsoft.EntityFrameworkCore;
 
 namespace Acxess.Catalog.Infrastructure.Services;
@@ -19,17 +17,15 @@ public class CatalogIntegrationService(CatalogModuleContext context) : ICatalogI
                 p.Name, 
                 p.Price, 
                 p.DurationInValue, 
-                p.DurationUnit))
+                p.DurationUnit,
+                p.TotalMembers))
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<Result<List<AddOnIntegrationDto>>> GetAddOnPriceBatchAsync(List<int> addOnIds,
+    public async Task<List<AddOnIntegrationDto>> GetAddOnPriceBatchAsync(List<int> addOnIds,
         CancellationToken ct = default)
     {
-        if ( addOnIds.Count == 0)
-        {
-            return Result<List<AddOnIntegrationDto>>.Success([]);
-        }
+        if (addOnIds.Count == 0) return [];
         
         var uniqueIds = addOnIds.Distinct().ToList();
         

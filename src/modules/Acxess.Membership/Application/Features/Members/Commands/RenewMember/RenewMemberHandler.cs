@@ -59,8 +59,7 @@ public class RenewMemberHandler(
             logger.LogInformation("Profile photo updated for MemberId: {MemberId}", mainMember.IdMember);
         }
 
-        var addOnsResult = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
-        var addOnsWithPrice = addOnsResult.Value;
+        var addOns = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
 
         // create new beneficiares
         var newBeneficiaries = new List<Member>();
@@ -105,7 +104,7 @@ public class RenewMemberHandler(
             request.CreatedUserId,
             planInfo.DurationUnit,
             finalBeneficiaryIds, 
-            addOnsWithPrice,
+            addOns,
             DateTime.Now);
 
 
@@ -116,7 +115,7 @@ public class RenewMemberHandler(
             "Member successfully renewed. MemberId: {MemberId}, SubscriptionId: {SubscriptionId}, SellingPlanId: {SellingPlanId}, AmountPaid: {AmountPaid}",
             mainMember.IdMember, newSubscriptionId, request.SellingPlanId, request.AmountPaid);
 
-        var addOnItems = addOnsWithPrice.Select(a =>
+        var addOnItems = addOns.Select(a =>
             new PurchasedAddOnItem(a.Id, a.Name, a.Price)
         ).ToList();
 

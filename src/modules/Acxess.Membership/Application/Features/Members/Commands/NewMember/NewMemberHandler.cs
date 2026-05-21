@@ -31,8 +31,7 @@ public class NewMemberHandler(
         }
         
         // get addOns info
-        var addOnsResult = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
-        var addOnsWithPrice = addOnsResult.Value;
+        var addOns = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
         
         // create new beneficiares
         var newBeneficiaries = new List<Member>();
@@ -95,7 +94,7 @@ public class NewMemberHandler(
             request.CreatedUserId,
             planInfo.DurationUnit,
             finalBeneficiaryIds, 
-            addOnsWithPrice,
+            addOns,
             DateTime.Now);
 
         context.Members.Add(mainMember);
@@ -106,7 +105,7 @@ public class NewMemberHandler(
             "New member successfully created and subscribed. MemberId: {MemberId}, SellingPlanId: {SellingPlanId}, TotalBeneficiaries: {TotalBeneficiaries}",
             mainMember.IdMember, request.SellingPlanId, finalBeneficiaryIds.Count);
 
-        var addOnItems = addOnsWithPrice.Select(a => 
+        var addOnItems = addOns.Select(a => 
                 new PurchasedAddOnItem(a.Id, a.Name, a.Price)
         ).ToList();
         

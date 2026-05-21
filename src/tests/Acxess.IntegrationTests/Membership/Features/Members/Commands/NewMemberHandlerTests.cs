@@ -28,11 +28,11 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IClass
 
         catalogMock
             .Setup(x => x.GetPlanInfoAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PlanIntegrationDto(1, "Mensualidad", 500m, 1, DurationSubscriptionUnit.Months));
+            .ReturnsAsync(new PlanIntegrationDto(1, "Mensualidad", 500m, 1, DurationSubscriptionUnit.Months, 1));
 
         catalogMock
             .Setup(x => x.GetAddOnPriceBatchAsync(It.IsAny<List<int>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<List<AddOnIntegrationDto>>.Success([])); 
+            .ReturnsAsync([]); 
 
         imageStorageMock
             .Setup(x => x.SaveImageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
