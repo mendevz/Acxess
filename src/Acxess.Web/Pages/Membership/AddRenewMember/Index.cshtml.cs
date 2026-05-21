@@ -1,26 +1,32 @@
-using System.Security.Claims;
-using System.Text.Json;
 using Acxess.Billing.Application.Features.Transactions.Commands.NewVisitTransaction;
 using Acxess.Catalog.Application.Features.AddOns.Queries.GetAddOnInscription;
 using Acxess.Catalog.Application.Features.AddOns.Queries.GetAddOns;
 using Acxess.Catalog.Application.Features.SellingPlans.Queries.GetSellingPlans;
+using Acxess.Catalog.Infrastructure.Persistence;
 using Acxess.Membership.Application.Features.Members.Commands.NewMember;
 using Acxess.Membership.Application.Features.Members.Commands.RenewMember;
 using Acxess.Membership.Application.Features.Members.DTOs;
 using Acxess.Membership.Application.Features.Members.Queries.GetMember;
 using Acxess.Membership.Application.Features.Members.Queries.GetRenewalMemberContext;
 using Acxess.Membership.Application.Features.Members.Queries.SearchEligibleMembers;
+using Acxess.Membership.Domain.Services;
+using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.ResultManager;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Text.Json;
 
 namespace Acxess.Web.Pages.Membership.AddRenewMember;
 
 public class IndexModel(
     IMediator mediator,
-    ICurrentTenant currentTenant) : PageModel
+    ICurrentTenant currentTenant,
+    CatalogModuleContext catalogContext,
+    MembershipModuleContext membershipContext) : PageModel
 {
 
     [BindProperty] public ProcessOrderRequest OrderRequest { get; set; } = new();
@@ -179,7 +185,77 @@ public class IndexModel(
 
         return partial;
     }
-    
+
+    public async Task<IActionResult> OnGetCalculateExpirationAsync(int planId, int? memberId)
+    {
+        if (planId <= 0) return Content("---");
+
+        var planData = await catalogContext.SellingPlans
+            .Where(p => p.IdSellingPlan == planId)
+            .Select(p => new { p.DurationInValue, p.DurationUnit })
+            .FirstOrDefaultAsync();
+
+        if (planData == null) return Content("---");
+
+        DateTime baseDate = DateTime.Now.Date;
+        bool hasActiveSub = false;
+
+        if (memberId.HasValue && memberId.Value > 0)
+        {
+            var memberData = await membershipContext.Members
+                .Where(m => m.IdMember == memberId.Value)
+                .Select(m => new
+                {
+                    HasActiveSub = m.SubscriptionMemberships.Any(sm => sm.Subscription.IsActive && sm.Subscription.EndDate > DateTime.Now),
+                    LastExpiration = m.SubscriptionMemberships
+                                      .Where(sm => sm.Subscription.IsActive)
+                                      .Max(sm => (DateTime?)sm.Subscription.EndDate)
+                })
+                .FirstOrDefaultAsync();
+
+
+            if (memberData != null)
+            {
+                hasActiveSub = memberData.HasActiveSub;
+
+                if (memberData.HasActiveSub && memberData.LastExpiration.HasValue)
+                {
+                    baseDate = memberData.LastExpiration.Value.Date;
+                }
+            }
+        }
+
+        var expirationDate = SubscriptionDateCalculator.CalculateEndDate(
+            baseDate, 
+            planData.DurationInValue,
+            planData.DurationUnit);
+
+        var culture = new System.Globalization.CultureInfo("es-MX");
+        string startStr = baseDate.ToString("dd MMM yyyy", culture);
+        string endStr = expirationDate.ToString("dd MMM yyyy", culture);
+
+        string notaVigenciaHtml = "<div id='nota-vigencia' hx-swap-oob='true'></div>"; // Vacío por defecto
+
+        if (hasActiveSub)
+        {
+            notaVigenciaHtml = $@"
+                <div id='nota-vigencia' hx-swap-oob='true' class='text-[11px] text-blue-600/80 dark:text-blue-400 mt-2 italic border-t border-blue-200 dark:border-blue-800 pt-2 leading-tight'>
+                    * Al estar vigente, los días del nuevo plan se sumarán a partir del <span class='font-bold'>{startStr}</span>.
+                </div>";
+        }
+
+        string htmlResponse = $@"
+            <strong id='fecha-inicio' hx-swap-oob='true' class='text-base md:text-lg text-blue-900 dark:text-blue-200'>
+                {startStr}
+            </strong>
+            {notaVigenciaHtml}
+            {endStr}
+        ";
+
+        return Content(htmlResponse, "text/html");
+    }
+
+
     private static List<NewMemberDto> MapBeneficiaries(IEnumerable<AddRenewMemberInput> requestBeneficiaries)
     {
         return requestBeneficiaries.Select(b => new NewMemberDto(

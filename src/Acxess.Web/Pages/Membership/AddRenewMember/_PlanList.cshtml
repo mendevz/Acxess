@@ -6,6 +6,12 @@
 
     <div 
         @@click='selectPlan(@Json.Serialize(plan))'
+
+        hx-get="?handler=CalculateExpiration"
+        hx-vals='{"planId": @plan.IdSellingPlan}'
+        hx-include="#hx-member-id"
+        hx-target="#fecha-vencimiento"
+        hx-indicator="#fecha-spinner"
     
         :class="selectedPlan?.idSellingPlan === @plan.IdSellingPlan
            ? 'ring-2 ring-blue-500 bg-white dark:bg-slate-800 shadow-md'

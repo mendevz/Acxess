@@ -187,6 +187,11 @@ document.addEventListener('alpine:init', () => {
             this.amountGiven = '';
             this.promoName = '';
             this.transferRef = '';
+
+            document.getElementById('fecha-inicio').innerText = '---';
+            document.getElementById('fecha-vencimiento').innerText = '---';
+            const nota = document.getElementById('nota-vigencia');
+            if (nota) nota.innerHTML = '';
         },
         get cannotSubmit() {
             if (this.mode === 'visit') {
@@ -221,38 +226,6 @@ document.addEventListener('alpine:init', () => {
                 return fechaVencimiento;
             }
             return new Date();
-        },
-        get calculatedEndDate() {
-            if (!this.selectedPlan) return null;
-
-            let baseDate = new Date();
-
-            if (this.mode === 'renew' && this.selectedMember?.IsSubscriptionActive) {
-                baseDate = new Date(this.selectedMember.LastExpirationDate);
-            }
-
-            let finalDate = new Date(baseDate);
-
-            const duration = this.selectedPlan.durationInValue || this.selectedPlan.DurationInValue || 0;
-            const unit = this.selectedPlan.durationSubscriptionUnit || this.selectedPlan.durationSubscriptionUnit; 
-
-            if (unit === 1) { 
-                finalDate.setDate(finalDate.getDate() + duration);
-            } else if (unit === 2) { 
-                finalDate.setMonth(finalDate.getMonth() + duration);
-            } else if (unit === 3) { 
-                finalDate.setFullYear(finalDate.getFullYear() + duration);
-            }
-
-            return finalDate;
-        },
-        formatDate(date) {
-            if (!date) return '---';
-            return date.toLocaleDateString('es-MX', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            });
         }
     }))
 });

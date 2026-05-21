@@ -1,4 +1,5 @@
 using Acxess.Membership.Domain.Constants;
+using Acxess.Membership.Domain.Services;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.Enums;
 using Acxess.Shared.IntegrationServices.Catalog;
@@ -150,13 +151,7 @@ public class Member : IHasTenant
                 : today;
         }
 
-        var endDate = unitValue switch
-        {
-            DurationSubscriptionUnit.Days => startDate.AddDays(duration),
-            DurationSubscriptionUnit.Months => startDate.AddMonths(duration),
-            DurationSubscriptionUnit.Years => startDate.AddYears(duration),
-            _ =>  startDate
-        };
+        var endDate = SubscriptionDateCalculator.CalculateEndDate(startDate, duration, unitValue);
 
         return (startDate, endDate);
     }
