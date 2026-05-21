@@ -33,8 +33,8 @@ public class MemberTests
 
         var addOns = new List<AddOnIntegrationDto>
         {
-            new(1, "Toalla", 50m),
-            new(2, "Agua", 20m)
+            new(1,"TOA", "Toalla", 50m),
+            new(2, "AGU","Agua", 20m)
         };
         var beneficiaryIds = new List<int> { 5, 8 };
 

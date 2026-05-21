@@ -122,7 +122,15 @@ public class IndexModel(
     {
         var member = new NewMemberDto(0, OrderRequest.MemberData.FirstName ?? "", OrderRequest.MemberData.LastName ?? "", OrderRequest.MemberData.Phone, OrderRequest.MemberData.PhotoBase64);
         var command = new NewMemberCommand(
-            member, OrderRequest.PlanId ?? 0, idTenant, OrderRequest.AddOnIds, paymentMethodId, OrderRequest.AmountPaid, beneficiaries, userNumber);
+            member, 
+            OrderRequest.PlanId ?? 0, 
+            idTenant, 
+            OrderRequest.AddOnIds, 
+            paymentMethodId, 
+            OrderRequest.AmountPaid, 
+            beneficiaries, 
+            userNumber,
+            OrderRequest.RequireInscription);
         
         return  HandleMemberResultAsync(await mediator.Send(command));
     }

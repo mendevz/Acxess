@@ -1,5 +1,6 @@
 using Acxess.Membership.Application.Features.Members.DTOs;
 using Acxess.Membership.Domain.Entities;
+using Acxess.Membership.Domain.Errors;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.IntegrationEvents.Membership;
@@ -17,6 +18,8 @@ public class NewMemberHandler(
     IMediator mediator,
     IImageStorageService imageStorage) : IRequestHandler<NewMemberCommand, Result<UpdatedSubMemberResponse>>
 {
+
+    private const string AddOnKeyInscription = "INS";
     public async Task<Result<UpdatedSubMemberResponse>> Handle(NewMemberCommand request, CancellationToken cancellationToken)
     {
         var planInfoResult = await catalogService.GetPlanInfoAsync(request.SellingPlanId, cancellationToken);
@@ -26,12 +29,21 @@ public class NewMemberHandler(
 
         // get addOns info
         var addOns = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
-        
+
+        if (request.RequireInscription && !addOns.Any(a => a.Key == AddOnKeyInscription))
+        {
+            return Result<UpdatedSubMemberResponse>.Failure(SubscriptionErrors.InscriptionRequired);
+        }
+
         // create new beneficiares
+        if (request.Beneficiaries.Count > planInfo.TotalMembers)
+        {
+            return Result<UpdatedSubMemberResponse>.Failure(SubscriptionErrors.ExceededBeneficiaries);
+        }
+
         var newBeneficiaries = new List<Member>();
         foreach (var benDto in request.Beneficiaries.Where(b => b.IdMember == 0))
         {
-            
             string? benPhotoUrl = null;
             if (!string.IsNullOrWhiteSpace(benDto.PhotoBase64))
             {
@@ -55,8 +67,8 @@ public class NewMemberHandler(
                 "Successfully created {BeneficiaryCount} new beneficiaries: {BeneficiaryIds}", 
                 newBeneficiaries.Count, savedBeneficiaryIds);
         }
-        
-        // combine beneficiaries
+
+        // combine beneficiaries news and existing
         var finalBeneficiaryIds = new List<int>();
         finalBeneficiaryIds.AddRange(request.Beneficiaries.Where(b => b.IdMember != 0).Select(b => b.IdMember));
         finalBeneficiaryIds.AddRange(newBeneficiaries.Select(b => b.IdMember));

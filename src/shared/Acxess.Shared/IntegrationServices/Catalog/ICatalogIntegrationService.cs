@@ -18,4 +18,4 @@ public record PlanIntegrationDto(
     DurationSubscriptionUnit DurationUnit,
     int TotalMembers);
 
-public record AddOnIntegrationDto(int Id, string Name, decimal Price);
+public record AddOnIntegrationDto(int Id, string Key, string Name, decimal Price);

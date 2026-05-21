@@ -69,11 +69,11 @@ document.addEventListener('alpine:init', () => {
             this.resetCustomerForm();
 
             if (this.mode === 'new') {
-                this.omitInscription = false;
                 if (this.visitAddon){
                     this.removeSystemAddon(this.visitAddon.IdAddOn);
                 }
-                this.addSystemAddon(this.inscAddon);
+                this.omitInscription = false;
+                this.toggleInscription();
                 document.getElementById("first-name-input")?.focus();
             } else if (this.mode === 'renew') {
                 this.removeSystemAddon(this.inscAddon.IdAddOn);
@@ -176,12 +176,12 @@ document.addEventListener('alpine:init', () => {
             }
         },
         resetAll() {
-            this.setMode('new');
+            this.cartAddons = [];
+            this.setMode(this.mode);
             this.selectedMember = null;
             this.selectedPlan = null;
             this.beneficiaries = [];
             this.customer = { Id: 0, FirstName: '', LastName: '', Phone: '', Email: '' };
-            this.cartAddons = [];
             this.discountAmount = 0;
             this.paymentMethod = 'cash';
             this.amountGiven = '';

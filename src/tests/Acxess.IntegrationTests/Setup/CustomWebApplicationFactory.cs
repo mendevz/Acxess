@@ -1,6 +1,7 @@
 ﻿using Acxess.Shared.Abstractions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.MsSql;
@@ -20,15 +21,14 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureAppConfiguration((context, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:Default"] = _dbContainer.GetConnectionString()
-            });
-        });
+        builder.UseEnvironment("Testing");
 
-        builder.UseEnvironment("Localhost");
+        var sqlBuilder = new SqlConnectionStringBuilder(_dbContainer.GetConnectionString())
+        {
+            TrustServerCertificate = true
+        };
+
+        builder.UseSetting("ConnectionStrings:Default", sqlBuilder.ConnectionString);
     }
     public async Task InitializeAsync()
     {

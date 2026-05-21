@@ -47,6 +47,7 @@ public class CatalogIntegrationService(
             .Where(a => uniqueIds.Contains(a.IdAddOn))
             .Select(a => new AddOnIntegrationDto(
                 a.IdAddOn,
+                a.AddOnKey,
                 a.Name,
                 a.Price
             ))

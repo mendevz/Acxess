@@ -119,10 +119,10 @@ public class Member : IHasTenant
         
         foreach (var beneficiaryId in beneficiaryIds)
         {
-            subscription.AddMember(beneficiaryId, isOwner: false);
+            subscription.AddMember(beneficiaryId, isOwner: false);      
         }
         
-        foreach (var (addOnId, name, addOnPrice) in addOns)
+        foreach (var (addOnId, key, name, addOnPrice) in addOns)
         {
             subscription.AddAddOn(addOnId, addOnPrice);
         }

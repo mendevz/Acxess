@@ -132,6 +132,7 @@ try
 catch (Exception ex) when (ex is not HostAbortedException) 
 {
     Log.Fatal(ex, "The Access application crashed and shut down");
+    throw;
 }
 finally
 {

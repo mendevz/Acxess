@@ -12,4 +12,5 @@ public record NewMemberCommand(
     int PaymentMethodId,
     decimal AmountPaid,
     List<NewMemberDto> Beneficiaries,
-    int CreatedUserId) : IRequest<Result<UpdatedSubMemberResponse>>;
+    int CreatedUserId,
+    bool RequireInscription) : IRequest<Result<UpdatedSubMemberResponse>>;

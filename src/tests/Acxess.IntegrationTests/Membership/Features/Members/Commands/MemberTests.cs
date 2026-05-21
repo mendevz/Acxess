@@ -6,7 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Acxess.IntegrationTests.Membership.Features.Members.Commands;
 
-public class MemberTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
+[Collection("IntegrationTests")]
+public class MemberTests(CustomWebApplicationFactory factory)
 {
     [Fact]
     public async Task Should_Saver_Member_In_Database()
