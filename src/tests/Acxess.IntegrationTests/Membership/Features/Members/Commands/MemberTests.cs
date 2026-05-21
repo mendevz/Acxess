@@ -1,10 +1,10 @@
-﻿
+﻿using Acxess.IntegrationTests.Setup;
 using Acxess.Membership.Domain.Entities;
 using Acxess.Membership.Infrastructure.Persistence;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Acxess.IntegrationTests;
+namespace Acxess.IntegrationTests.Membership.Features.Members.Commands;
 
 public class MemberTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
