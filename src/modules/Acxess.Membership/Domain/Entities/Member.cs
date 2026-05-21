@@ -101,9 +101,10 @@ public class Member : IHasTenant
         int userId,
         DurationSubscriptionUnit durationUnit,
         List<int> beneficiaryIds,
-        List<AddOnIntegrationDto> addOns)
+        List<AddOnIntegrationDto> addOns,
+        DateTime currentDate)
     {
-        var (startDate, endDate) = CalculateSubscriptionDates(duration, durationUnit);
+        var (startDate, endDate) = CalculateSubscriptionDates(duration, durationUnit, currentDate);
         
         var subscription = Subscription.Create(
             this.IdTenant,
@@ -130,9 +131,8 @@ public class Member : IHasTenant
         UpdatedAt = DateTime.Now;
     }
 
-    private (DateTime Start, DateTime End) CalculateSubscriptionDates(int duration, DurationSubscriptionUnit unitValue)
+    private (DateTime Start, DateTime End) CalculateSubscriptionDates(int duration, DurationSubscriptionUnit unitValue, DateTime today)
     {
-        var today = DateTime.Now.Date; 
         var startDate = today;
 
         var lastActiveSub = _subscriptionMemberships

@@ -104,7 +104,9 @@ public class RenewMemberHandler(
             planInfo.Duration,
             request.CreatedUserId,
             planInfo.DurationUnit,
-            finalBeneficiaryIds, addOnsWithPrice);
+            finalBeneficiaryIds, 
+            addOnsWithPrice,
+            DateTime.Now);
 
 
         await context.SaveChangesAsync(cancellationToken);

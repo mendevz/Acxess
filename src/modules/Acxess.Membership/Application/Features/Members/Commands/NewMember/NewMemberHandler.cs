@@ -95,7 +95,8 @@ public class NewMemberHandler(
             request.CreatedUserId,
             planInfo.DurationUnit,
             finalBeneficiaryIds, 
-            addOnsWithPrice);
+            addOnsWithPrice,
+            DateTime.Now);
 
         context.Members.Add(mainMember);
         
