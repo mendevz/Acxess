@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Testcontainers.MsSql;
 
 namespace Acxess.IntegrationTests.Setup;
@@ -29,6 +29,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         };
 
         builder.UseSetting("ConnectionStrings:Default", sqlBuilder.ConnectionString);
+        builder.ConfigureLogging(logging =>
+        {
+            logging.ClearProviders();
+        });
     }
     public async Task InitializeAsync()
     {

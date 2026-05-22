@@ -17,7 +17,7 @@ using Destructurama;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
-    .CreateBootstrapLogger();
+    .CreateLogger();
 
 try
 {

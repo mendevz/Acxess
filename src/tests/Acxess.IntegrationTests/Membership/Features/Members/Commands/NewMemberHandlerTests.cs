@@ -23,8 +23,10 @@ namespace Acxess.IntegrationTests.Membership.Features.Members.Commands;
 [Collection("IntegrationTests")]
 public class NewMemberHandlerTests(CustomWebApplicationFactory factory) 
 {
-    [Fact]
-    public async Task Handle_HappyPath()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Should_Subscribe_NewMember(bool requireInscription)
     {
         // Arrange
         var catalogMock = new Mock<ICatalogIntegrationService>();
@@ -35,11 +37,13 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
             .Setup(x => x.GetPlanInfoAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PlanIntegrationDto(1, "Mensualidad", 500m, 1, DurationSubscriptionUnit.Months, 1));
 
+        var addOns = requireInscription 
+            ? [new AddOnIntegrationDto(1, Inscription.Key, Inscription.Name, Inscription.Price)] 
+            : new List<AddOnIntegrationDto>();
+
         catalogMock
             .Setup(x => x.GetAddOnPriceBatchAsync(It.IsAny<List<int>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
-                    
-                ]); 
+            .ReturnsAsync(addOns); 
 
         imageStorageMock
             .Setup(x => x.SaveImageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -74,7 +78,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
             AmountPaid: 600m,
             Beneficiaries: [],
             CreatedUserId: 1,
-            RequireInscription:false
+            RequireInscription:requireInscription
         );
 
 
@@ -103,7 +107,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task Handle_ComplexData_HappyPath()
+    public async Task Should_Subscribe_NewMember_With_Beneficiries_One_Existing()
     {
         // Arrange
         using var scope = factory.Services.CreateScope();
@@ -198,7 +202,97 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task Handle_WhenSellingPlan_NotExists_ShouldFail()
+    public async Task Should_Subscribe_NewMember_With_NewBeneficiries()
+    {
+        // Arrange
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MembershipModuleContext>();
+
+        var addOnsIds = new List<int> { 1};
+
+        var catalogMock = new Mock<ICatalogIntegrationService>();
+        catalogMock.Setup(c => c.GetPlanInfoAsync(99, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<PlanIntegrationDto>.Success(
+                    new PlanIntegrationDto(1, "Plan Familiar 2", 700m, 1, DurationSubscriptionUnit.Months, 2)
+                )
+            );
+
+        catalogMock.Setup(c => c.GetAddOnPriceBatchAsync(addOnsIds, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new AddOnIntegrationDto(1, Inscription.Key,Inscription.Name, Inscription.Price)
+            ]);
+
+        var imageStorageMock = new Mock<IImageStorageService>();
+        imageStorageMock.Setup(i => i.SaveImageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<string>.Success("https://storage/fake-foto.jpg"));
+
+        var mediatorSpy = new Mock<IMediator>();
+
+        var handler = new NewMemberHandler(
+            dbContext,
+            Mock.Of<ILogger<NewMemberHandler>>(),
+            catalogMock.Object,
+            mediatorSpy.Object,
+            imageStorageMock.Object);
+
+        var titularDto = new NewMemberDto(1, "Bruce", "Wayne", "123", "base64-titular-img");
+
+        var beneficiariosDtos = new List<NewMemberDto>
+        {
+            new(0, "Jason", "Todd", "456", "base64-ben-img")
+        };
+
+        var command = new NewMemberCommand(
+            IdTenant: 1,
+            CreatedUserId: 1,
+            SellingPlanId: 99,
+            PaymentMethodId: 1,
+            AmountPaid: 8150m,
+            MemberDto: titularDto,
+            Beneficiaries: beneficiariosDtos,
+            AddOnIds: addOnsIds,
+            RequireInscription: true
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+        imageStorageMock.Verify(
+            i => i.SaveImageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+
+        mediatorSpy.Verify(
+            m => m.Publish(
+                It.Is<SubscriptionPurchasedIntegrationEvent>(e =>
+                    e.AddOns.Count == 1 &&
+                    e.AmountReceived == 8150m),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        dbContext.ChangeTracker.Clear();
+
+        var totalMembers = await dbContext.Members.IgnoreQueryFilters().CountAsync();
+        totalMembers.Should().Be(2, "inserted 1 beneficiaries and titular member");
+
+        var titularEnBd = await dbContext.Members.IgnoreQueryFilters()
+            .Include(m => m.OwnedSubscriptions)
+                .ThenInclude(s => s.SubscriptionMembers)
+            .Include(m => m.OwnedSubscriptions)
+                .ThenInclude(s => s.AddOns)
+            .FirstOrDefaultAsync(m => m.IdMember == result.Value.IdMember);
+
+        titularEnBd.Should().NotBeNull();
+        titularEnBd!.PhotoUrl.Should().Be("https://storage/fake-foto.jpg");
+
+        var subscripcionGuardada = titularEnBd.OwnedSubscriptions.Single();
+        subscripcionGuardada.AddOns.Should().HaveCount(1);
+
+        var idsBeneficiariosGuardados = subscripcionGuardada.SubscriptionMembers.Select(sm => sm.IdMember).ToList();
+        idsBeneficiariosGuardados.Should().HaveCount(2);
+        idsBeneficiariosGuardados.Should().Contain(titularEnBd.IdMember, "is owner");
+    }
+
+    [Fact]
+    public async Task Should_Fail_SellingPlan_NotExists()
     {
         // Arrange
         var catalogMock = new Mock<ICatalogIntegrationService>();
