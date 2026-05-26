@@ -17,8 +17,15 @@ using Moq;
 namespace Acxess.IntegrationTests.Membership.Members;
 
 [Collection("IntegrationTests")]
-public class RenewMemberHandlerTests(CustomWebApplicationFactory factory)
+public class RenewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsyncLifetime
 {
+    public async Task InitializeAsync()
+    {
+        await factory.ResetDatabaseAsync();
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
+
     [Fact]
     public async Task Handle_Should_Renew_Subscription_Member()
     {
@@ -46,7 +53,7 @@ public class RenewMemberHandlerTests(CustomWebApplicationFactory factory)
         var mediatorSpy = new Mock<IMediator>();
 
         var renewMemberCommand = new RenewMemberCommand(
-            IdMember: 1,
+            IdMember: mainMember.IdMember,
             SellingPlanId: 1,
             IdTenant: 1,
             AddOnIds: [],
@@ -66,7 +73,7 @@ public class RenewMemberHandlerTests(CustomWebApplicationFactory factory)
         var result = await handler.Handle(renewMemberCommand, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue(result.Error.Description);
         mediatorSpy.Verify(
             m => m.Publish(
                 It.Is<SubscriptionPurchasedIntegrationEvent>(e =>
@@ -75,9 +82,11 @@ public class RenewMemberHandlerTests(CustomWebApplicationFactory factory)
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
-        dbContext.ChangeTracker.Clear();
+        using var assertScope = factory.Services.CreateScope();
+        var assertDbContext = scope.ServiceProvider.GetRequiredService<MembershipModuleContext>();
 
-        var titularEnBd = await dbContext.Members.IgnoreQueryFilters()
+
+        var titularEnBd = await assertDbContext.Members.IgnoreQueryFilters()
             .Include(m => m.OwnedSubscriptions)
                 .ThenInclude(s => s.SubscriptionMembers)
             .Include(m => m.OwnedSubscriptions)

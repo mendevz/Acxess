@@ -6,6 +6,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Respawn;
+using System.Data.Common;
 using Testcontainers.MsSql;
 
 namespace Acxess.IntegrationTests.Setup;
@@ -13,6 +15,8 @@ namespace Acxess.IntegrationTests.Setup;
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly MsSqlContainer _dbContainer;
+    private Respawner _respawner = default!;
+    private DbConnection _dbConnection = default!;
 
     public CustomWebApplicationFactory()
     {
@@ -52,10 +56,35 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         {
             await seeder.SeedAsync();
         }
+
+        _dbConnection = new SqlConnection(_dbContainer.GetConnectionString());
+        await _dbConnection.OpenAsync();
+
+        _respawner = await Respawner.CreateAsync(_dbConnection, new RespawnerOptions
+        {
+            // Evita que Respawn borre los registros de que las tablas ya han sido migradas,
+            // lo que es útil para mantener el estado de la base de datos consistente durante las pruebas.
+            TablesToIgnore = 
+            [
+                "__MembershipMigrationsHistory",
+                "__IdentityMigrationsHistory",
+                "__CatalogMigrationsHistory",
+                "__BillingMigrationsHistory",
+                "__MarketingMigrationsHistory"
+            ],
+            DbAdapter = DbAdapter.SqlServer
+        });
     }
 
+    public async Task ResetDatabaseAsync()
+    {
+        await _respawner.ResetAsync(_dbConnection);
+    }
     async Task IAsyncLifetime.DisposeAsync()
     {
+        if (_dbConnection is not null)
+            await _dbConnection.DisposeAsync();
+
         await _dbContainer.DisposeAsync();
     }
 }

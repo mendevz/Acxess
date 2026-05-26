@@ -21,7 +21,7 @@ using static Acxess.Catalog.Domain.Constants.AddOnDefaults;
 namespace Acxess.IntegrationTests.Membership.Members;
 
 [Collection("IntegrationTests")]
-public class NewMemberHandlerTests(CustomWebApplicationFactory factory) 
+public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsyncLifetime
 {
     [Theory]
     [InlineData(true)]
@@ -84,11 +84,13 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue(result.Error.Description);
         result.Value.Mensaje.Should().Be("Subscripción registrada correctamente.");
 
-        var miembroGuardado = await dbContext.Members.FindAsync(result.Value.IdMember);
+        using var assertScope = factory.Services.CreateScope();
+        var assertDbContext = scope.ServiceProvider.GetRequiredService<MembershipModuleContext>();
+
+        var miembroGuardado = await assertDbContext.Members.FindAsync(result.Value.IdMember);
 
         miembroGuardado.Should().NotBeNull();
         miembroGuardado!.FirstName.Should().Be("Bruce");
@@ -165,6 +167,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
+        result.IsSuccess.Should().BeTrue(result.Error.Description);
         imageStorageMock.Verify(
             i => i.SaveImageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Exactly(2));
@@ -177,12 +180,13 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
-        dbContext.ChangeTracker.Clear();
+        using var assertScope = factory.Services.CreateScope();
+        var assertDbContext = scope.ServiceProvider.GetRequiredService<MembershipModuleContext>();
 
-        var totalMembers = await dbContext.Members.IgnoreQueryFilters().CountAsync();
+        var totalMembers = await assertDbContext.Members.IgnoreQueryFilters().CountAsync();
         totalMembers.Should().Be(3, "inserted 2 beneficiaries and titular member");
 
-        var titularEnBd = await dbContext.Members.IgnoreQueryFilters()
+        var titularEnBd = await assertDbContext.Members.IgnoreQueryFilters()
             .Include(m => m.OwnedSubscriptions)
                 .ThenInclude(s => s.SubscriptionMembers)
             .Include(m => m.OwnedSubscriptions)
@@ -256,6 +260,8 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue(result.Error.Description);
         imageStorageMock.Verify(
             i => i.SaveImageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Exactly(2));
@@ -268,12 +274,14 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
-        dbContext.ChangeTracker.Clear();
 
-        var totalMembers = await dbContext.Members.IgnoreQueryFilters().CountAsync();
+        using var assertScope = factory.Services.CreateScope();
+        var assertDbContext = scope.ServiceProvider.GetRequiredService<MembershipModuleContext>();
+
+        var totalMembers = await assertDbContext.Members.IgnoreQueryFilters().CountAsync();
         totalMembers.Should().Be(2, "inserted 1 beneficiaries and titular member");
 
-        var titularEnBd = await dbContext.Members.IgnoreQueryFilters()
+        var titularEnBd = await assertDbContext.Members.IgnoreQueryFilters()
             .Include(m => m.OwnedSubscriptions)
                 .ThenInclude(s => s.SubscriptionMembers)
             .Include(m => m.OwnedSubscriptions)
@@ -324,10 +332,20 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
+        result.IsFailure.Should().BeTrue(result.Error.Description);
         result.Error.Should().Be(SellingPlansErrors.NotFound);
 
-        var miembrosEnBD = dbContext.Members.ToList();
+        using var assertScope = factory.Services.CreateScope();
+        var assertDbContext = scope.ServiceProvider.GetRequiredService<MembershipModuleContext>();
+
+        var miembrosEnBD = assertDbContext.Members.ToList();
         miembrosEnBD.Should().BeEmpty();
     }
+
+    public async Task InitializeAsync()
+    {
+        await factory.ResetDatabaseAsync();
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 }
