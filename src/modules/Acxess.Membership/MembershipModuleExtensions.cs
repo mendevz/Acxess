@@ -3,6 +3,7 @@ using Acxess.Membership.Infrastructure.BackgroundJobs;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,7 +20,8 @@ public static class MembershipModuleExtensions
         {
             options.UseSqlServer(connectionString, sqlOptions =>
                 sqlOptions.MigrationsHistoryTable("__MembershipMigrationsHistory", "Membership")
-            );
+            )
+            .ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning)); ;
         });
 
         services.AddScoped<IDataSeeder, MembershipSeeder>();

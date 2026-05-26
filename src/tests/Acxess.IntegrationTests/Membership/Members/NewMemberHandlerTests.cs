@@ -187,6 +187,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
         totalMembers.Should().Be(3, "inserted 2 beneficiaries and titular member");
 
         var titularEnBd = await assertDbContext.Members.IgnoreQueryFilters()
+            .AsSplitQuery()
             .Include(m => m.OwnedSubscriptions)
                 .ThenInclude(s => s.SubscriptionMembers)
             .Include(m => m.OwnedSubscriptions)
@@ -282,6 +283,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
         totalMembers.Should().Be(2, "inserted 1 beneficiaries and titular member");
 
         var titularEnBd = await assertDbContext.Members.IgnoreQueryFilters()
+            .AsSplitQuery()
             .Include(m => m.OwnedSubscriptions)
                 .ThenInclude(s => s.SubscriptionMembers)
             .Include(m => m.OwnedSubscriptions)

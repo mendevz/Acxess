@@ -87,6 +87,7 @@ public class RenewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsy
 
 
         var titularEnBd = await assertDbContext.Members.IgnoreQueryFilters()
+            .AsSplitQuery()
             .Include(m => m.OwnedSubscriptions)
                 .ThenInclude(s => s.SubscriptionMembers)
             .Include(m => m.OwnedSubscriptions)
