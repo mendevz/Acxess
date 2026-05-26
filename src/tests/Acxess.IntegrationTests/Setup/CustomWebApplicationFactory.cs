@@ -1,8 +1,10 @@
 ﻿using Acxess.Shared.Abstractions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Testcontainers.MsSql;
 
@@ -32,6 +34,13 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         builder.ConfigureLogging(logging =>
         {
             logging.ClearProviders();
+        });
+
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<ICurrentTenant>();
+            services.AddSingleton<TestCurrentTenant>();
+            services.AddSingleton<ICurrentTenant>(sp => sp.GetRequiredService<TestCurrentTenant>());
         });
     }
     public async Task InitializeAsync()

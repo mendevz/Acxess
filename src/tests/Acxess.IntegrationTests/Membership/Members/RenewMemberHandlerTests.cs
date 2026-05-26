@@ -1,0 +1,95 @@
+﻿using Acxess.IntegrationTests.Setup;
+using Acxess.Membership.Application.Features.Members.Commands.RenewMember;
+using Acxess.Membership.Domain.Entities;
+using Acxess.Membership.Infrastructure.Persistence;
+using Acxess.Shared.Abstractions;
+using Acxess.Shared.Enums;
+using Acxess.Shared.IntegrationEvents.Membership;
+using Acxess.Shared.IntegrationServices.Catalog;
+using Acxess.Shared.ResultManager;
+using FluentAssertions;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Moq;
+
+namespace Acxess.IntegrationTests.Membership.Members;
+
+[Collection("IntegrationTests")]
+public class RenewMemberHandlerTests(CustomWebApplicationFactory factory)
+{
+    [Fact]
+    public async Task Handle_Should_Renew_Subscription_Member()
+    {
+        // Arrange
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MembershipModuleContext>();
+
+        var mainMember = Member.Create(1,
+            "Mauro",
+            "Mendez",
+            1);
+
+        var startActiveSubscription = new DateTime(2026, 4, 25);
+        mainMember.Subscribe(1, "Mensualidad", 500m, 1, 1, DurationSubscriptionUnit.Months, [], [], startActiveSubscription);
+        dbContext.Members.Add(mainMember);  
+        await dbContext.SaveChangesAsync();
+
+        var catalogMock = new Mock<ICatalogIntegrationService>();
+        catalogMock.Setup(c => c.GetPlanInfoAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<PlanIntegrationDto>.Success(
+                  new PlanIntegrationDto(1, "Mensualidad", 400m, 1, DurationSubscriptionUnit.Months, 1)
+            ));
+
+        var imageStorageMock = new Mock<IImageStorageService>();
+        var mediatorSpy = new Mock<IMediator>();
+
+        var renewMemberCommand = new RenewMemberCommand(
+            IdMember: 1,
+            SellingPlanId: 1,
+            IdTenant: 1,
+            AddOnIds: [],
+            PaymentMethodId:   1,
+            AmountPaid: 400m,
+            Beneficiaries: [],
+            CreatedUserId: 1);
+
+        var handler = new RenewMemberHandler(
+            dbContext, 
+            catalogMock.Object,
+            mediatorSpy.Object, 
+            imageStorageMock.Object, 
+            Mock.Of<ILogger<RenewMemberHandler>>());
+
+        // Act
+        var result = await handler.Handle(renewMemberCommand, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        mediatorSpy.Verify(
+            m => m.Publish(
+                It.Is<SubscriptionPurchasedIntegrationEvent>(e =>
+                    e.AddOns.Count == 0 &&
+                    e.AmountReceived == 400m),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        dbContext.ChangeTracker.Clear();
+
+        var titularEnBd = await dbContext.Members.IgnoreQueryFilters()
+            .Include(m => m.OwnedSubscriptions)
+                .ThenInclude(s => s.SubscriptionMembers)
+            .Include(m => m.OwnedSubscriptions)
+                .ThenInclude(s => s.AddOns)
+            .FirstOrDefaultAsync(m => m.IdMember == result.Value.IdMember);
+
+        titularEnBd.Should().NotBeNull();
+
+        var ownerSubscriptions = titularEnBd.OwnedSubscriptions.ToList();
+        ownerSubscriptions.Should().HaveCount(2, "had active subscription");
+
+        var subscriptions = titularEnBd.SubscriptionMemberships.ToList();
+        subscriptions.Should().HaveCount(2, "had active subscription");
+    }
+}

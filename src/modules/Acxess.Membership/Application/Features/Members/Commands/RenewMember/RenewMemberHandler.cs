@@ -1,5 +1,6 @@
 using Acxess.Membership.Application.Features.Members.DTOs;
 using Acxess.Membership.Domain.Entities;
+using Acxess.Membership.Domain.Errors;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.IntegrationEvents.Membership;
@@ -38,8 +39,7 @@ public class RenewMemberHandler(
             logger.LogWarning(
                 "Renewal failed: Member not found. MemberId: {MemberId}",
                 request.IdMember);
-            return Result<UpdatedSubMemberResponse>.Failure("Member.NotFound",
-                $"No se encontró el miembro con Id {request.IdMember}");
+            return Result<UpdatedSubMemberResponse>.Failure(MemberError.NotFound);
         }
 
         if (!string.IsNullOrWhiteSpace(request.PhotoBase64))
@@ -53,7 +53,9 @@ public class RenewMemberHandler(
             logger.LogInformation("Profile photo updated for MemberId: {MemberId}", mainMember.IdMember);
         }
 
-        var addOns = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
+        var addOns = request.AddOnIds.Count > 0 
+            ? await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken)
+            : [];
 
         // create new beneficiares
         var newBeneficiaries = new List<Member>();

@@ -136,9 +136,15 @@ public class Member : IHasTenant
     {
         var startDate = today;
 
-        var lastActiveSub = _subscriptionMemberships
+        var ownedActiveSubs = _ownedSubscriptions
+                .Where(s => s.IsActive);
+
+        var membershipActiveSubs = _subscriptionMemberships
             .Select(sm => sm.Subscription)
-            .Where(sm => sm.IsActive)
+            .Where(s => s.IsActive);
+
+        var lastActiveSub = ownedActiveSubs
+            .Union(membershipActiveSubs)
             .OrderByDescending(s => s.EndDate)
             .FirstOrDefault();
 
@@ -148,7 +154,7 @@ public class Member : IHasTenant
             
             startDate = (lastEnd >= today || today <= lastEnd.AddDays(Configurations.PRORROGA_DAYS))
                 ? lastEnd
-                : today;
+                : today.Date;
         }
 
         var endDate = SubscriptionDateCalculator.CalculateEndDate(startDate, duration, unitValue);

@@ -69,4 +69,66 @@ public class MemberTests
         beneficiariosAgregados.Should().HaveCount(2);
         beneficiariosAgregados.Select(sm => sm.IdMember).Should().BeEquivalentTo(beneficiaryIds);
     }
+
+    [Fact]
+    public void Subscribe_WhenHasActiveSubscription_ShouldStartOnPreviousEndDate()
+    {
+        // Arrange
+        var titular = Member.Create(1, "Clark", "Kent", 1);
+        var startActiveSubscription = new DateTime(2026, 4, 25);
+        var startNewSubscription = new DateTime(2026, 5, 23);
+
+        titular.Subscribe(1, "Mensualidad", 500m, 1, 1, DurationSubscriptionUnit.Months, [], [], startActiveSubscription);
+        var subscripcionActiva = titular.OwnedSubscriptions.First();
+
+        // Act
+        titular.Subscribe(1, "Mensualidad", 500m, 1, 1, DurationSubscriptionUnit.Months, [], [], startNewSubscription);
+        var nuevaSubscripcion = titular.OwnedSubscriptions.Last();
+
+        // Assert
+        titular.OwnedSubscriptions.Should().HaveCount(2);
+        nuevaSubscripcion.StartDate.Date.Should().Be(subscripcionActiva.EndDate.Date, "Debe iniciar el día que termina la anterior para no perder días pagados");
+    }
+
+    [Fact]
+    public void Subscribe_WhenInGracePeriod_ShouldStartOnPreviousEndDate()
+    {
+        // Arrange
+        var titular = Member.Create(1, "Clark", "Kent", 1);
+        var startProrrogaSubscription = new DateTime(2026, 4, 22);
+        var startNewSubscription = new DateTime(2026, 5, 23);
+
+        titular.Subscribe(1, "Mensualidad", 500m, 1, 1, DurationSubscriptionUnit.Months, [], [], startProrrogaSubscription);
+        var subscripcionProrroga = titular.OwnedSubscriptions.First();
+
+        // Act
+        titular.Subscribe(1, "Mensualidad", 500m, 1, 1, DurationSubscriptionUnit.Months, [], [], startNewSubscription);
+        var nuevaSubscripcion = titular.OwnedSubscriptions.Last();
+
+        // Assert
+        titular.OwnedSubscriptions.Should().HaveCount(2);
+        nuevaSubscripcion.StartDate.Date.Should().Be(subscripcionProrroga.EndDate.Date, "Dentro de la prórroga, la nueva suscripción respeta la fecha de corte original");
+    }
+    
+    [Fact]
+    public void Subscribe_WhenGracePeriodPassed_ShouldStartToday()
+    {
+        // Arrange
+        var titular = Member.Create(1, "Clark", "Kent", 1);
+        var startExpiredSubscription = new DateTime(2026, 4, 19);
+        var startNewSubscription = new DateTime(2026, 5, 23);
+
+        titular.Subscribe(1, "Mensualidad", 500m, 1, 1, DurationSubscriptionUnit.Months, [], [], startExpiredSubscription);
+
+        // Act
+        titular.Subscribe(1, "Mensualidad", 500m, 1, 1, DurationSubscriptionUnit.Months, [], [], startNewSubscription);
+        var nuevaSubscripcion = titular.OwnedSubscriptions.Last();
+
+        // Assert
+        titular.OwnedSubscriptions.Should().HaveCount(2);
+        nuevaSubscripcion.StartDate.Date.Should().Be(startNewSubscription.Date, "Pasó la prórroga y se desactivó, por lo que la nueva suscripción inicia hoy");
+    }
+
+
+
 }

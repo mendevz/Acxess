@@ -18,7 +18,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using static Acxess.Catalog.Domain.Constants.AddOnDefaults;
 
-namespace Acxess.IntegrationTests.Membership.Features.Members.Commands;
+namespace Acxess.IntegrationTests.Membership.Members;
 
 [Collection("IntegrationTests")]
 public class NewMemberHandlerTests(CustomWebApplicationFactory factory) 
@@ -26,7 +26,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task Should_Subscribe_NewMember(bool requireInscription)
+    public async Task Handle_Should_Subscribe_NewMember(bool requireInscription)
     {
         // Arrange
         var catalogMock = new Mock<ICatalogIntegrationService>();
@@ -107,7 +107,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task Should_Subscribe_NewMember_With_Beneficiries_One_Existing()
+    public async Task Handle_Should_Subscribe_NewMember_With_Beneficiries_One_Existing()
     {
         // Arrange
         using var scope = factory.Services.CreateScope();
@@ -202,7 +202,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task Should_Subscribe_NewMember_With_NewBeneficiries()
+    public async Task Handle_Should_Subscribe_NewMember_With_NewBeneficiries()
     {
         // Arrange
         using var scope = factory.Services.CreateScope();
@@ -292,7 +292,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task Should_Fail_SellingPlan_NotExists()
+    public async Task Handle_Should_Fail_SellingPlan_NotExists()
     {
         // Arrange
         var catalogMock = new Mock<ICatalogIntegrationService>();
