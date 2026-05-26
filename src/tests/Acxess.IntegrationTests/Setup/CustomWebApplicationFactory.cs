@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Respawn;
 using System.Data.Common;
@@ -45,7 +46,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.RemoveAll<ICurrentTenant>();
             services.AddSingleton<TestCurrentTenant>();
             services.AddSingleton<ICurrentTenant>(sp => sp.GetRequiredService<TestCurrentTenant>());
+            
+            services.RemoveAll<IHostedService>();
         });
+
     }
     public async Task InitializeAsync()
     {
