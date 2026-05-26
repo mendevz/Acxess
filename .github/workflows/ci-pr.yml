@@ -17,6 +17,15 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install NPM dependencies (Tailwind)
+        working-directory: ./src/Acxess.Web
+        run: npm install
+
       - name: Restore dependencies
         run: dotnet restore src/Acxess.sln
 

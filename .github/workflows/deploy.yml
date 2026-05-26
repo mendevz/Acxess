@@ -32,10 +32,22 @@ jobs:
         with:
           ref: ${{ env.APP_VERSION }}
 
+      # -----------------------------------------------------------------
+      # Quality Control (Tests )
+      # -----------------------------------------------------------------
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install NPM dependencies (Tailwind)
+        working-directory: ./src/Acxess.Web
+        run: npm install
 
       - name: Execute Validation Suite (Stop-on-Failure)
         run: dotnet test src/Acxess.sln --configuration Release --verbosity minimum
