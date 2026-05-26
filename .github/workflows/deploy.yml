@@ -50,7 +50,7 @@ jobs:
         run: npm install
 
       - name: Execute Validation Suite (Stop-on-Failure)
-        run: dotnet test src/Acxess.sln --configuration Release --verbosity minimum
+        run: dotnet test src/Acxess.sln --configuration Release --verbosity minimal
 
       - name: Log In to GitHub Container Registry
         uses: docker/login-action@v3
