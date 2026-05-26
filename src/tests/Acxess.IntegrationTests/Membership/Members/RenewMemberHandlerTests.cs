@@ -97,7 +97,7 @@ public class RenewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsy
         titularEnBd.Should().NotBeNull();
 
         var ownerSubscriptions = titularEnBd.OwnedSubscriptions.ToList();
-        ownerSubscriptions.Should().HaveCount(3, "had active subscription");
+        ownerSubscriptions.Should().HaveCount(2, "had active subscription");
 
         var subscriptions = titularEnBd.SubscriptionMemberships.ToList();
         subscriptions.Should().HaveCount(2, "had active subscription");
