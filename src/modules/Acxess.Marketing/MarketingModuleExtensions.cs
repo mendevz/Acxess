@@ -1,6 +1,7 @@
 using Acxess.Marketing.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,7 +17,8 @@ public static class MarketingModuleExtensions
         {
             options.UseSqlServer(connectionString, sqlOptions =>
                 sqlOptions.MigrationsHistoryTable("__MarketingMigrationsHistory", "Marketing")
-            );
+            )
+            .ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning)); ;
         });
 
         services.AddScoped<IDataSeeder, MarketingSeeders>();

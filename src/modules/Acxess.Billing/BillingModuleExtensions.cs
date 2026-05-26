@@ -1,6 +1,7 @@
 using Acxess.Billing.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,7 +17,8 @@ public static class BillingModuleExtensions
         {
             options.UseSqlServer(connectionString, sqlOptions =>
                 sqlOptions.MigrationsHistoryTable("__BillingMigrationsHistory", "Billing")
-            );
+            )
+            .ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning));
         });
 
         services.AddScoped<IDataSeeder, BillingSeeder>();

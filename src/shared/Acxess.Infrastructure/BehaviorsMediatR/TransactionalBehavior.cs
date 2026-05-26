@@ -14,10 +14,9 @@ public class TransactionalBehavior<TRequest, TResponse>(ILogger<TransactionalBeh
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         var requestName = typeof(TRequest).Name;
-        if (!typeof(Result).IsAssignableFrom(typeof(TResponse)))
-        {
-            return await next(); 
-        }
+
+        if (!typeof(Result).IsAssignableFrom(typeof(TResponse)))  return await next(); 
+        if (!requestName.EndsWith("Command")) return await next();
 
         using var scope = new TransactionScope(
             TransactionScopeOption.Required,

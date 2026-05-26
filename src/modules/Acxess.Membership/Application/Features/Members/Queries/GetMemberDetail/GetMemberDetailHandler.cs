@@ -82,7 +82,11 @@ public class GetMemberDetailHandler(
         
         if (displaySub != null)
         {
-            var planInfo = await catalogService.GetPlanInfoAsync(displaySub.IdSellingPlan, cancellationToken); 
+            var planInfoResult = await catalogService.GetPlanInfoAsync(displaySub.IdSellingPlan, cancellationToken);
+            if (planInfoResult.IsFailure) return Result<MemberDetailDto>.Failure(planInfoResult.Error);
+
+            var planInfo = planInfoResult.Value;
+
             planName = planInfo is null ? $"Plan #{displaySub.IdSellingPlan}" :  planInfo.Name;
 
             if (displaySub.AddOns.Count != 0)

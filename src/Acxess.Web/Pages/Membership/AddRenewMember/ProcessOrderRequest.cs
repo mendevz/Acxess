@@ -19,6 +19,8 @@ public class ProcessOrderRequest : IValidatableObject
     public string PaymentMethod { get; set; } = "cash";
     public decimal AmountPaid { get; set; }
 
+    public bool RequireInscription { get; set; } = true;
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
 

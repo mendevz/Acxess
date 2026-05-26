@@ -1,5 +1,6 @@
 using Acxess.Membership.Application.Features.Members.DTOs;
 using Acxess.Membership.Domain.Entities;
+using Acxess.Membership.Domain.Errors;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.IntegrationEvents.Membership;
@@ -21,16 +22,10 @@ public class RenewMemberHandler(
     public async Task<Result<UpdatedSubMemberResponse>> Handle(RenewMemberCommand request,
         CancellationToken cancellationToken)
     {
-        var planInfo = await catalogService.GetPlanInfoAsync(request.SellingPlanId, cancellationToken);
+        var planInfoResult = await catalogService.GetPlanInfoAsync(request.SellingPlanId, cancellationToken);
+        if (planInfoResult.IsFailure) return Result<UpdatedSubMemberResponse>.Failure(planInfoResult.Error);
 
-        if (planInfo == null)
-        {
-            logger.LogWarning(
-                "Renewal failed: Plan not found. SellingPlanId: {SellingPlanId}",
-                request.SellingPlanId);
-            return Result<UpdatedSubMemberResponse>.Failure("Plan.NotFound",
-                "El plan seleccionado no existe o no está activo.");
-        }
+        var planInfo = planInfoResult.Value;
 
         var mainMember = await context.Members
             .Include(m => m.SubscriptionMemberships)
@@ -44,8 +39,7 @@ public class RenewMemberHandler(
             logger.LogWarning(
                 "Renewal failed: Member not found. MemberId: {MemberId}",
                 request.IdMember);
-            return Result<UpdatedSubMemberResponse>.Failure("Member.NotFound",
-                $"No se encontró el miembro con Id {request.IdMember}");
+            return Result<UpdatedSubMemberResponse>.Failure(MemberError.NotFound);
         }
 
         if (!string.IsNullOrWhiteSpace(request.PhotoBase64))
@@ -59,8 +53,9 @@ public class RenewMemberHandler(
             logger.LogInformation("Profile photo updated for MemberId: {MemberId}", mainMember.IdMember);
         }
 
-        var addOnsResult = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
-        var addOnsWithPrice = addOnsResult.Value;
+        var addOns = request.AddOnIds.Count > 0 
+            ? await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken)
+            : [];
 
         // create new beneficiares
         var newBeneficiaries = new List<Member>();
@@ -104,7 +99,9 @@ public class RenewMemberHandler(
             planInfo.Duration,
             request.CreatedUserId,
             planInfo.DurationUnit,
-            finalBeneficiaryIds, addOnsWithPrice);
+            finalBeneficiaryIds, 
+            addOns,
+            DateTime.Now);
 
 
         await context.SaveChangesAsync(cancellationToken);
@@ -114,7 +111,7 @@ public class RenewMemberHandler(
             "Member successfully renewed. MemberId: {MemberId}, SubscriptionId: {SubscriptionId}, SellingPlanId: {SellingPlanId}, AmountPaid: {AmountPaid}",
             mainMember.IdMember, newSubscriptionId, request.SellingPlanId, request.AmountPaid);
 
-        var addOnItems = addOnsWithPrice.Select(a =>
+        var addOnItems = addOns.Select(a =>
             new PurchasedAddOnItem(a.Id, a.Name, a.Price)
         ).ToList();
 

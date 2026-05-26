@@ -5,11 +5,17 @@ namespace Acxess.Shared.IntegrationServices.Catalog;
 
 public interface ICatalogIntegrationService
 {
-    Task<PlanIntegrationDto?> GetPlanInfoAsync(int planId, CancellationToken ct = default);
-    Task<Result<List<AddOnIntegrationDto>>> GetAddOnPriceBatchAsync(List<int> addOnIds, CancellationToken ct = default);
+    Task<Result<PlanIntegrationDto>> GetPlanInfoAsync(int planId, CancellationToken ct = default);
+    Task<List<AddOnIntegrationDto>> GetAddOnPriceBatchAsync(List<int> addOnIds, CancellationToken ct = default);
     Task<List<string>> GetAddOnNamesAsync(List<int> addOnIds, CancellationToken ct = default);
 }
 
-public record PlanIntegrationDto(int Id, string Name, decimal Price, int Duration, DurationSubscriptionUnit DurationUnit);
+public record PlanIntegrationDto(
+    int Id,
+    string Name, 
+    decimal Price, 
+    int Duration, 
+    DurationSubscriptionUnit DurationUnit,
+    int TotalMembers);
 
-public record AddOnIntegrationDto(int Id, string Name, decimal Price);
+public record AddOnIntegrationDto(int Id, string Key, string Name, decimal Price);

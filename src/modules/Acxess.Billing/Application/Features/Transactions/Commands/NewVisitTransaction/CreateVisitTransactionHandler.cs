@@ -30,10 +30,9 @@ public class CreateVisitTransactionHandler(
             "Pase de Visita" 
         );
         
-        var addOnsResult = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
-        var addOnsWithPrice = addOnsResult.Value ?? throw new ArgumentNullException("addOnsResult.Value");
+        var addOns = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
 
-        foreach (var addOn in addOnsWithPrice)
+        foreach (var addOn in addOns)
         {
             transaction.AddOnItem(
                 addOn.Id, 

@@ -1,3 +1,6 @@
+using Destructurama.Attributed;
+using System.Text.Json.Serialization;
+
 namespace Acxess.Membership.Application.Features.Members.DTOs;
 
 public record NewMemberDto
@@ -6,4 +9,4 @@ public record NewMemberDto
     string FirstName,
     string LastName,
     string? Phone,
-    string? PhotoBase64 = null);
+    [property: JsonIgnore, LogMasked] string? PhotoBase64 = null);

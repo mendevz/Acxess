@@ -1,5 +1,6 @@
 using Acxess.Membership.Application.Features.Members.DTOs;
 using Acxess.Membership.Domain.Entities;
+using Acxess.Membership.Domain.Errors;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.IntegrationEvents.Membership;
@@ -17,28 +18,32 @@ public class NewMemberHandler(
     IMediator mediator,
     IImageStorageService imageStorage) : IRequestHandler<NewMemberCommand, Result<UpdatedSubMemberResponse>>
 {
+
+    private const string AddOnKeyInscription = "INS";
     public async Task<Result<UpdatedSubMemberResponse>> Handle(NewMemberCommand request, CancellationToken cancellationToken)
     {
-        var planInfo = await catalogService.GetPlanInfoAsync(request.SellingPlanId, cancellationToken);
-        if (planInfo == null)
-        {
-            logger.LogWarning(
-                "New member registration failed. SellingPlanId: {SellingPlanId} not found or inactive.", 
-                request.SellingPlanId);
-            
-            return Result<UpdatedSubMemberResponse>
-                .Failure("Plan.NotFound", "Plan not found or is not active.");
-        }
-        
+        var planInfoResult = await catalogService.GetPlanInfoAsync(request.SellingPlanId, cancellationToken);
+        if (planInfoResult.IsFailure) return Result<UpdatedSubMemberResponse>.Failure(planInfoResult.Error);
+
+        var planInfo = planInfoResult.Value;
+
         // get addOns info
-        var addOnsResult = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
-        var addOnsWithPrice = addOnsResult.Value;
-        
+        var addOns = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
+
+        if (request.RequireInscription && !addOns.Any(a => a.Key == AddOnKeyInscription))
+        {
+            return Result<UpdatedSubMemberResponse>.Failure(SubscriptionErrors.InscriptionRequired);
+        }
+
         // create new beneficiares
+        if (request.Beneficiaries.Count > planInfo.TotalMembers)
+        {
+            return Result<UpdatedSubMemberResponse>.Failure(SubscriptionErrors.ExceededBeneficiaries);
+        }
+
         var newBeneficiaries = new List<Member>();
         foreach (var benDto in request.Beneficiaries.Where(b => b.IdMember == 0))
         {
-            
             string? benPhotoUrl = null;
             if (!string.IsNullOrWhiteSpace(benDto.PhotoBase64))
             {
@@ -62,8 +67,8 @@ public class NewMemberHandler(
                 "Successfully created {BeneficiaryCount} new beneficiaries: {BeneficiaryIds}", 
                 newBeneficiaries.Count, savedBeneficiaryIds);
         }
-        
-        // combine beneficiaries
+
+        // combine beneficiaries news and existing
         var finalBeneficiaryIds = new List<int>();
         finalBeneficiaryIds.AddRange(request.Beneficiaries.Where(b => b.IdMember != 0).Select(b => b.IdMember));
         finalBeneficiaryIds.AddRange(newBeneficiaries.Select(b => b.IdMember));
@@ -95,7 +100,8 @@ public class NewMemberHandler(
             request.CreatedUserId,
             planInfo.DurationUnit,
             finalBeneficiaryIds, 
-            addOnsWithPrice);
+            addOns,
+            DateTime.Now);
 
         context.Members.Add(mainMember);
         
@@ -105,7 +111,7 @@ public class NewMemberHandler(
             "New member successfully created and subscribed. MemberId: {MemberId}, SellingPlanId: {SellingPlanId}, TotalBeneficiaries: {TotalBeneficiaries}",
             mainMember.IdMember, request.SellingPlanId, finalBeneficiaryIds.Count);
 
-        var addOnItems = addOnsWithPrice.Select(a => 
+        var addOnItems = addOns.Select(a => 
                 new PurchasedAddOnItem(a.Id, a.Name, a.Price)
         ).ToList();
         

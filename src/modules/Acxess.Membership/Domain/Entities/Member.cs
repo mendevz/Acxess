@@ -1,4 +1,5 @@
 using Acxess.Membership.Domain.Constants;
+using Acxess.Membership.Domain.Services;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.Enums;
 using Acxess.Shared.IntegrationServices.Catalog;
@@ -101,9 +102,10 @@ public class Member : IHasTenant
         int userId,
         DurationSubscriptionUnit durationUnit,
         List<int> beneficiaryIds,
-        List<AddOnIntegrationDto> addOns)
+        List<AddOnIntegrationDto> addOns,
+        DateTime currentDate)
     {
-        var (startDate, endDate) = CalculateSubscriptionDates(duration, durationUnit);
+        var (startDate, endDate) = CalculateSubscriptionDates(duration, durationUnit, currentDate);
         
         var subscription = Subscription.Create(
             this.IdTenant,
@@ -118,10 +120,10 @@ public class Member : IHasTenant
         
         foreach (var beneficiaryId in beneficiaryIds)
         {
-            subscription.AddMember(beneficiaryId, isOwner: false);
+            subscription.AddMember(beneficiaryId, isOwner: false);      
         }
         
-        foreach (var (addOnId, name, addOnPrice) in addOns)
+        foreach (var (addOnId, key, name, addOnPrice) in addOns)
         {
             subscription.AddAddOn(addOnId, addOnPrice);
         }
@@ -130,14 +132,19 @@ public class Member : IHasTenant
         UpdatedAt = DateTime.Now;
     }
 
-    private (DateTime Start, DateTime End) CalculateSubscriptionDates(int duration, DurationSubscriptionUnit unitValue)
+    private (DateTime Start, DateTime End) CalculateSubscriptionDates(int duration, DurationSubscriptionUnit unitValue, DateTime today)
     {
-        var today = DateTime.Now.Date; 
         var startDate = today;
 
-        var lastActiveSub = _subscriptionMemberships
+        var ownedActiveSubs = _ownedSubscriptions
+                .Where(s => s.IsActive);
+
+        var membershipActiveSubs = _subscriptionMemberships
             .Select(sm => sm.Subscription)
-            .Where(sm => sm.IsActive)
+            .Where(s => s.IsActive);
+
+        var lastActiveSub = ownedActiveSubs
+            .Union(membershipActiveSubs)
             .OrderByDescending(s => s.EndDate)
             .FirstOrDefault();
 
@@ -147,16 +154,10 @@ public class Member : IHasTenant
             
             startDate = (lastEnd >= today || today <= lastEnd.AddDays(Configurations.PRORROGA_DAYS))
                 ? lastEnd
-                : today;
+                : today.Date;
         }
 
-        var endDate = unitValue switch
-        {
-            DurationSubscriptionUnit.Days => startDate.AddDays(duration),
-            DurationSubscriptionUnit.Months => startDate.AddMonths(duration),
-            DurationSubscriptionUnit.Years => startDate.AddYears(duration),
-            _ =>  startDate
-        };
+        var endDate = SubscriptionDateCalculator.CalculateEndDate(startDate, duration, unitValue);
 
         return (startDate, endDate);
     }

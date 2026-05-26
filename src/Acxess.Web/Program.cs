@@ -17,7 +17,7 @@ using Destructurama;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
-    .CreateBootstrapLogger();
+    .CreateLogger();
 
 try
 {
@@ -132,9 +132,12 @@ try
 catch (Exception ex) when (ex is not HostAbortedException) 
 {
     Log.Fatal(ex, "The Access application crashed and shut down");
+    throw;
 }
 finally
 {
     Log.Information("Shutting down Acxess safely...");
     Log.CloseAndFlush(); 
 }
+
+public partial class Program { }

@@ -1,0 +1,36 @@
+name: CI - Pull Request Validation
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  run-tests:
+    name: Execute Validation Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install NPM dependencies (Tailwind, Alpine.js, HTMX)
+        working-directory: ./src/Acxess.Web
+        run: npm install
+
+      - name: Restore dependencies
+        run: dotnet restore src/Acxess.sln
+
+      - name: Build the solution
+        run: dotnet build src/Acxess.sln --configuration Release --no-restore
+
+      - name: Run tests (Unit & Integration via Testcontainers)
+        run: dotnet test src/Acxess.sln --configuration Release --no-build --verbosity normal

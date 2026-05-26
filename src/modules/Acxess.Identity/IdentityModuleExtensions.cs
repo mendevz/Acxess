@@ -5,6 +5,7 @@ using Acxess.Shared.Abstractions;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 namespace Acxess.Identity;
@@ -19,7 +20,8 @@ public static class IdentityModuleExtensions
         {
             options.UseSqlServer(connectionString, sqlOptions =>
                 sqlOptions.MigrationsHistoryTable("__IdentityMigrationsHistory", "Identity")
-            );
+            )
+            .ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning)); ;
         });
 
         services.AddApplicationIdentity();
