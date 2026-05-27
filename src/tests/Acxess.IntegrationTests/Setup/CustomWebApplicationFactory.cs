@@ -1,4 +1,6 @@
-﻿using Acxess.Shared.Abstractions;
+﻿using Acxess.IntegrationTests.Mocks;
+using Acxess.Shared.Abstractions;
+using Amazon.S3;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -46,10 +48,23 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.RemoveAll<ICurrentTenant>();
             services.AddSingleton<TestCurrentTenant>();
             services.AddSingleton<ICurrentTenant>(sp => sp.GetRequiredService<TestCurrentTenant>());
-            
-            services.RemoveAll<IHostedService>();
-        });
 
+
+            var s3Descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IAmazonS3));
+            if (s3Descriptor != null)
+            {
+                services.Remove(s3Descriptor);
+            }
+
+            var storageDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IImageStorageService));
+            if (storageDescriptor != null)
+            {
+                services.Remove(storageDescriptor);
+            }
+
+            // Dummy
+            services.AddScoped<IImageStorageService, DummyImageStorageService>();
+        });
     }
     public async Task InitializeAsync()
     {
