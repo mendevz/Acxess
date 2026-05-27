@@ -74,3 +74,8 @@ Use the .NET CLI to run the application or targeting Localhost environment confi
 ```bash
 ASPNETCORE_ENVIRONMENT=Localhost dotnet run --project ./Acxess.Web/
 ```
+
+## C4 Context Diagram
+
+<img width="1186" height="270" alt="C4Diagram_Acxess" src="https://github.com/user-attachments/assets/c0c060fd-6170-4d4d-a58d-78ab8f9a91cd" />
+
