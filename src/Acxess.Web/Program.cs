@@ -1,28 +1,30 @@
-using Serilog;
+using Acxess.Billing;
+using Acxess.Billing.Infrastructure.Services;
 using Acxess.Catalog;
+using Acxess.Catalog.Infrastructure.Services;
 using Acxess.Identity;
 using Acxess.Infrastructure.Extensions;
 using Acxess.Infrastructure.Middlewares;
-using Acxess.Membership;
-using Acxess.Billing;
-using Acxess.Billing.Infrastructure.Services;
-using Acxess.Catalog.Infrastructure.Services;
 using Acxess.Marketing;
+using Acxess.Membership;
 using Acxess.Membership.Application.Services;
 using Acxess.Shared.IntegrationServices.Billing;
 using Acxess.Shared.IntegrationServices.Catalog;
 using Acxess.Web;
 using Acxess.Web.Filters;
 using Destructurama;
+using Serilog;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .CreateLogger();
-
 try
 {
     Log.Information("Starting Acxess Web");
     var builder = WebApplication.CreateBuilder(args);
+
+    var r2Config = builder.Configuration.GetSection("CloudflareR2");
+    builder.Services.AddS3Client(r2Config);
 
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
