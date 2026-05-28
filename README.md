@@ -79,3 +79,6 @@ ASPNETCORE_ENVIRONMENT=Localhost dotnet run --project ./Acxess.Web/
 
 <img width="1186" height="270" alt="C4Diagram_Acxess" src="https://github.com/user-attachments/assets/c0c060fd-6170-4d4d-a58d-78ab8f9a91cd" />
 
+## Deployment Diagram
+<img width="1166" height="586" alt="image" src="https://github.com/user-attachments/assets/353adbfa-dbda-4896-ad2c-302c2413c8ab" />
+
