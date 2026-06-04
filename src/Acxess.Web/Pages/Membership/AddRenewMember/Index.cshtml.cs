@@ -100,8 +100,6 @@ public class IndexModel(
         var paymentMethodId = OrderRequest.PaymentMethod == "cash" ? 1 : 2;
         var beneficiaries = MapBeneficiaries(OrderRequest.AdditionalBeneficiaries);
         
-        await Task.Delay(3000); 
-
         return OrderRequest.Mode switch
         {
             ProcessOrderRequest.VISIT_MEMBER => await ProcessVisitAsync(idTenant, paymentMethodId, userNumber),
