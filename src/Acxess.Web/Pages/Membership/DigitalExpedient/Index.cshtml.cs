@@ -68,7 +68,7 @@ public class IndexModel(IMediator mediator) : PageModel
                     string.Empty, 
                     CurrentPage,
                     PaginationValues.PageSize,
-                    "all"));
+                    StatusFilter ?? "all"));
             
             if (membersResult.IsSuccess) MembersResponse = membersResult.Value;
             
@@ -81,7 +81,7 @@ public class IndexModel(IMediator mediator) : PageModel
                     string.Empty, 
                     CurrentPage,
                     PaginationValues.PageSize,
-                    "all"));
+                    StatusFilter ?? "all"));
             if (membersResult.IsSuccess) MembersResponse = membersResult.Value;
         }
     }
