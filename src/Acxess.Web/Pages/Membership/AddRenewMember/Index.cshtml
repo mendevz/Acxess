@@ -17,8 +17,8 @@
         @Html.Raw(Model.PreselectedMemberJson)
     )'>
 
+    <input type="hidden" name="OrderRequest.IdempotencyToken" value="@Guid.NewGuid()" />
     <input type="hidden" id="hx-member-id" name="memberId" x-model="customer.Id">
-    
     <input type="hidden" name="OrderRequest.Mode" :value="mode">
     <input type="hidden" name="OrderRequest.PaymentMethod" :value="paymentMethod">
     <input type="hidden" name="OrderRequest.AmountPaid" :value="amountGiven || 0">

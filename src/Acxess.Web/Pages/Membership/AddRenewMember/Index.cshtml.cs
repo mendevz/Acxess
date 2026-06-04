@@ -92,6 +92,7 @@ public class IndexModel(
         if (!ModelState.IsValid) return Feedback(errorMessage: "Error de validaciones"); 
         
         var userNumberString = User.FindFirstValue("UserNumber");
+
         if (!int.TryParse(userNumberString, out var userNumber) || userNumber == 0)
             return Feedback(errorMessage: "No estás autenticado");
         
@@ -99,7 +100,8 @@ public class IndexModel(
         var paymentMethodId = OrderRequest.PaymentMethod == "cash" ? 1 : 2;
         var beneficiaries = MapBeneficiaries(OrderRequest.AdditionalBeneficiaries);
         
-        
+        await Task.Delay(3000); 
+
         return OrderRequest.Mode switch
         {
             ProcessOrderRequest.VISIT_MEMBER => await ProcessVisitAsync(idTenant, paymentMethodId, userNumber),

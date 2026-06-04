@@ -26,6 +26,29 @@ services:
       - /etc/localtime:/etc/localtime:ro
     networks:
       - acxess-network
+
+  # ==============================
+  # Distributed Cache
+  # ==============================
+  acxess-redis:
+    image: redis:7-alpine
+    container_name: redis_acxess
+    restart: unless-stopped
+    mem_limit: 256m
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - acxess-network
+    profiles: ["tools", "app"]
+
   # ==============================
   #  Migrator de Base de Datos
   # ==============================
@@ -81,6 +104,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT} 
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__Default=Server=acxess-db;Database=AcxessDB;User Id=${DB_USER};Password=${DB_PASSWORD};TrustServerCertificate=True;
+      - ConnectionStrings__Redis=acxess-redis:6379,password=${REDIS_PASSWORD},abortConnect=False
       - SystemUser__Password=${SYSTEM_USER_PASSWORD}
       - RUN_MIGRATIONS=false
       - TZ=America/Mexico_City 
@@ -95,6 +119,7 @@ services:
 volumes:
   sql_data:
   seq_data:
+  redis_data:
 
 networks:
   acxess-network:
