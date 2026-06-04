@@ -4,7 +4,7 @@ document.addEventListener('alpine:init', () => {
         selectMember(id) {
             this.selectedMemberId = id;
         },
-        statusFilter: 'all',
+        statusFilter: new URLSearchParams(window.location.search).get('StatusFilter') || 'all',
         setFilter(filter) {
             this.statusFilter = filter;
             this.$nextTick(() => {

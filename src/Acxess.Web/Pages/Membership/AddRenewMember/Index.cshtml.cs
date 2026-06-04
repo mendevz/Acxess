@@ -92,6 +92,7 @@ public class IndexModel(
         if (!ModelState.IsValid) return Feedback(errorMessage: "Error de validaciones"); 
         
         var userNumberString = User.FindFirstValue("UserNumber");
+
         if (!int.TryParse(userNumberString, out var userNumber) || userNumber == 0)
             return Feedback(errorMessage: "No estás autenticado");
         
@@ -99,7 +100,8 @@ public class IndexModel(
         var paymentMethodId = OrderRequest.PaymentMethod == "cash" ? 1 : 2;
         var beneficiaries = MapBeneficiaries(OrderRequest.AdditionalBeneficiaries);
         
-        
+        await Task.Delay(3000); 
+
         return OrderRequest.Mode switch
         {
             ProcessOrderRequest.VISIT_MEMBER => await ProcessVisitAsync(idTenant, paymentMethodId, userNumber),
@@ -136,7 +138,8 @@ public class IndexModel(
             OrderRequest.AmountPaid, 
             beneficiaries, 
             userNumber,
-            OrderRequest.RequireInscription);
+            OrderRequest.RequireInscription,
+            OrderRequest.IdempotencyToken);
         
         return  HandleMemberResultAsync(await mediator.Send(command));
     }
@@ -144,7 +147,16 @@ public class IndexModel(
     private async Task<IActionResult> ProcessRenewMemberAsync(int idTenant, int paymentMethodId, int userNumber, List<NewMemberDto> beneficiaries)
     {
         var command = new RenewMemberCommand(
-            OrderRequest.MemberData.Id, OrderRequest.PlanId ?? 0, idTenant, OrderRequest.AddOnIds, paymentMethodId, OrderRequest.AmountPaid, beneficiaries, userNumber, OrderRequest.MemberData.PhotoBase64);
+            OrderRequest.MemberData.Id, 
+            OrderRequest.PlanId ?? 0, 
+            idTenant, 
+            OrderRequest.AddOnIds, 
+            paymentMethodId, 
+            OrderRequest.AmountPaid, 
+            beneficiaries, 
+            userNumber,
+            OrderRequest.IdempotencyToken,
+            OrderRequest.MemberData.PhotoBase64);
         
         return  HandleMemberResultAsync(await mediator.Send(command));
     }
