@@ -3,6 +3,7 @@ using Acxess.Shared.Abstractions;
 using Amazon.S3;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace Acxess.Infrastructure.Extensions;
 
@@ -22,6 +23,7 @@ public static class AcxessInfrastructureExtensions
             cfg.RegisterServicesFromAssembly(typeof(AcxessInfrastructureExtensions).Assembly);
             cfg.AddOpenBehavior(typeof(BehaviorsMediatR.LoggingBehavior<,>));
             cfg.AddOpenBehavior(typeof(BehaviorsMediatR.TracingBehavior<,>));
+            cfg.AddOpenBehavior(typeof(BehaviorsMediatR.IdempotencyBehavior<,>));
             cfg.AddOpenBehavior(typeof(BehaviorsMediatR.DatabaseExceptionBehavior<,>));
             cfg.AddOpenBehavior(typeof(BehaviorsMediatR.TransactionalBehavior<,>));
         });
@@ -42,6 +44,15 @@ public static class AcxessInfrastructureExtensions
             ForcePathStyle = true
         };
         services.AddSingleton<IAmazonS3>(new Amazon.S3.AmazonS3Client(credentials, s3Config));
+        return services;
+    }
+
+    public static IServiceCollection AddDistributedCacheRedis(this IServiceCollection services, IConfiguration configuration)
+    {
+        var redisConnectionString = configuration.GetConnectionString("Redis");
+
+        services.AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(redisConnectionString!));
+
         return services;
     }
 }

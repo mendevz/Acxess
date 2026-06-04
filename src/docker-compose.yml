@@ -35,9 +35,11 @@ services:
     container_name: redis_acxess
     restart: unless-stopped
     mem_limit: 256m
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes --appendfsync everysec
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: redis-cli -a ${REDIS_PASSWORD} ping
       interval: 5s
       timeout: 3s
       retries: 5

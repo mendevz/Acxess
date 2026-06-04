@@ -78,7 +78,8 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
             AmountPaid: 600m,
             Beneficiaries: [],
             CreatedUserId: 1,
-            RequireInscription:requireInscription
+            RequireInscription:requireInscription,
+            Guid.NewGuid()
         );
 
 
@@ -162,7 +163,8 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
             MemberDto: titularDto,
             Beneficiaries: beneficiariosDtos,
             AddOnIds: [1, 2],
-            RequireInscription: true
+            RequireInscription: true,
+            IdempotencyToken: Guid.NewGuid()
         );
 
         // Act
@@ -256,7 +258,8 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
             MemberDto: titularDto,
             Beneficiaries: beneficiariosDtos,
             AddOnIds: addOnsIds,
-            RequireInscription: true
+            RequireInscription: true,
+            IdempotencyToken: Guid.NewGuid()
         );
 
         // Act
@@ -327,7 +330,8 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
            MemberDto: new NewMemberDto(1, "Bruce", "Wayne", "12345", "base64String..."),
            Beneficiaries: [],
            AddOnIds: [],
-           RequireInscription: true
+           RequireInscription: true,
+           IdempotencyToken: Guid.NewGuid()
        );
 
         // Act

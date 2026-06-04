@@ -1,4 +1,5 @@
 using Acxess.Membership.Application.Features.Members.DTOs;
+using Acxess.Shared.Abstractions;
 using Acxess.Shared.ResultManager;
 using MediatR;
 
@@ -13,4 +14,6 @@ public record NewMemberCommand(
     decimal AmountPaid,
     List<NewMemberDto> Beneficiaries,
     int CreatedUserId,
-    bool RequireInscription) : IRequest<Result<UpdatedSubMemberResponse>>;
+    bool RequireInscription,
+    Guid IdempotencyToken
+) : IRequest<Result<UpdatedSubMemberResponse>>, IIdempotentCommand;

@@ -138,7 +138,8 @@ public class IndexModel(
             OrderRequest.AmountPaid, 
             beneficiaries, 
             userNumber,
-            OrderRequest.RequireInscription);
+            OrderRequest.RequireInscription,
+            OrderRequest.IdempotencyToken);
         
         return  HandleMemberResultAsync(await mediator.Send(command));
     }
@@ -146,7 +147,16 @@ public class IndexModel(
     private async Task<IActionResult> ProcessRenewMemberAsync(int idTenant, int paymentMethodId, int userNumber, List<NewMemberDto> beneficiaries)
     {
         var command = new RenewMemberCommand(
-            OrderRequest.MemberData.Id, OrderRequest.PlanId ?? 0, idTenant, OrderRequest.AddOnIds, paymentMethodId, OrderRequest.AmountPaid, beneficiaries, userNumber, OrderRequest.MemberData.PhotoBase64);
+            OrderRequest.MemberData.Id, 
+            OrderRequest.PlanId ?? 0, 
+            idTenant, 
+            OrderRequest.AddOnIds, 
+            paymentMethodId, 
+            OrderRequest.AmountPaid, 
+            beneficiaries, 
+            userNumber,
+            OrderRequest.IdempotencyToken,
+            OrderRequest.MemberData.PhotoBase64);
         
         return  HandleMemberResultAsync(await mediator.Send(command));
     }

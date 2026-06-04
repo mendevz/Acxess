@@ -60,7 +60,8 @@ public class RenewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsy
             PaymentMethodId:   1,
             AmountPaid: 400m,
             Beneficiaries: [],
-            CreatedUserId: 1);
+            CreatedUserId: 1,
+            IdempotencyToken: Guid.NewGuid());
 
         var handler = new RenewMemberHandler(
             dbContext, 
