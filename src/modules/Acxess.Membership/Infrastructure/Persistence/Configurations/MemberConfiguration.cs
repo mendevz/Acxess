@@ -34,7 +34,7 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
         .HasMaxLength(80);
         
         builder.Property(t => t.Phone)
-        .HasMaxLength(13);
+        .HasMaxLength(20);
 
 
         builder.Property(t => t.IsDeleted)
