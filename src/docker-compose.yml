@@ -1,6 +1,6 @@
 services:
   # ==============================
-  # Base de Datos
+  # DataBase SQL Server
   # ==============================
   acxess-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -49,10 +49,10 @@ services:
       - redis_data:/data
     networks:
       - acxess-network
-    profiles: ["tools", "app"]
+    # profiles: ["tools", "app"]
 
   # ==============================
-  #  Migrator de Base de Datos
+  #  Data base migrator 
   # ==============================
   acxess-migrator:
     build:
@@ -66,10 +66,21 @@ services:
     environment:
       - ConnectionStrings__Default=Server=acxess-db;Database=AcxessDB;User Id=${DB_USER};Password=${DB_PASSWORD};TrustServerCertificate=True;
       - SystemUser__Password=${SYSTEM_USER_PASSWORD}
+      - CloudflareR2__BucketName=${S3_BUCKET_NAME}
+      - CloudflareR2__AccessKey=${S3_ACCESS_KEY}
+      - CloudflareR2__SecretKey=${S3_SECRET_KEY}
+      - CloudflareR2__ServiceURL=${S3_SERVICE_URL}
+      - CloudflareR2__PublicDomain=${S3_PUBLIC_DOMAIN}
     networks:
       - acxess-network
-    profiles: ["tools", "app"]
+    # profiles: ["tools", "app"]
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     
+  
+  # ==============================
+  #  Seq - Log Management (Dev Environment)
+  # ==============================
 
   seq:
     image: datalust/seq:latest
@@ -85,7 +96,7 @@ services:
       - seq_data:/data
     networks:
       - acxess-network
-    profiles: ["tools", "app"]
+    # profiles: ["tools", "app"]
 
   # ==============================
   #  App Web
@@ -96,7 +107,7 @@ services:
       dockerfile: src/Acxess.Web/DOCKERFILE
     container_name: acxess_web
     mem_limit: 512m
-    restart: always
+    restart: "no"
     depends_on:
       acxess-db:
         condition: service_healthy
@@ -110,18 +121,101 @@ services:
       - SystemUser__Password=${SYSTEM_USER_PASSWORD}
       - RUN_MIGRATIONS=false
       - TZ=America/Mexico_City 
+      - OpenTelemetry__Endpoint=${OPEN_TELEMETRY_ENDPOINT}
+      - OpenTelemetry__Token=${OPEN_TELEMETRY_TOKEN}
+      - CloudflareR2__BucketName=${S3_BUCKET_NAME}
+      - CloudflareR2__AccessKey=${S3_ACCESS_KEY}
+      - CloudflareR2__SecretKey=${S3_SECRET_KEY}
+      - CloudflareR2__ServiceURL=${S3_SERVICE_URL}
+      - CloudflareR2__PublicDomain=${S3_PUBLIC_DOMAIN}
     ports:
       - "5000:8080" 
     networks:
       - acxess-network
-    profiles: ["app"]
+    # profiles: ["app"]
     volumes:
-      - ../src/Acxess.Web/wwwroot/uploads:/app/wwwroot/uploads
+      - acxess_keys:/root/.aspnet/DataProtection-Keys
+
+  # ==============================
+  # Stack WhatsApp (Evolution API)
+  # ==============================
+  evolution-postgres:
+    image: postgres:15-alpine
+    container_name: evolution_db
+    environment:
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: evolution_password
+      POSTGRES_DB: evolution_api
+      TZ: America/Mexico_City
+    ports:
+      - "5433:5432" 
+    volumes:
+      - evolution_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolution -d evolution_api"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - acxess-network
+    # profiles: ["tools", "app"]
+
+  evolution-redis:
+    image: redis:7-alpine
+    container_name: evolution_redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - evolution_redis_data:/data
+    networks:
+      - acxess-network
+    # profiles: ["tools", "app"]
+
+  evolution-api:
+    image: evoapicloud/evolution-api:latest
+    container_name: evolution_api
+    mem_limit: 512m
+    depends_on:
+      evolution-postgres:
+        condition: service_healthy
+      evolution-redis:
+        condition: service_started
+    ports:
+      - "8082:8080"
+    environment:
+      - SERVER_URL=http://localhost:8082
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY} 
+      - CONFIG_SESSION_PHONE_VERSION=2.3000.1023204200
+      # Database Settings
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://evolution:evolution_password@evolution-postgres:5432/evolution_api
+      - DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+      # Redis
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://evolution-redis:6379/1
+      - CACHE_REDIS_PREFIX_KEY=evolution
+      # RAM Settings
+      - WEBSOCKET_ENABLED=false
+      - RABBITMQ_ENABLED=false
+      - SQS_ENABLED=false
+      - TYPEBOT_INTEGRATION=false
+      - CHATWOOT_INTEGRATION=false
+      - READ_MESSAGES=true
+      - REJECT_CALLS=true
+    volumes:
+      - evolution_instances:/evolution/instances
+    networks:
+      - acxess-network
+    # profiles: ["tools", "app"]
 
 volumes:
   sql_data:
   seq_data:
   redis_data:
+  evolution_pgdata:       
+  evolution_redis_data:   
+  evolution_instances:
+  acxess_keys:
 
 networks:
   acxess-network:

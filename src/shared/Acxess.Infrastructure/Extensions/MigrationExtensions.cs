@@ -23,6 +23,7 @@ public static class MigrationExtensions
             catch (Exception ex)
             {
                 Console.WriteLine($"--> Error en Seed {seeder.GetType().Name}: {ex.Message}");
+                throw;
             }
         }
     }

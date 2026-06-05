@@ -17,7 +17,7 @@ env:
 
 jobs:
   # ==========================================
-  # FASE 1: Integración Continua (CI)
+  # Contineus Integration
   # ==========================================
   build-and-push:
     name: Build and push image
@@ -43,7 +43,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: latest
 
       - name: Install NPM dependencies (Tailwind)
         working-directory: ./src/Acxess.Web

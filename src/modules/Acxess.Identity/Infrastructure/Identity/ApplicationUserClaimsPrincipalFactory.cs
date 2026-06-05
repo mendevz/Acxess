@@ -21,6 +21,7 @@ public class ApplicationUserClaimsPrincipalFactory(
         var identity = await base.GenerateClaimsAsync(user);
         
       var availableTenants = await context.Set<TenantsUsers>()
+            .OrderByDescending(tu => tu.Default)
             .Include(tu => tu.Tenant)
             .AsSplitQuery()
             .Where(tu => tu.UserNumber == user.UserNumber && tu.Tenant.IsActive)
