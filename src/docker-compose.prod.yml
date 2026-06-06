@@ -95,6 +95,7 @@ services:
     profiles: ["tools", "app"]
     volumes:
       - /etc/localtime:/etc/localtime:ro
+      - acxess_keys:/root/.aspnet/DataProtection-Keys
 
   # ==============================
   #  App Web
