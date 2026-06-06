@@ -95,9 +95,7 @@ public class IndexModel(
 
         if (!int.TryParse(userNumberString, out var userNumber) || userNumber == 0)
             return Feedback(errorMessage: "No estás autenticado");
-
-        await Task.Delay(3000);
-        
+            
         var idTenant = currentTenant.Id ?? 0;
         var paymentMethodId = OrderRequest.PaymentMethod == "cash" ? 1 : 2;
         var beneficiaries = MapBeneficiaries(OrderRequest.AdditionalBeneficiaries);
