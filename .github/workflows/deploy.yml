@@ -108,9 +108,11 @@ jobs:
           envs: APP_VERSION
           script: |
             cd /opt/acxess
-
-            mv docker-compose.prod.yml docker-compose.yml
+            
+            mv src/docker-compose.prod.yml docker-compose.yml
             mv infrastructure/* .
+
+            rm -rf src infrastructure
 
             chmod +x backup.sh || true
 
