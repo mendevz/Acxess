@@ -58,14 +58,11 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
         builder.HasMany(m => m.OwnedSubscriptions)
             .WithOne(s => s.OwnerMember)
             .HasForeignKey(s => s.IdMemberOwner)
-            .OnDelete(DeleteBehavior.Restrict); // Evita borrado en cascada peligroso
-        
-        
+            .OnDelete(DeleteBehavior.Restrict); // Avoid cascading deletes to prevent accidental data loss
+
         builder.HasMany(m => m.SubscriptionMemberships)
             .WithOne(sm => sm.Member)
             .HasForeignKey(sm => sm.IdMember)
             .OnDelete(DeleteBehavior.Restrict);
-        
-            
     }
 }

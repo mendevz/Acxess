@@ -11,6 +11,7 @@
     <DockerLaunchArguments>--profile app</DockerLaunchArguments>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="docker-compose.prod.yml" />
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
   </ItemGroup>

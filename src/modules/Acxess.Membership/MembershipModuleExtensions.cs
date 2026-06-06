@@ -25,8 +25,11 @@ public static class MembershipModuleExtensions
         });
 
         services.AddScoped<IDataSeeder, MembershipSeeder>();
+
         services.AddScoped<ISubscriptionService, SubscriptionService>();
+
         services.AddHostedService<SubscriptionExpirationWorker>();
+        services.AddHostedService<WhatsAppDailyReportWorker>();
 
         return services;
     }

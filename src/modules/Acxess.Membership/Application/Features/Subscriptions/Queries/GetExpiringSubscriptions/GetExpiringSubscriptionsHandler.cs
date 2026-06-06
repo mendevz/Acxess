@@ -11,11 +11,13 @@ public class GetExpiringSubscriptionsHandler(
 {
     public async Task<Result<List<TenantExpiringDataDto>>> Handle(GetExpiringSubscriptionsQuery request, CancellationToken cancellationToken)
     {
-        var today = DateTime.Now.Date;
+        var startOfToday = DateTime.Now.Date; 
+        var endOfToday = startOfToday.AddDays(1);
 
         var expiringData = await dbContext.Subscriptions
-            .AsNoTracking() 
-            .Where(s => s.IsActive && s.EndDate.Date == today)
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(s => s.IsActive && s.EndDate >= startOfToday && s.EndDate < endOfToday)
             .SelectMany(s => s.SubscriptionMembers.Select(sm => new
             {
                 s.IdTenant,

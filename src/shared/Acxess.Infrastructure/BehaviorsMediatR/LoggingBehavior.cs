@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Security.Claims;
 using Acxess.Shared.Abstractions;
-using Acxess.Shared.ResultManager;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -17,7 +16,6 @@ public class LoggingBehavior<TRequest, TResponse>(
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         var requestName = typeof(TRequest).Name;
-        
         
         var userId = httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "Anonymous";
         var correlationId = httpContextAccessor.HttpContext?.TraceIdentifier ?? Guid.NewGuid().ToString();
@@ -44,7 +42,6 @@ public class LoggingBehavior<TRequest, TResponse>(
             
                 if (response is IResult { IsFailure: true } result)
                 {
-
                     logger.LogWarning(
                         "Command/Query rejected by Domain: {RequestName} in {ElapsedMilliseconds} ms. Details: {@Error}", 
                         requestName, timer.ElapsedMilliseconds, result.Error);

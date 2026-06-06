@@ -3,7 +3,11 @@ using Acxess.Shared.Abstractions;
 using Amazon.S3;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Extensions.Http;
 using StackExchange.Redis;
+using System.Net.Http.Headers;
 
 namespace Acxess.Infrastructure.Extensions;
 
@@ -52,6 +56,36 @@ public static class AcxessInfrastructureExtensions
         var redisConnectionString = configuration.GetConnectionString("Redis");
 
         services.AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(redisConnectionString!));
+
+        return services;
+    }
+
+    public static IServiceCollection AddWhatsAppInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        var retryPolicy = HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .WaitAndRetryAsync(
+                retryCount: 3,
+                sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
+                                                      + TimeSpan.FromMilliseconds(new Random().Next(0, 100)),
+                onRetry: (outcome, timespan, retryCount, context) =>
+                {
+                    var logger = services.BuildServiceProvider().GetRequiredService<ILogger<EvolutionWhatsAppService>>();
+                    logger.LogWarning("Transient error hitting Evolution API. Retrying in {Seconds}s. Attempt {Attempt} of 3.",
+                        timespan.TotalSeconds, retryCount);
+                });
+
+        services.AddHttpClient<IWhatsAppService, EvolutionWhatsAppService>(client =>
+        {
+            var baseUrl = configuration["WhatsApp:BaseUrl"] ?? throw new Exception("Falta baseUrl de EvolutionAPI");
+            var apiKey = configuration["WhatsApp:ApiKey"] ?? throw new Exception("Falta ApiKey de EvolutionApi");
+
+            client.BaseAddress = new Uri(baseUrl);
+            client.DefaultRequestHeaders.Add("apikey", apiKey);
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.Timeout = TimeSpan.FromSeconds(10);
+        })
+        .AddPolicyHandler(retryPolicy);
 
         return services;
     }

@@ -1,0 +1,12 @@
+acxess-app.com, www.acxess-app.com {
+    @static_404 {
+        path /robots.txt
+    }
+    respond @static_404 "Not Found" 404
+
+    reverse_proxy acxess-web:8080
+}
+
+api-wa.acxess-app.com {
+    reverse_proxy evolution-api:8080
+}

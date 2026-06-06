@@ -1,11 +1,32 @@
 services:
   # ==============================
+  # Reverse Proxy (Auto HTTPS)
+  # ==============================
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data # Guarda los certificados SSL
+      - caddy_config:/config
+    networks:
+      - acxess-network
+    depends_on:
+      - acxess-web
+    profiles: ["app"]
+  # ==============================
   # DataBase SQL Server
   # ==============================
   acxess-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sql_acxess_container
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:1433:1433"
     mem_limit: 3072m
     cpus: 1.0
     environment:
@@ -19,8 +40,6 @@ services:
       retries: 10
       start_period: 30s
       timeout: 3s
-    ports:
-      - "1433:1433" 
     volumes:
       - sql_data:/var/opt/mssql 
       - /etc/localtime:/etc/localtime:ro
@@ -49,15 +68,13 @@ services:
       - redis_data:/data
     networks:
       - acxess-network
-    # profiles: ["tools", "app"]
+    profiles: ["tools", "app"]
 
   # ==============================
   #  Data base migrator 
   # ==============================
   acxess-migrator:
-    build:
-      context: ..
-      dockerfile: src/Acxess.Web/DOCKERFILE
+    image: ghcr.io/mendevz/acxess-web:${APP_VERSION:-latest} 
     container_name: acxess_migrator
     command: ["dotnet", "Acxess.Web.dll", "--migrate-only"]
     depends_on:
@@ -75,38 +92,15 @@ services:
       - WhatsApp__InstanceName=${EVOLUTION_API_INSTANCE}
     networks:
       - acxess-network
-    # profiles: ["tools", "app"]
+    profiles: ["tools", "app"]
     volumes:
       - /etc/localtime:/etc/localtime:ro
-    
-  
-  # ==============================
-  #  Seq - Log Management (Dev Environment)
-  # ==============================
-
-  seq:
-    image: datalust/seq:latest
-    container_name: seq_acxess
-    restart: unless-stopped
-    environment:
-      - ACCEPT_EULA=Y
-      - SEQ_FIRSTRUN_ADMINPASSWORD=${SYSTEM_USER_PASSWORD}
-    ports:
-      - "8081:80"
-      - "5341:5341"
-    volumes:
-      - seq_data:/data
-    networks:
-      - acxess-network
-    # profiles: ["tools", "app"]
 
   # ==============================
   #  App Web
   # ==============================
   acxess-web:
-    build:
-      context: .. 
-      dockerfile: src/Acxess.Web/DOCKERFILE
+    image: ghcr.io/mendevz/acxess-web:${APP_VERSION:-latest}
     container_name: acxess_web
     mem_limit: 512m
     restart: "no"
@@ -132,13 +126,12 @@ services:
       - CloudflareR2__PublicDomain=${S3_PUBLIC_DOMAIN}
       - WhatsApp__ApiKey=${EVOLUTION_API_KEY}
       - WhatsApp__InstanceName=${EVOLUTION_API_INSTANCE}
-    ports:
-      - "5000:8080" 
     networks:
       - acxess-network
-    # profiles: ["app"]
+    profiles: ["app"]
     volumes:
       - acxess_keys:/root/.aspnet/DataProtection-Keys
+      - /etc/localtime:/etc/localtime:ro
 
   # ==============================
   # Stack WhatsApp (Evolution API)
@@ -162,7 +155,7 @@ services:
       retries: 5
     networks:
       - acxess-network
-    # profiles: ["tools", "app"]
+    profiles: ["app"]
 
   evolution-redis:
     image: redis:7-alpine
@@ -173,12 +166,13 @@ services:
       - evolution_redis_data:/data
     networks:
       - acxess-network
-    # profiles: ["tools", "app"]
+    profiles: ["app"]
 
   evolution-api:
     image: evoapicloud/evolution-api:latest
     container_name: evolution_api
     mem_limit: 512m
+    restart: always
     depends_on:
       evolution-postgres:
         condition: service_healthy
@@ -187,7 +181,7 @@ services:
     ports:
       - "8082:8080"
     environment:
-      - SERVER_URL=http://localhost:8082
+      - SERVER_URL=${EVO_SERVER_URL}
       - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY} 
       - CONFIG_SESSION_PHONE_VERSION=2.3000.1023204200
       # Database Settings
@@ -210,16 +204,17 @@ services:
       - evolution_instances:/evolution/instances
     networks:
       - acxess-network
-    # profiles: ["tools", "app"]
+    profiles: ["app"]
 
 volumes:
+  caddy_data:
+  caddy_config:
   sql_data:
-  seq_data:
   redis_data:
+  acxess_keys:
   evolution_pgdata:       
   evolution_redis_data:   
   evolution_instances:
-  acxess_keys:
 
 networks:
   acxess-network:

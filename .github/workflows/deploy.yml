@@ -87,6 +87,18 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      - name: Download code source
+        uses: actions/checkout@v4
+
+      - name: Copy Infrastructure Files via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.MENDEZ_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "src/docker-compose.prod.yml,infrastructure/Caddyfile,infrastructure/backup.sh"
+          target: "/opt/acxess/" 
+
       - name: Connect to VPS via SSH and Update Containers
         uses: appleboy/ssh-action@master
         with:
@@ -97,17 +109,35 @@ jobs:
           script: |
             cd /opt/acxess
 
-            if grep -q "^APP_VERSION=" .env; then
-              sed -i "s/^APP_VERSION=.*/APP_VERSION=${APP_VERSION}/" .env
-            else
-              echo "APP_VERSION=${APP_VERSION}" >> .env
-            fi
+            mv docker-compose.prod.yml docker-compose.yml
+            mv infrastructure/* .
+
+            chmod +x backup.sh || true
+
+            cat <<EOF > .env
+            ASPNETCORE_ENVIRONMENT=Production
+            DB_USER=sa
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            SYSTEM_USER_PASSWORD=${{ secrets.SYSTEM_USER_PASSWORD }}
+            OPEN_TELEMETRY_ENDPOINT=${{ secrets.OPEN_TELEMETRY_ENDPOINT }}
+            OPEN_TELEMETRY_TOKEN=${{ secrets.OPEN_TELEMETRY_TOKEN }}
+            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
+            S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }}
+            S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }}
+            S3_SERVICE_URL=${{ secrets.S3_SERVICE_URL }}
+            S3_PUBLIC_DOMAIN=${{ secrets.S3_PUBLIC_DOMAIN }}
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+            EVOLUTION_API_KEY=${{ secrets.EVOLUTION_API_KEY }}
+            EVOLUTION_API_INSTANCE=${{ secrets.EVOLUTION_API_INSTANCE }}
+            EVO_SERVER_URL=${{ secrets.EVO_SERVER_URL }}
+            APP_VERSION=${APP_VERSION}
+            EOF
             
-            # 1. Force Docker to download the most recent version we just compiled
+            # Force Docker to download the most recent version we just compiled
             docker compose pull
-            
-            # 2. Start everything: The DB, run the migrator and start the app
+
+            # Start everything: The DB, run the migrator and start the app
             docker compose --profile app up -d --force-recreate
             
-            # 3. Cleanup: Delete old Docker images to prevent the server's hard drive from filling up
+            # Cleanup: Delete old Docker images to prevent the server's hard drive from filling up
             docker image prune -f
