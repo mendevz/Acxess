@@ -34,7 +34,7 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
         .HasMaxLength(80);
         
         builder.Property(t => t.Phone)
-        .HasMaxLength(13);
+        .HasMaxLength(20);
 
 
         builder.Property(t => t.IsDeleted)
@@ -58,14 +58,11 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
         builder.HasMany(m => m.OwnedSubscriptions)
             .WithOne(s => s.OwnerMember)
             .HasForeignKey(s => s.IdMemberOwner)
-            .OnDelete(DeleteBehavior.Restrict); // Evita borrado en cascada peligroso
-        
-        
+            .OnDelete(DeleteBehavior.Restrict); // Avoid cascading deletes to prevent accidental data loss
+
         builder.HasMany(m => m.SubscriptionMemberships)
             .WithOne(sm => sm.Member)
             .HasForeignKey(sm => sm.IdMember)
             .OnDelete(DeleteBehavior.Restrict);
-        
-            
     }
 }

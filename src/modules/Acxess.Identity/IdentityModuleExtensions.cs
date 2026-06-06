@@ -1,7 +1,9 @@
 using Acxess.Identity.Domain.Entities;
 using Acxess.Identity.Infrastructure.Identity;
 using Acxess.Identity.Infrastructure.Persistence;
+using Acxess.Identity.Infrastructure.Services;
 using Acxess.Shared.Abstractions;
+using Acxess.Shared.IntegrationServices;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +29,7 @@ public static class IdentityModuleExtensions
         services.AddApplicationIdentity();
 
         services.AddScoped<IDataSeeder, IdentitySeeder>();
+        services.AddScoped<IIdentityIntegrationService, IdentityIntegrationService>();
 
         return services;
     }

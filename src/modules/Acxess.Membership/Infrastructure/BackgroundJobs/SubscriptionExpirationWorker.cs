@@ -1,56 +1,65 @@
+namespace Acxess.Membership.Infrastructure.BackgroundJobs;
+
+using System;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using Acxess.Membership.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
-using System.Diagnostics;
-
-namespace Acxess.Membership.Infrastructure.BackgroundJobs;
 
 public class SubscriptionExpirationWorker(
     IServiceScopeFactory scopeFactory,
-    ILogger<SubscriptionExpirationWorker> logger): BackgroundService
+    ILogger<SubscriptionExpirationWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using (LogContext.PushProperty("BackgroundJob", nameof(SubscriptionExpirationWorker)))
+        const string JobName = nameof(SubscriptionExpirationWorker);
+
+        using (LogContext.PushProperty("BackgroundJob", JobName))
         {
-            logger.LogInformation("The subscription expiration worker has started.");
-       
+            logger.LogInformation("Background job started | JobName: {JobName}", JobName);
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 var now = DateTime.Now;
                 var nextRun = now.Date.AddDays(1).AddHours(1);
-                
-                if (now.Hour < 1) 
+
+                if (now.Hour < 1)
                 {
                     nextRun = now.Date.AddHours(1);
                 }
 
                 var delay = nextRun - now;
-                logger.LogInformation("Next scheduled run: {NextRun} (in {DelayHours} hours)", 
-                        nextRun, delay.TotalHours);
-                try 
+
+                logger.LogInformation("Scheduled next execution | NextRun: {NextRun}, DelayHours: {DelayHours:F2}",
+                    nextRun, delay.TotalHours);
+
+                try
                 {
                     await Task.Delay(delay, stoppingToken);
 
+                    logger.LogInformation("Executing subscription expiration job");
                     var stopwatch = Stopwatch.StartNew();
-                    logger.LogInformation("Starting the deactivation of expired subscriptions...");
 
                     using var scope = scopeFactory.CreateScope();
                     var service = scope.ServiceProvider.GetRequiredService<ISubscriptionService>();
                     await service.DeactivateExpiredSubscriptionsAsync(stoppingToken);
 
                     stopwatch.Stop();
-                    logger.LogInformation("Deactivation completed successfully in {ElapsedMilliseconds} ms", 
+
+                    logger.LogInformation("Subscription expiration job completed | DurationMs: {DurationMs}",
                         stopwatch.ElapsedMilliseconds);
                 }
-                catch (OperationCanceledException) { 
-                    logger.LogWarning("The worker was cancelled by the system before finishing.");
-                }
-                catch (Exception ex) 
+                catch (OperationCanceledException)
                 {
-                    logger.LogError(ex, "Critical error during the automatic execution of the membership deactivation.");
+                    logger.LogWarning("Background job canceled | JobName: {JobName}", JobName);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Unhandled exception in background job | JobName: {JobName}", JobName);
                     await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 }
             }

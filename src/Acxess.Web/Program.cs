@@ -7,12 +7,14 @@ using Acxess.Infrastructure.Extensions;
 using Acxess.Infrastructure.Middlewares;
 using Acxess.Marketing;
 using Acxess.Membership;
+using Acxess.Membership.Application.Features.Subscriptions.Commands.SendDailyExpirationReminders;
 using Acxess.Membership.Application.Services;
 using Acxess.Shared.IntegrationServices.Billing;
 using Acxess.Shared.IntegrationServices.Catalog;
 using Acxess.Web;
 using Acxess.Web.Filters;
 using Destructurama;
+using MediatR;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -39,6 +41,7 @@ try
     
     builder.Services.AddAcxessTelemetry(builder.Configuration);
     builder.Services.AddDistributedCacheRedis(builder.Configuration);
+    builder.Services.AddWhatsAppInfrastructure(builder.Configuration);
 
     builder.Services
         .AddExceptionHandler<GlobalExceptionHandler>()
@@ -127,6 +130,13 @@ try
     {
         await service.DeactivateExpiredSubscriptionsAsync(CancellationToken.None);
         return Results.Ok(new { message = "Expiration process executed manually." });
+    })
+    .WithTags("Maintenance");
+
+    app.MapPost("/api/membership/subscriptions/send-report-subscriptions", async (IMediator mediator) =>
+    {
+        var result = await mediator.Send(new SendDailyExpirationRemindersCommand(), CancellationToken.None);
+        return Results.Ok(new { message = "Send report of expired subscriptions executed manually." });
     })
     .WithTags("Maintenance");
     
