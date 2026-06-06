@@ -1,5 +1,6 @@
 ﻿using Acxess.Infrastructure.Utils;
 using Acxess.Shared.Abstractions;
+using Acxess.Shared.ResultManager;
 using MediatR;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -41,10 +42,17 @@ public class IdempotencyBehavior<TRequest, TResponse> (IConnectionMultiplexer re
 
         var response = await next();
 
-        await db.StringSetAsync(
-            cacheIdempotencyKey,
-            JsonSerializer.Serialize(response),
-            TimeSpan.FromHours(3));
+        if (response is IResult result && result.IsFailure)
+        {
+            await db.KeyDeleteAsync(cacheIdempotencyKey);
+        }
+        else
+        {
+            await db.StringSetAsync(
+                cacheIdempotencyKey,
+                JsonSerializer.Serialize(response, jsonOptions),
+                TimeSpan.FromHours(3));
+        }
 
         return response;
     }
