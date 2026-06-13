@@ -1,18 +1,21 @@
+using Acxess.Membership.Infrastructure.Extensions;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.ResultManager;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Acxess.Membership.Application.Features.Subscriptions.Commands.CancelSubscription;
+namespace Acxess.Membership.Application.Features.Subscriptions.Commands;
 
+public record CancelSubscriptionCommand(int SubscriptionId, string Reason, int UserId) : IRequest<Result<string>>;
 public class CancelSubscriptionHandler(
     MembershipModuleContext context,
     ILogger<CancelSubscriptionHandler> logger) : IRequestHandler<CancelSubscriptionCommand, Result<string>>
 {
     public async Task<Result<string>> Handle(CancelSubscriptionCommand request, CancellationToken cancellationToken)
     {
-        
+        var today = DateTime.Now.Date;
+
         var memberId = await context.SubscriptionMembers
             .Where(sm => sm.IdSubscription == request.SubscriptionId)
             .Select(sm => sm.IdMember)
@@ -26,7 +29,7 @@ public class CancelSubscriptionHandler(
         
         var activeSubscriptionsToCancel = await context.SubscriptionMembers
             .Include(sm => sm.Subscription)
-            .Where(sm => sm.IdMember == memberId && sm.Subscription.IsActive)
+            .Where(sm => sm.IdMember == memberId && sm.Subscription.IsSubscriptionActive(toda))
             .Select(sm => sm.Subscription)
             .ToListAsync(cancellationToken);
 

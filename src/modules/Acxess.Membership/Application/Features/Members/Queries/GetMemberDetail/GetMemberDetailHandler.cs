@@ -3,6 +3,7 @@ using Acxess.Membership.Application.Formatters;
 using Acxess.Membership.Domain.Constants;
 using Acxess.Membership.Domain.Errors;
 using Acxess.Membership.Domain.ValueObjects;
+using Acxess.Membership.Infrastructure.Extensions;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.IntegrationServices.Billing;
 using Acxess.Shared.IntegrationServices.Catalog;
@@ -45,9 +46,9 @@ public class GetMemberDetailHandler(
                         s.StartDate, 
                         s.EndDate, 
                         s.IdSellingPlan,
-                        s.IsActive,
                         s.CancelledAt,
-                        AddOns = s.AddOns.Select(ao => new { ao.IdAddOn, ao.PriceSnapshot }).ToList() 
+                        AddOns = s.AddOns.Select(ao => new { ao.IdAddOn, ao.PriceSnapshot }).ToList(),
+                        IsActive = s.IsSubscriptionActive(today)
                     })
                     .ToList()
             })
@@ -57,7 +58,7 @@ public class GetMemberDetailHandler(
             return Result<MemberDetailDto>.Failure(MemberError.NotFound);
         
         var activeSubscriptions = member.Subscriptions
-            .Where(s => s.EndDate >= today && s.IsActive)
+            .Where(s => s.EndDate >= today)
             .ToList();
         
         var lastSubscription = member.Subscriptions
@@ -97,19 +98,19 @@ public class GetMemberDetailHandler(
             }
         }
 
-        var isSubscriptionCancelled = displaySub != null && !displaySub.IsActive && displaySub.CancelledAt.HasValue;
+        var isSubscriptionCancelled = displaySub != null && displaySub.CancelledAt.HasValue;
         
         var metrics = SubscriptionMetrics.Calculate(
             currentDate: today,
             joinedDate: member.CreatedAt,
             chainStartDate: chainStartDate,
             absoluteEndDate: absoluteEndDate,
-            isDisplaySubActive: displaySub?.IsActive ?? false,
+            isDisplaySubActive: displaySub!.IsActive,
             isSubscriptionCancelled: isSubscriptionCancelled,
             gracePeriodDaysConfig: Configurations.PRORROGA_DAYS 
         );
 
-        var displayInfoToFront = MemberDetailDisplayFormatter.GetStatusDisplay(
+        var displayInfoToFront = MembershipDisplayFormatters.GetStatusDisplay(
             isDeleted: member.IsDeleted, 
             hasPlan: displaySub != null, 
             isSubscriptionCancelled: isSubscriptionCancelled,

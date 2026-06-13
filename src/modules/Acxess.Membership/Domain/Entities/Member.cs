@@ -74,10 +74,13 @@ public class Member : IHasTenant
     {
         IsDeleted = false;
     }
-    
+
+
+
     public bool HasActiveSubscription()
     {
-        return _subscriptionMemberships.Any(sm => sm.Subscription.IsActive && sm.Subscription.EndDate > DateTime.Now);
+        var today = DateTime.Now.Date;
+        return _subscriptionMemberships.Any(sm =>  sm.Subscription.IsActive(today));
     }
     
     public void UpdateInformation(string firstName, string lastName, string? phone, string? email)
@@ -122,8 +125,8 @@ public class Member : IHasTenant
         {
             subscription.AddMember(beneficiaryId, isOwner: false);      
         }
-        
-        foreach (var (addOnId, key, name, addOnPrice) in addOns)
+
+        foreach (var (addOnId, _, _, addOnPrice) in addOns)
         {
             subscription.AddAddOn(addOnId, addOnPrice);
         }
@@ -137,11 +140,11 @@ public class Member : IHasTenant
         var startDate = today;
 
         var ownedActiveSubs = _ownedSubscriptions
-                .Where(s => s.IsActive);
+                .Where(s => s.IsActive(startDate));
 
         var membershipActiveSubs = _subscriptionMemberships
             .Select(sm => sm.Subscription)
-            .Where(s => s.IsActive);
+            .Where(s => s.IsActive(startDate));
 
         var lastActiveSub = ownedActiveSubs
             .Union(membershipActiveSubs)

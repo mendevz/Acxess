@@ -25,7 +25,6 @@ public class Subscription : IHasTenant
         StartDate = startDate;
         EndDate = endDate;
         CreatedAt =  DateTime.Now;
-        IsActive = true;
         SellingPlanName = sellingPlanName;
     }
 
@@ -37,7 +36,6 @@ public class Subscription : IHasTenant
     public int IdMemberOwner { get; private set; }
     public int IdSellingPlan { get; private set; }
     public string SellingPlanName { get; private set; } = string.Empty;
-    public bool IsActive { get; private set; } = true;
     public DateTime StartDate { get; private set; }
     public DateTime EndDate { get; private set; }
     public decimal PriceSnapshot { get; private set; }
@@ -83,7 +81,10 @@ public class Subscription : IHasTenant
         
         return subscription;
     }
-    
+
+    public bool IsActive(DateTime atDate)
+        => EndDate >= atDate && !CancelledAt.HasValue;
+
     private void AddOwnerMember(Member owner)
     {
         var membership = Membership.Domain.Entities.SubscriptionMembers.CreateForOwner(owner, this.IdSubscription, this.IdTenant);
@@ -109,10 +110,6 @@ public class Subscription : IHasTenant
     
     public Result Cancel(string reason, int userId)
     {
-        if (!IsActive)  return Result.Failure("Subsctiprion.IsCanceled","Subscription is already cancel");
-
-        IsActive = false;
-        
         CancelledAt = DateTime.Now;
         CancellationReason = reason;
         CancelledBy = userId;
@@ -121,12 +118,6 @@ public class Subscription : IHasTenant
     }
     public void Deactivate()
     {
-        IsActive = false;
-        CancelledBy = 1; // user system
-    }
-    
-    public void MarkAsExpired()
-    {
-        if (IsActive && EndDate < DateTime.Now) IsActive = false;
+        CancelledBy = 1; 
     }
 }

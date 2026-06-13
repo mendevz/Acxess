@@ -1,4 +1,4 @@
-﻿namespace Acxess.Membership.Application.Features.Subscriptions.Commands.SendDailyExpirationReminders;
+﻿namespace Acxess.Membership.Application.Features.Subscriptions.Commands;
 
 using Acxess.Membership.Application.Features.Subscriptions.Queries.GetExpiringSubscriptions;
 using Acxess.Shared.Abstractions;

@@ -1,4 +1,6 @@
+using Acxess.Membership.Application.Formatters;
 using Acxess.Membership.Domain.Errors;
+using Acxess.Membership.Infrastructure.Extensions;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.ResultManager;
 using MediatR;
@@ -34,13 +36,13 @@ public class GetRenewalMemberContextHandler(
             return Result<RenewalContextDto>.Failure(MemberError.NotFound);
             
         List<SuggestedBeneficiaryDto> suggestions = [];
-            
+
         if (memberContext.LastGroupSub != null)
         {
             var previousMembersRaw = await context.SubscriptionMembers
                 .AsNoTracking()
                 .Where(sm => sm.IdSubscription == memberContext.LastGroupSub.IdSubscription && sm.IdMember != request.MemberId)
-                .Select(sm => new 
+                .Select(sm => new
                 {
                     sm.IdMember,
                     sm.Member.FirstName,
@@ -48,22 +50,20 @@ public class GetRenewalMemberContextHandler(
                     Phone = sm.Member.Phone ?? string.Empty,
                     Email = sm.Member.Email ?? string.Empty,
                     HasConflictingSub = sm.Member.SubscriptionMemberships
-                        .Any(subLink => 
-                            subLink.Subscription.IsActive &&
-                            subLink.Subscription.EndDate >= today && subLink.Subscription.SubscriptionMembers.All(peer => peer.IdMember != request.MemberId))
+                        .Select(s => s.Subscription)
+                        .AnyConflictingSubscriptionMember(today, request.MemberId)
                 })
                 .ToListAsync(cancellationToken);
 
-            
+
             suggestions.AddRange(previousMembersRaw.Select(item => new SuggestedBeneficiaryDto(
-                item.IdMember, 
-                item.FirstName, 
-                item.LastName, 
-                item.Phone, 
-                item.Email, 
-                !item.HasConflictingSub, 
-                // !item.HasConflictingSub ? "AVAILABLE" : "HAS_ACTIVE_PLAN" // Código semántico, no UI
-                !item.HasConflictingSub ? "Disponible" : "Tiene otro plan activo" 
+                item.IdMember,
+                item.FirstName,
+                item.LastName,
+                item.Phone,
+                item.Email,
+                !item.HasConflictingSub,
+                MembershipDisplayFormatters.MemberElegibleLabel(!item.HasConflictingSub, null)
             )));
         }
         

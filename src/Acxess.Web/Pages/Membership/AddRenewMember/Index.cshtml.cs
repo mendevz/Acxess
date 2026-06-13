@@ -216,9 +216,9 @@ public class IndexModel(
                 .Where(m => m.IdMember == memberId.Value)
                 .Select(m => new
                 {
-                    HasActiveSub = m.SubscriptionMemberships.Any(sm => sm.Subscription.IsActive && sm.Subscription.EndDate > DateTime.Now),
+                    HasActiveSub = m.SubscriptionMemberships.Any(sm => sm.Subscription.EndDate > DateTime.Now),
                     LastExpiration = m.SubscriptionMemberships
-                                      .Where(sm => sm.Subscription.IsActive)
+                                      .Where(sm => sm.Subscription.EndDate > DateTime.Now)
                                       .Max(sm => (DateTime?)sm.Subscription.EndDate)
                 })
                 .FirstOrDefaultAsync();

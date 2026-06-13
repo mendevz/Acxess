@@ -1,4 +1,5 @@
 using Acxess.Membership.Domain.Constants;
+using Acxess.Membership.Infrastructure.Extensions;
 using Acxess.Membership.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -19,7 +20,7 @@ public class SubscriptionService(MembershipModuleContext context, ILogger<Subscr
         
         var expired = await context.Subscriptions
             .IgnoreQueryFilters()
-            .Where(s => s.IsActive && s.EndDate.Date < limitDate.Date)
+            .Where(s => s.IsSubscriptionActive(today) && s.EndDate.Date < limitDate.Date)
             .ToListAsync(ct);
 
         if (expired.Count == 0) return;

@@ -24,10 +24,6 @@ public class SubscriptionConfiguration : IEntityTypeConfiguration<Subscription>
         builder.Property(t => t.IdSellingPlan)
             .IsRequired();
 
-        builder.Property(t => t.IsActive)
-            .IsRequired()
-            .HasDefaultValue(false);
-
         builder.Property(rt => rt.StartDate)
             .IsRequired();
 

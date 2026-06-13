@@ -65,15 +65,22 @@ public class GetMemberHistoryHandler(
             }
             else if (sub.EndDate < DateTime.Now.Date)
             {
-                timeline.Add(new TimelineItemDto
+
+                bool hasSeamlessRenewal = subscriptionDates.Any(otherSub =>
+                    otherSub.StartDate <= sub.EndDate && otherSub.EndDate > sub.EndDate);
+
+                if (!hasSeamlessRenewal)
                 {
-                    Title = "Membresía Vencida",
-                    Date = sub.EndDate,
-                    Amount = null,
-                    Type = "Expiration",
-                    ColorClass = "red",
-                    Details = []
-                });
+                    timeline.Add(new TimelineItemDto
+                    {
+                        Title = "Membresía Vencida",
+                        Date = sub.EndDate,
+                        Amount = null,
+                        Type = "Expiration",
+                        ColorClass = "red",
+                        Details = []
+                    });
+                }
             }
         }
         

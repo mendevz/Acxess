@@ -1,3 +1,5 @@
+using Acxess.Membership.Application.Formatters;
+using Acxess.Membership.Infrastructure.Extensions;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.ResultManager;
 using MediatR;
@@ -26,7 +28,6 @@ public class SearchEligibleMembersHandler(
                 .ToListAsync(cancellationToken);
         }
         
-        
         var query = context.Members.AsNoTracking();
         
         var isNumeric = int.TryParse(request.Term, out var id);
@@ -49,10 +50,12 @@ public class SearchEligibleMembersHandler(
                 m.Phone,
                 m.Email,
                 ActiveSubscription = m.SubscriptionMemberships
-                    .Where(sm => sm.Subscription.EndDate >= today 
-                                 && sm.Subscription.IsActive 
-                                 && !sharedSubscriptionIds.Contains(sm.IdSubscription))
-                    .Select(sm => new { sm.Subscription.EndDate, sm.Subscription.IdSellingPlan, sm.Subscription.SellingPlanName })
+                    .WhereActiveAndNotShared(today, sharedSubscriptionIds)
+                    .Select(sm => new { 
+                        sm.Subscription.EndDate, 
+                        sm.Subscription.IdSellingPlan, 
+                        sm.Subscription.SellingPlanName 
+                    })
                     .FirstOrDefault()
             })
             .ToListAsync(cancellationToken);
@@ -60,10 +63,9 @@ public class SearchEligibleMembersHandler(
         var result = candidates.Select(c =>
         {
             var isEligible = c.ActiveSubscription == null;
-            
-            var reason = isEligible 
-                ? "Disponible" 
-                : $"Tiene plan activo ({c.ActiveSubscription?.SellingPlanName ?? ""})";
+
+            var reason = MembershipDisplayFormatters
+                .MemberElegibleLabel(isEligible, c.ActiveSubscription?.SellingPlanName);
 
             return new EligibleMemberDto(
                 c.IdMember, 

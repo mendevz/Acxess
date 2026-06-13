@@ -1,5 +1,6 @@
 using Acxess.Membership.Application.Features.Members.Queries.GetMember;
 using Acxess.Membership.Domain.Constants;
+using Acxess.Membership.Infrastructure.Extensions;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.ResultManager;
 using MediatR;
@@ -47,7 +48,7 @@ internal sealed class GetMemberToRenewHandler(
                 m.PhotoUrl,
                 LatestSubscription = m.SubscriptionMemberships
                     .Select(sm => sm.Subscription)
-                    .Where(sm => sm.IsActive)
+                    .Where(sm => sm.IsSubscriptionActive(today))
                     .OrderByDescending(s => s.EndDate)
                     .Select(s => new
                     {

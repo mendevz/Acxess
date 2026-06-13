@@ -1,4 +1,4 @@
-﻿
+﻿using Acxess.Membership.Infrastructure.Extensions;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.ResultManager;
 using MediatR;
@@ -17,7 +17,12 @@ public class GetExpiringSubscriptionsHandler(
         var expiringData = await dbContext.Subscriptions
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(s => s.IsActive && s.EndDate >= startOfToday && s.EndDate < endOfToday)
+            .Where(s => s.IsSubscriptionActive(startOfToday) && s.EndDate >= startOfToday && s.EndDate < endOfToday)
+            .Where(s => !dbContext.Subscriptions.Any(futureSub =>
+                futureSub.IdSubscription != s.IdSubscription &&
+                futureSub.IsSubscriptionActive(startOfToday) && 
+                futureSub.StartDate <= endOfToday && 
+                futureSub.SubscriptionMembers.Any(fsm => s.SubscriptionMembers.Any(sm => sm.IdMember == fsm.IdMember))))
             .SelectMany(s => s.SubscriptionMembers.Select(sm => new
             {
                 s.IdTenant,

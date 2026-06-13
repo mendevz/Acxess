@@ -1,3 +1,4 @@
+using Acxess.Membership.Infrastructure.Extensions;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.Constants;
 using Acxess.Shared.ResultManager;
@@ -27,7 +28,6 @@ public class GetMembersHandler(
                 var searchTerms = searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 baseGetMembersQuery = searchTerms.Aggregate(baseGetMembersQuery, (current, term) => current.Where(m => m.FirstName.Contains(term) || m.LastName.Contains(term)));
             }
-                
         }
         
         var statsMembers = await  baseGetMembersQuery
@@ -37,18 +37,26 @@ public class GetMembersHandler(
                 TotalMembers = m.Count(),
                 DeletedMembers = m.Count(member => member.IsDeleted),
                 ActiveMembers = m.Count(member => 
-                    !member.IsDeleted && 
-                    member.SubscriptionMemberships.Any(sm => 
-                        sm.Subscription.IsActive && sm.Subscription.EndDate >= now))
-            }).SingleOrDefaultAsync(cancellationToken)?? new { TotalMembers = 0, DeletedMembers = 0, ActiveMembers = 0 };
+                    !member.IsDeleted 
+                    && member.SubscriptionMemberships.Select(sm => sm.Subscription)
+                    .AnySubscriptionActive(now)
+                )
+            }).SingleOrDefaultAsync(cancellationToken) ?? new { TotalMembers = 0, DeletedMembers = 0, ActiveMembers = 0 };
 
         var expiredMembers = (statsMembers.TotalMembers - statsMembers.DeletedMembers) - statsMembers.ActiveMembers;
 
         var query = request.StatusFilter?.ToLower() switch
         {
-            "active" => baseGetMembersQuery.Where(m => !m.IsDeleted && m.SubscriptionMemberships.Any(sm => sm.Subscription.EndDate >= now && sm.Subscription.IsActive)),
-            "expired" => baseGetMembersQuery.Where(m => !m.IsDeleted && !m.SubscriptionMemberships.Any(sm => sm.Subscription.EndDate >= now && sm.Subscription.IsActive)),
+            "active" => baseGetMembersQuery
+                .Where(m => !m.IsDeleted)
+                .WhereHasSubscriptionActive(now),
+
+            "expired" => baseGetMembersQuery
+                .Where(m => !m.IsDeleted)
+                .WhereHasNotSubscriptionActive(now),
+
             "deleted" => baseGetMembersQuery.Where(m => m.IsDeleted),
+
             _ => baseGetMembersQuery.Where(m => !m.IsDeleted)
         };
         
@@ -69,7 +77,8 @@ public class GetMembersHandler(
                 m.IsDeleted,
                 m.PhotoUrl,
                 HasActiveSubscription = m.SubscriptionMemberships
-                    .Any(sm => sm.Subscription.EndDate >= now && sm.Subscription.IsActive)
+                    .Select(sm => sm.Subscription)
+                    .AnySubscriptionActive(now)
             })
             .ToListAsync(cancellationToken);
 

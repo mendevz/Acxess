@@ -2,7 +2,7 @@ using Acxess.Membership.Domain.ValueObjects;
 
 namespace Acxess.Membership.Application.Formatters;
 public record MemberDisplayInfo(string Label, string Color, string TextColor, string Msg);
-public static class MemberDetailDisplayFormatter
+public static class MembershipDisplayFormatters
 {
     public static MemberDisplayInfo GetStatusDisplay(
         bool isDeleted,
@@ -27,5 +27,22 @@ public static class MemberDetailDisplayFormatter
             
         return new MemberDisplayInfo("VENCIDO", "red", "text-red-500", "La membresía venció. Al renovar, la fecha de corte se reiniciará.");
     }
+
+    public static string GetInitials(string firstName, string lastName)
+    {
+        var firstInitial = !string.IsNullOrEmpty(firstName) ? firstName[0].ToString().ToUpper() : "";
+        var lastInitial = !string.IsNullOrEmpty(lastName) ? lastName[0].ToString().ToUpper() : "";
+        return $"{firstInitial}{lastInitial}";
+    }
+
+    public static string GetSellingPlanName(string sellingPlanName, bool isCanceled)
+    {
+        return isCanceled
+                    ? $"{sellingPlanName} (Canceled)"
+                    : sellingPlanName;
+    }
+
+    public static string MemberElegibleLabel(bool isElegible, string? SellingPlanName)
+       =>  isElegible ? "Disponible" : $"Tiene plan activo {SellingPlanName ?? ""}";
 
 }
