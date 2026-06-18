@@ -74,9 +74,6 @@ public class Member : IHasTenant
     {
         IsDeleted = false;
     }
-
-
-
     public bool HasActiveSubscription()
     {
         var today = DateTime.Now.Date;
@@ -140,11 +137,11 @@ public class Member : IHasTenant
         var startDate = today;
 
         var ownedActiveSubs = _ownedSubscriptions
-                .Where(s => s.IsActive(startDate));
+                .Where(s => s.IsInGracePeriod(startDate));
 
         var membershipActiveSubs = _subscriptionMemberships
             .Select(sm => sm.Subscription)
-            .Where(s => s.IsActive(startDate));
+            .Where(s => s.IsInGracePeriod(startDate));
 
         var lastActiveSub = ownedActiveSubs
             .Union(membershipActiveSubs)

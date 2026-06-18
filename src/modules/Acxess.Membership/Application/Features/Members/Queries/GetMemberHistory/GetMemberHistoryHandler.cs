@@ -38,8 +38,6 @@ public class GetMemberHistoryHandler(
         })
         .ToList();
 
-       
-        
         foreach (var sub in subscriptionDates)
         {
             timeline.Add(new TimelineItemDto
@@ -67,7 +65,9 @@ public class GetMemberHistoryHandler(
             {
 
                 bool hasSeamlessRenewal = subscriptionDates.Any(otherSub =>
-                    otherSub.StartDate <= sub.EndDate && otherSub.EndDate > sub.EndDate);
+                    otherSub.StartDate <= sub.EndDate 
+                    && otherSub.EndDate > sub.EndDate
+                );
 
                 if (!hasSeamlessRenewal)
                 {
@@ -89,6 +89,9 @@ public class GetMemberHistoryHandler(
             .Take(takeCount)
             .ToList();
         
-        return Result<MemberHistoryDto>.Success(new MemberHistoryDto { MemberId = request.IdMember, Items = finalItems });
+        return new MemberHistoryDto { 
+            MemberId = request.IdMember, 
+            Items = finalItems 
+        };
     }
 }

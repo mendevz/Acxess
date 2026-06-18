@@ -12,8 +12,8 @@ public record MemberDetailDto
     public string Initials { get; init; } = string.Empty;
     
     public bool IsDeleted { get; init; }
-    public string StatusLabel { get; init; } = "Inactivo"; // Texto: ACTIVO, VENCIDO, BAJA, PRÓRROGA
-    public string StatusColor { get; init; } = "gray"; // gray, green, red, yellow
+    public string StatusLabel { get; init; } = "Inactivo";
+    public string StatusColor { get; init; } = "gray";
     public bool CanRenew { get; init; }
     
     public bool HasActiveMembership { get; init; }

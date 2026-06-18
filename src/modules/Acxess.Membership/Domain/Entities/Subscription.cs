@@ -1,3 +1,4 @@
+using Acxess.Membership.Domain.Constants;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.ResultManager;
 
@@ -83,7 +84,12 @@ public class Subscription : IHasTenant
     }
 
     public bool IsActive(DateTime atDate)
-        => EndDate >= atDate && !CancelledAt.HasValue;
+        => EndDate.Date >= atDate.Date && !CancelledAt.HasValue;
+    public bool IsInGracePeriod(DateTime atDate)
+    {
+        var gracePeriodEnd = EndDate.AddDays(Configurations.PRORROGA_DAYS);
+        return EndDate.Date <= atDate.Date && !CancelledAt.HasValue && atDate.Date <= gracePeriodEnd.Date;
+    }
 
     private void AddOwnerMember(Member owner)
     {
@@ -115,9 +121,5 @@ public class Subscription : IHasTenant
         CancelledBy = userId;
 
         return Result.Success();
-    }
-    public void Deactivate()
-    {
-        CancelledBy = 1; 
     }
 }

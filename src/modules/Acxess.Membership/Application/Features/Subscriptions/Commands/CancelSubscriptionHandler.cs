@@ -29,7 +29,7 @@ public class CancelSubscriptionHandler(
         
         var activeSubscriptionsToCancel = await context.SubscriptionMembers
             .Include(sm => sm.Subscription)
-            .Where(sm => sm.IdMember == memberId && sm.Subscription.IsSubscriptionActive(toda))
+            .Where(sm => sm.IdMember == memberId && sm.Subscription.IsSubscriptionActive(today))
             .Select(sm => sm.Subscription)
             .ToListAsync(cancellationToken);
 

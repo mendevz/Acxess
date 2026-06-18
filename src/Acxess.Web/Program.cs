@@ -7,8 +7,7 @@ using Acxess.Infrastructure.Extensions;
 using Acxess.Infrastructure.Middlewares;
 using Acxess.Marketing;
 using Acxess.Membership;
-using Acxess.Membership.Application.Features.Subscriptions.Commands.SendDailyExpirationReminders;
-using Acxess.Membership.Application.Services;
+using Acxess.Membership.Application.Features.Subscriptions.Commands;
 using Acxess.Shared.IntegrationServices.Billing;
 using Acxess.Shared.IntegrationServices.Catalog;
 using Acxess.Web;
@@ -125,13 +124,6 @@ try
     app.UseAuthorization();
     
     app.MapRazorPages();
-
-    app.MapPost("/api/membership/subscriptions/check-expiration", async (ISubscriptionService service) =>
-    {
-        await service.DeactivateExpiredSubscriptionsAsync(CancellationToken.None);
-        return Results.Ok(new { message = "Expiration process executed manually." });
-    })
-    .WithTags("Maintenance");
 
     app.MapPost("/api/membership/subscriptions/send-report-subscriptions", async (IMediator mediator) =>
     {

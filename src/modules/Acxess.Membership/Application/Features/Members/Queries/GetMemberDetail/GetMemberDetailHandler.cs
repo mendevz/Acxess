@@ -14,6 +14,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Acxess.Membership.Application.Features.Members.Queries.GetMemberDetail;
 
+public record GetMemberDetailQuery(int IdMember) : IRequest<Result<MemberDetailDto>>;
+
 public class GetMemberDetailHandler(
     MembershipModuleContext context,
     ICatalogIntegrationService catalogService,

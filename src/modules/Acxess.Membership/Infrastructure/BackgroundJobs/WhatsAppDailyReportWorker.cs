@@ -1,4 +1,4 @@
-﻿using Acxess.Membership.Application.Features.Subscriptions.Commands.SendDailyExpirationReminders;
+﻿using Acxess.Membership.Application.Features.Subscriptions.Commands;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

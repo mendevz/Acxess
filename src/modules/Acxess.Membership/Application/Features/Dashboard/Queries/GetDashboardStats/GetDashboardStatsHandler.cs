@@ -39,17 +39,17 @@ public class GetDashboardStatsHandler(
             .Select(m => new 
             {
                 Member = m,
-                FullName = $"{m.FirstName} {m.LastName}",
-                InitialsName = MembershipDisplayFormatters.GetInitials(m.FirstName, m.LastName),
                 RelevantSub = m.SubscriptionMemberships
                     .Select(sm => sm.Subscription)
-                    .AsQueryable()
-                    .WhereInAlertWindowExpiring(recentExpirationThreshold, expirationWarningThreshold)
-                    .OrderByLatestAlertDate()
+                    .Where(s =>
+                        (!s.CancelledAt.HasValue && s.EndDate >= recentExpirationThreshold && s.EndDate <= expirationWarningThreshold) ||
+                        (s.CancelledAt.HasValue && s.CancelledAt >= recentExpirationThreshold && s.CancelledAt <= expirationWarningThreshold)
+                    )
+                    .OrderByDescending(s => s.CancelledAt ?? s.EndDate)
                     .FirstOrDefault(),
                 HasFutureSub = m.SubscriptionMemberships
-                .Select(s => s.Subscription)
-                .AnySubscriptionActive(expirationWarningThreshold)
+                    .Select(s => s.Subscription)
+                    .Any(s => s.EndDate > expirationWarningThreshold && !s.CancelledAt.HasValue)
             })
             .Where(x => x.RelevantSub != null && !x.HasFutureSub)
             .OrderByDescending(x => x.RelevantSub!.CancelledAt ?? x.RelevantSub!.EndDate)
@@ -67,11 +67,11 @@ public class GetDashboardStatsHandler(
 
                 return new ExpiringMemberItem(
                     x.Member.IdMember,
-                    x.FullName,
+                    $"{x.Member.FirstName} {x.Member.LastName}",
                     namePlan, 
                     referenceDate,
-                    daysDiff, 
-                    x.InitialsName,
+                    daysDiff,
+                    MembershipDisplayFormatters.GetInitials(x.Member.FirstName, x.Member.LastName),
                     x.Member.PhotoUrl
                 );
             })

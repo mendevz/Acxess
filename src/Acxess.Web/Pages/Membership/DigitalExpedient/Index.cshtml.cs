@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Text.Json;
 using Acxess.Marketing.Application.Features.Coupons.Commands.AssignCoupon;
@@ -11,7 +10,7 @@ using Acxess.Membership.Application.Features.Members.Queries.GetMemberById;
 using Acxess.Membership.Application.Features.Members.Queries.GetMemberDetail;
 using Acxess.Membership.Application.Features.Members.Queries.GetMemberHistory;
 using Acxess.Membership.Application.Features.Members.Queries.GetMembers;
-using Acxess.Membership.Application.Features.Subscriptions.Commands.CancelSubscription;
+using Acxess.Membership.Application.Features.Subscriptions.Commands;
 using Acxess.Shared.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

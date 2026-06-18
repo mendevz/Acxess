@@ -24,16 +24,16 @@ public static class MemberQueryExtensions
 
     public static IQueryable<Member> WhereHasSubscriptionActive(this IQueryable<Member> query, DateTime today)
         => query.Where(m => 
-            m.SubscriptionMemberships
-                .Select(s => s.Subscription)
-                .AnySubscriptionActive(today)
+            m.SubscriptionMemberships.Any(sm =>
+                sm.Subscription.EndDate >= today && !sm.Subscription.CancelledAt.HasValue
+            )
         );
 
     public static IQueryable<Member> WhereHasNotSubscriptionActive(this IQueryable<Member> query, DateTime today)
         => query.Where(m => 
-            !m.SubscriptionMemberships
-                .Select(s => s.Subscription)
-                .AnySubscriptionActive(today)
+            !m.SubscriptionMemberships.Any(sm =>
+                sm.Subscription.EndDate >= today && !sm.Subscription.CancelledAt.HasValue
+            )
         );
 
     public static IQueryable<Member> NewMembersToday(

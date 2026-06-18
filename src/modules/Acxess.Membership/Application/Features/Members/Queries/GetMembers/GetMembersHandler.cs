@@ -38,8 +38,10 @@ public class GetMembersHandler(
                 DeletedMembers = m.Count(member => member.IsDeleted),
                 ActiveMembers = m.Count(member => 
                     !member.IsDeleted 
-                    && member.SubscriptionMemberships.Select(sm => sm.Subscription)
-                    .AnySubscriptionActive(now)
+                    && member.SubscriptionMemberships.Any(sm =>
+                        sm.Subscription.EndDate >= now
+                        && !sm.Subscription.CancelledAt.HasValue
+                    )
                 )
             }).SingleOrDefaultAsync(cancellationToken) ?? new { TotalMembers = 0, DeletedMembers = 0, ActiveMembers = 0 };
 
@@ -77,8 +79,10 @@ public class GetMembersHandler(
                 m.IsDeleted,
                 m.PhotoUrl,
                 HasActiveSubscription = m.SubscriptionMemberships
-                    .Select(sm => sm.Subscription)
-                    .AnySubscriptionActive(now)
+                    .Any(
+                        sm => sm.Subscription.EndDate >= now
+                        && !sm.Subscription.CancelledAt.HasValue
+                    )
             })
             .ToListAsync(cancellationToken);
 
