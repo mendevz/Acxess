@@ -47,14 +47,16 @@ internal sealed class GetMemberToRenewHandler(
                 m.CreatedAt,
                 m.PhotoUrl,
                 LatestSubscription = m.SubscriptionMemberships
-                    .Select(sm => sm.Subscription)
-                    .Where(sm => sm.IsSubscriptionActive(today))
-                    .OrderByDescending(s => s.EndDate)
+                    .Where(sm =>
+                        sm.Subscription.EndDate >= today 
+                        && !sm.Subscription.CancelledAt.HasValue
+                    )
+                    .OrderByDescending(s => s.Subscription.EndDate)
                     .Select(s => new
                     {
-                        s.EndDate,
-                        s.IdSellingPlan,
-                        s.SellingPlanName
+                        s.Subscription.EndDate,
+                        s.Subscription.IdSellingPlan,
+                        s.Subscription.SellingPlanName
                     })
                     .FirstOrDefault()
             })
