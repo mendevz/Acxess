@@ -26,6 +26,8 @@ public class RegisterTenantInputModel
     [Required(ErrorMessage = "El password es necesario")]
     [DataType(DataType.Password)]
     public string Password { get; set; } = string.Empty;
+
+    public string TimeZoneId { get; set; } = "America/Mexico_City";
 }
 
 public class RegisterTenantModel(IMediator mediator) : PageModel
@@ -50,6 +52,7 @@ public class RegisterTenantModel(IMediator mediator) : PageModel
             Input.Username,
             Input.NombreAdmin,
             Input.Password,
+            Input.TimeZoneId,
             Input.Email
         );
         var result = await mediator.Send(newTenantInfo);

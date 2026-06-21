@@ -3,6 +3,7 @@ using Acxess.Identity.Infrastructure.Persistence;
 using Acxess.Shared.Constants;
 using Acxess.Shared.IntegrationEvents.Identity;
 using Acxess.Shared.ResultManager;
+using Amazon.Util.Internal;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 
@@ -11,12 +12,15 @@ namespace Acxess.Identity.Application.Features.Tenants.Commands.RegisterTenant;
 public class RegisterTenantHandler(
     IdentityModuleContext context,
     UserManager< Domain.Entities.ApplicationUser> userManager,
+    TimeProvider timeProvider,
     IMediator mediator
 ) : IRequestHandler<RegisterTenantCommand, Result>
 {
     public async Task<Result> Handle(RegisterTenantCommand request, CancellationToken cancellationToken)
     {
-        var tenant = Tenant.Create(request.NameTenant);
+
+        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+        var tenant = Tenant.Create(request.NameTenant, request.TimeZoneId, utcNow);
 
         context.Tenants.Add(tenant);
 

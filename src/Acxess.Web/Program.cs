@@ -68,9 +68,8 @@ try
         typeof(CatalogModuleExtensions).Assembly,
         typeof(Program).Assembly
     };
-    
+    builder.Services.AddSingleton(TimeProvider.System);
     builder.Services.AddAcxessInfrastructure(modulesAssemblies);
-
     builder.Services.AddIdentityModule(builder.Configuration);
     builder.Services.AddCatalogModule(builder.Configuration);
     builder.Services.AddMembershipModule(builder.Configuration);

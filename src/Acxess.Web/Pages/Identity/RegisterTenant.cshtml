@@ -54,7 +54,6 @@
                             <input 
                                 asp-for="Input.NameTenant"
                                 id="nameTenant" 
-                                name="nameTenant" 
                                 type="text" 
                                 required 
                                 class="input-field" 
@@ -73,7 +72,6 @@
                             <input
                                 asp-for="Input.Username" 
                                 id="username" 
-                                name="username" 
                                 type="text" 
                                 required 
                                 class="input-field" 
@@ -96,7 +94,6 @@
                             <input 
                                 asp-for="Input.NombreAdmin"
                                 id="nombreAdmin" 
-                                name="nombreAdmin" 
                                 type="text" 
                                 required 
                                 class="input-field" 
@@ -115,7 +112,6 @@
                             <input 
                                 asp-for="Input.Email"
                                 id="email" 
-                                name="email" 
                                 type="email"
                                 required 
                                 class="input-field" 
@@ -135,7 +131,6 @@
                         <input 
                             asp-for="Input.Password"
                             id="password" 
-                            name="password" 
                             type="password"  
                             placeholder="*****" 
                             required 
@@ -143,6 +138,8 @@
                         <span asp-validation-for="Input.Password" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                 </div>
+
+                <input type="hidden" asp-for="Input.TimeZoneId" id="timezoneInput" />
 
                 <div class="pt-2">
                     <button 
@@ -163,10 +160,22 @@
         </div>
         
         <p class="mt-8 text-center text-xs text-slate-400">
-            &copy; @DateTime.Now.Year Acxess
+            &copy; @DateTime.UtcNow.Year Acxess
         </p>
     </div>
     
     <script src="~/js/site.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const tzInput = document.getElementById("timezoneInput");
+            if (tzInput) {
+                const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                if (userTimeZone) {
+                    tzInput.value = userTimeZone;
+                }
+            }
+        });
+    </script>
 </body>
 </html>
