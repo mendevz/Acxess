@@ -1,0 +1,168 @@
+using Acxess.Membership.Application.Features.Members.DTOs;
+using Acxess.Membership.Domain.Entities;
+using Acxess.Membership.Domain.Errors;
+using Acxess.Membership.Infrastructure.Persistence;
+using Acxess.Shared.Abstractions;
+using Acxess.Shared.IntegrationEvents.Membership;
+using Acxess.Shared.IntegrationServices;
+using Acxess.Shared.ResultManager;
+using MediatR;
+using Microsoft.Extensions.Logging;
+
+namespace Acxess.Membership.Application.Features.Members.Commands;
+
+public record NewMemberCommand(
+    NewMemberDto MemberDto,
+    int SellingPlanId,
+    List<int> AddOnIds,
+    int PaymentMethodId,
+    decimal AmountPaid,
+    List<NewMemberDto> Beneficiaries,
+    int CreatedUserId,
+    bool RequireInscription,
+    Guid IdempotencyToken
+) : IRequest<Result<UpdatedSubMemberResponse>>, IIdempotentCommand, ITenantRequest
+{
+    public int IdTenant { get; set; } 
+}
+
+public class NewMemberHandler(
+    MembershipModuleContext context,
+    ILogger<NewMemberHandler> logger,
+    ICatalogIntegrationService catalogService,
+    IMediator mediator,
+    IImageStorageService imageStorage,
+    ITimeService timeService) : IRequestHandler<NewMemberCommand, Result<UpdatedSubMemberResponse>>
+{
+
+    private const string AddOnKeyInscription = "INS";
+    public async Task<Result<UpdatedSubMemberResponse>> Handle(NewMemberCommand request, CancellationToken cancellationToken)
+    {
+        var utcNow = timeService.GetUtcNow();
+
+        var planInfoResult = await catalogService.GetPlanInfoAsync(request.SellingPlanId, cancellationToken);
+        if (planInfoResult.IsFailure) return Result<UpdatedSubMemberResponse>.Failure(planInfoResult.Error);
+
+        var planInfo = planInfoResult.Value;
+
+        // get addOns info
+        var addOns = await catalogService.GetAddOnPriceBatchAsync(request.AddOnIds, cancellationToken);
+
+        if (request.RequireInscription && !addOns.Any(a => a.Key == AddOnKeyInscription))
+        {
+            return Result<UpdatedSubMemberResponse>.Failure(SubscriptionErrors.InscriptionRequired);
+        }
+
+        // create new beneficiares
+        if (request.Beneficiaries.Count > planInfo.TotalMembers)
+        {
+            return Result<UpdatedSubMemberResponse>.Failure(SubscriptionErrors.ExceededBeneficiaries);
+        }
+
+        var newBeneficiaries = new List<Member>();
+        foreach (var benDto in request.Beneficiaries.Where(b => b.IdMember == 0))
+        {
+            string? benPhotoUrl = null;
+            if (!string.IsNullOrWhiteSpace(benDto.PhotoBase64))
+            {
+                var cleanName = $"{benDto.FirstName}-{benDto.LastName}".ToLower().Replace(" ", "-");
+                var resultSaved = await imageStorage.SaveImageAsync(benDto.PhotoBase64, cleanName, cancellationToken);
+                benPhotoUrl = resultSaved.Value;
+            }
+            
+            var newBeneficiary = Member.Create(
+                request.IdTenant, 
+                benDto.FirstName, 
+                benDto.LastName, 
+                request.CreatedUserId,
+                utcNow,
+                benDto.Phone, 
+                null, 
+                benPhotoUrl);
+            
+            context.Members.Add(newBeneficiary);
+            newBeneficiaries.Add(newBeneficiary);
+        }
+        
+        if (newBeneficiaries.Count != 0)
+        {
+            await context.SaveChangesAsync(cancellationToken); 
+            var savedBeneficiaryIds = newBeneficiaries.Select(b => b.IdMember).ToList();
+            logger.LogInformation(
+                "Successfully created {BeneficiaryCount} new beneficiaries: {BeneficiaryIds}", 
+                newBeneficiaries.Count, savedBeneficiaryIds);
+        }
+
+        // combine beneficiaries news and existing
+        var finalBeneficiaryIds = new List<int>();
+        finalBeneficiaryIds.AddRange(request.Beneficiaries.Where(b => b.IdMember != 0).Select(b => b.IdMember));
+        finalBeneficiaryIds.AddRange(newBeneficiaries.Select(b => b.IdMember));
+        
+        string? mainPhotoUrl = null;
+        if (!string.IsNullOrWhiteSpace(request.MemberDto.PhotoBase64))
+        {
+            var cleanName = $"{request.MemberDto.FirstName}-{request.MemberDto.LastName}".ToLower().Replace(" ", "-");
+            var mainPhotoResult = await imageStorage.SaveImageAsync(request.MemberDto.PhotoBase64, cleanName, cancellationToken);
+            mainPhotoUrl = mainPhotoResult.Value;   
+        }
+        
+        // create member
+        var mainMember = Member.Create(
+            request.IdTenant,
+            request.MemberDto.FirstName,
+            request.MemberDto.LastName,
+            request.CreatedUserId,
+            utcNow,
+            request.MemberDto.Phone,
+            null,
+            mainPhotoUrl
+        );
+        
+        mainMember.Subscribe(
+            planInfo.Id,
+            planInfo.Name,
+            planInfo.Price,
+            planInfo.Duration,
+            request.CreatedUserId,
+            planInfo.DurationUnit,
+            finalBeneficiaryIds, 
+            addOns,
+            utcNow);
+
+        context.Members.Add(mainMember);
+        
+        await context.SaveChangesAsync(cancellationToken);
+        
+        logger.LogInformation(
+            "New member successfully created and subscribed. MemberId: {MemberId}, SellingPlanId: {SellingPlanId}, TotalBeneficiaries: {TotalBeneficiaries}",
+            mainMember.IdMember, request.SellingPlanId, finalBeneficiaryIds.Count);
+
+        var addOnItems = addOns.Select(a => 
+                new PurchasedAddOnItem(a.Id, a.Name, a.Price)
+        ).ToList();
+        
+        var integrationBilling = new SubscriptionPurchasedIntegrationEvent(
+            request.IdTenant,
+            request.CreatedUserId,
+            mainMember.IdMember,
+            mainMember.OwnedSubscriptions.Last().IdSubscription,
+            planInfo.Name,
+            planInfo.Price,
+            request.PaymentMethodId,
+            request.AmountPaid,
+            $"{mainMember.FirstName}  {mainMember.LastName}",
+            true,
+            addOnItems
+        );
+        
+        await mediator.Publish(integrationBilling, cancellationToken);
+        
+        logger.LogInformation(
+            "Published billing integration event for SubscriptionId: {SubscriptionId}, MemberId: {MemberId}, Amount: {AmountPaid}", 
+            integrationBilling.IdSubscription, mainMember.IdMember, request.AmountPaid);
+
+        return new UpdatedSubMemberResponse(
+            "Subscripción registrada correctamente.", 
+            mainMember.IdMember);
+    }
+}

@@ -1,17 +1,13 @@
-using Acxess.Catalog.Application.Features.AccessTiers.Commands.AddAccessTier;
-using Acxess.Catalog.Application.Features.AccessTiers.Commands.UpdateAccessTier;
-using Acxess.Catalog.Application.Features.AccessTiers.Queries.GetAccessTiers;
-using Acxess.Catalog.Application.Features.AccessTiers.Queries.GetAccesTierById;
-using Acxess.Shared.Abstractions;
+using Acxess.Catalog.Application.Features.AccessTiers.Commands;
+using Acxess.Catalog.Application.Features.AccessTiers.DTOs;
+using Acxess.Catalog.Application.Features.AccessTiers.Queries;
 using Acxess.Shared.ResultManager;
 using Acxess.Web.Pages.Catalog.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Acxess.Web.Pages.Catalog.AccessTiers;
-public class IndexModel(
-    IMediator sender,
-    ICurrentTenant currentTenant) : BaseCatalogPageModel<AccessTierInput, AccessTierDto>
+public class IndexModel(IMediator sender) : BaseCatalogPageModel<AccessTierInput, AccessTierDto>
 {
 
     public async Task<IActionResult> OnGetItemsAsync()
@@ -57,7 +53,7 @@ public class IndexModel(
         if (!ModelState.IsValid) return FormView();
         
         IRequest<Result<string>> request = Input.IdAccessTier == 0
-            ? new AddAccessTierCommand(Input.Name, currentTenant.Id ?? 0, Input.Description)
+            ? new AddAccessTierCommand(Input.Name, Input.Description)
             : new UpdateAccessTierCommand(Input.IdAccessTier, Input.Name, Input.Description, Input.IsActive);
         
         var resultSaved = await sender.Send(request);

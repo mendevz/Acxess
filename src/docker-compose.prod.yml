@@ -33,7 +33,7 @@ services:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${DB_PASSWORD}
       - MSSQL_PID=Express  
-      - TZ=America/Mexico_City 
+      - TZ=UTC 
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${DB_PASSWORD} -C -Q 'SELECT 1' || exit 1"]
       interval: 5s
@@ -42,7 +42,6 @@ services:
       timeout: 3s
     volumes:
       - sql_data:/var/opt/mssql 
-      - /etc/localtime:/etc/localtime:ro
     networks:
       - acxess-network
 
@@ -93,9 +92,6 @@ services:
     networks:
       - acxess-network
     profiles: ["tools", "app"]
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - acxess_keys:/root/.aspnet/DataProtection-Keys
 
   # ==============================
   #  App Web
@@ -130,9 +126,6 @@ services:
     networks:
       - acxess-network
     profiles: ["app"]
-    volumes:
-      - acxess_keys:/root/.aspnet/DataProtection-Keys
-      - /etc/localtime:/etc/localtime:ro
 
   # ==============================
   # Stack WhatsApp (Evolution API)
@@ -212,7 +205,6 @@ volumes:
   caddy_config:
   sql_data:
   redis_data:
-  acxess_keys:
   evolution_pgdata:       
   evolution_redis_data:   
   evolution_instances:

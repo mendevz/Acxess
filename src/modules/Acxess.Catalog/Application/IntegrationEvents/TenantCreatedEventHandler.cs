@@ -1,5 +1,5 @@
-using Acxess.Catalog.Application.Features.AccessTiers.Commands.AddAccessTier;
-using Acxess.Catalog.Application.Features.AddOns.Commands.NewAddOn;
+using Acxess.Catalog.Application.Features.AccessTiers.Commands;
+using Acxess.Catalog.Application.Features.AddOns.Commands;
 using Acxess.Catalog.Domain.Constants;
 using Acxess.Shared.Exceptions;
 using Acxess.Shared.IntegrationEvents.Identity;
@@ -14,11 +14,13 @@ public class TenantCreatedEventHandler(
     public async Task Handle(TenantCreatedIntegrationEvent notification, CancellationToken cancellationToken)
     {
         var command = new NewAddOnCommand(
-            notification.TenantId,
             AddOnDefaults.Inscription.Key,
             AddOnDefaults.Inscription.Name,
             AddOnDefaults.Inscription.Price
-        );  
+        )
+        {
+            IdTenant = notification.TenantId
+        };  
         var resultAdd = await mediator.Send(command, cancellationToken);
 
         if (resultAdd.IsFailure)
@@ -27,13 +29,15 @@ public class TenantCreatedEventHandler(
         }
         
         var commandVisit = new NewAddOnCommand(
-            notification.TenantId,
             AddOnDefaults.Visit.Key,
             AddOnDefaults.Visit.Name,
             AddOnDefaults.Visit.Price,
             true,
             true
-        );  
+        )
+        {
+            IdTenant = notification.TenantId
+        };
         var resultVisit = await mediator.Send(commandVisit, cancellationToken);
 
         if (resultVisit.IsFailure)
@@ -43,8 +47,10 @@ public class TenantCreatedEventHandler(
 
         var commandAccessTIer = new AddAccessTierCommand(
             AccessTiersDefaults.GeneralAccessTiers.Name,
-            notification.TenantId, 
-            AccessTiersDefaults.GeneralAccessTiers.Description);
+            AccessTiersDefaults.GeneralAccessTiers.Description)
+        {
+            IdTenant = notification.TenantId
+        };
         
         var resultAccessTIer = await mediator.Send(commandAccessTIer, cancellationToken);
         

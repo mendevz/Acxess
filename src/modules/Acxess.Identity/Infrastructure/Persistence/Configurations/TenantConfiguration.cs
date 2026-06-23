@@ -21,6 +21,10 @@ public class TenantConfiguration: IEntityTypeConfiguration<Tenant>
             .IsRequired()
             .HasMaxLength(100);
 
+        builder.Property(t => t.TimeZoneId)
+            .IsRequired()
+            .HasMaxLength(150);
+
         builder.Property(t => t.Logo)
             .HasMaxLength(600);
 

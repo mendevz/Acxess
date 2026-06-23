@@ -1,32 +1,22 @@
-using Acxess.Billing.Application.Features.Transactions.Commands.NewVisitTransaction;
-using Acxess.Catalog.Application.Features.AddOns.Queries.GetAddOnInscription;
-using Acxess.Catalog.Application.Features.AddOns.Queries.GetAddOns;
-using Acxess.Catalog.Application.Features.SellingPlans.Queries.GetSellingPlans;
-using Acxess.Catalog.Infrastructure.Persistence;
-using Acxess.Membership.Application.Features.Members.Commands.NewMember;
-using Acxess.Membership.Application.Features.Members.Commands.RenewMember;
+using Acxess.Billing.Application.Features.Transactions.Commands;
+using Acxess.Catalog.Application.Features.AddOns.DTOs;
+using Acxess.Catalog.Application.Features.AddOns.Queries;
+using Acxess.Catalog.Application.Features.SellingPlans.DTOs;
+using Acxess.Catalog.Application.Features.SellingPlans.Queries;
+using Acxess.Membership.Application.Features.Members.Commands;
 using Acxess.Membership.Application.Features.Members.DTOs;
-using Acxess.Membership.Application.Features.Members.Queries.GetMember;
-using Acxess.Membership.Application.Features.Members.Queries.GetRenewalMemberContext;
-using Acxess.Membership.Application.Features.Members.Queries.SearchEligibleMembers;
-using Acxess.Membership.Domain.Services;
-using Acxess.Membership.Infrastructure.Persistence;
-using Acxess.Shared.Abstractions;
+using Acxess.Membership.Application.Features.Members.Queries;
+using Acxess.Membership.Application.Features.Subscriptions.Queries;
 using Acxess.Shared.ResultManager;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
 
 namespace Acxess.Web.Pages.Membership.AddRenewMember;
 
-public class IndexModel(
-    IMediator mediator,
-    ICurrentTenant currentTenant,
-    CatalogModuleContext catalogContext,
-    MembershipModuleContext membershipContext) : PageModel
+public class IndexModel(IMediator mediator) : PageModel
 {
 
     [BindProperty] public ProcessOrderRequest OrderRequest { get; set; } = new();
@@ -96,26 +86,29 @@ public class IndexModel(
         if (!int.TryParse(userNumberString, out var userNumber) || userNumber == 0)
             return Feedback(errorMessage: "No estás autenticado");
             
-        var idTenant = currentTenant.Id ?? 0;
         var paymentMethodId = OrderRequest.PaymentMethod == "cash" ? 1 : 2;
         var beneficiaries = MapBeneficiaries(OrderRequest.AdditionalBeneficiaries);
         
         return OrderRequest.Mode switch
         {
-            ProcessOrderRequest.VISIT_MEMBER => await ProcessVisitAsync(idTenant, paymentMethodId, userNumber),
-            ProcessOrderRequest.NEW_MEMBER => await ProcessNewMemberAsync(idTenant, paymentMethodId, userNumber, beneficiaries),
-            _ => await ProcessRenewMemberAsync(idTenant, paymentMethodId, userNumber, beneficiaries)
+            ProcessOrderRequest.VISIT_MEMBER => await ProcessVisitAsync(paymentMethodId, userNumber),
+            ProcessOrderRequest.NEW_MEMBER => await ProcessNewMemberAsync(paymentMethodId, userNumber, beneficiaries),
+            _ => await ProcessRenewMemberAsync(paymentMethodId, userNumber, beneficiaries)
         };
     }
     
-    private async Task<IActionResult> ProcessVisitAsync(int idTenant, int paymentMethodId, int userNumber)
+    private async Task<IActionResult> ProcessVisitAsync( int paymentMethodId, int userNumber)
     {
         var visitName = string.IsNullOrWhiteSpace(OrderRequest.MemberData.FirstName) 
             ? "Visita General" 
             : OrderRequest.MemberData.FirstName;
 
         var command = new CreateVisitTransactionCommand(
-            idTenant, visitName, paymentMethodId, OrderRequest.AmountPaid, userNumber, OrderRequest.AddOnIds);
+           visitName, 
+           paymentMethodId, 
+           OrderRequest.AmountPaid, 
+           userNumber, 
+           OrderRequest.AddOnIds);
         
         var result = await mediator.Send(command);
         
@@ -124,13 +117,12 @@ public class IndexModel(
             : Feedback(successMessage: result.Value);
     }
     
-    private async Task<IActionResult> ProcessNewMemberAsync(int idTenant, int paymentMethodId, int userNumber, List<NewMemberDto> beneficiaries)
+    private async Task<IActionResult> ProcessNewMemberAsync(int paymentMethodId, int userNumber, List<NewMemberDto> beneficiaries)
     {
         var member = new NewMemberDto(0, OrderRequest.MemberData.FirstName ?? "", OrderRequest.MemberData.LastName ?? "", OrderRequest.MemberData.Phone, OrderRequest.MemberData.PhotoBase64);
         var command = new NewMemberCommand(
             member, 
             OrderRequest.PlanId ?? 0, 
-            idTenant, 
             OrderRequest.AddOnIds, 
             paymentMethodId, 
             OrderRequest.AmountPaid, 
@@ -142,12 +134,11 @@ public class IndexModel(
         return  HandleMemberResultAsync(await mediator.Send(command));
     }
 
-    private async Task<IActionResult> ProcessRenewMemberAsync(int idTenant, int paymentMethodId, int userNumber, List<NewMemberDto> beneficiaries)
+    private async Task<IActionResult> ProcessRenewMemberAsync( int paymentMethodId, int userNumber, List<NewMemberDto> beneficiaries)
     {
         var command = new RenewMemberCommand(
             OrderRequest.MemberData.Id, 
             OrderRequest.PlanId ?? 0, 
-            idTenant, 
             OrderRequest.AddOnIds, 
             paymentMethodId, 
             OrderRequest.AmountPaid, 
@@ -200,71 +191,37 @@ public class IndexModel(
     {
         if (planId <= 0) return Content("---");
 
-        var planData = await catalogContext.SellingPlans
-            .Where(p => p.IdSellingPlan == planId)
-            .Select(p => new { p.DurationInValue, p.DurationUnit })
-            .FirstOrDefaultAsync();
+        var query = new CalculateExpirationQuery(planId, memberId);
+        var result = await mediator.Send(query);
 
-        if (planData == null) return Content("---");
+        if (result.IsFailure) return Content("---");
 
-        DateTime baseDate = DateTime.Now.Date;
-        bool hasActiveSub = false;
-
-        if (memberId.HasValue && memberId.Value > 0)
-        {
-            var memberData = await membershipContext.Members
-                .Where(m => m.IdMember == memberId.Value)
-                .Select(m => new
-                {
-                    HasActiveSub = m.SubscriptionMemberships.Any(sm => sm.Subscription.IsActive && sm.Subscription.EndDate > DateTime.Now),
-                    LastExpiration = m.SubscriptionMemberships
-                                      .Where(sm => sm.Subscription.IsActive)
-                                      .Max(sm => (DateTime?)sm.Subscription.EndDate)
-                })
-                .FirstOrDefaultAsync();
-
-
-            if (memberData != null)
-            {
-                hasActiveSub = memberData.HasActiveSub;
-
-                if (memberData.HasActiveSub && memberData.LastExpiration.HasValue)
-                {
-                    baseDate = memberData.LastExpiration.Value.Date;
-                }
-            }
-        }
-
-        var expirationDate = SubscriptionDateCalculator.CalculateEndDate(
-            baseDate, 
-            planData.DurationInValue,
-            planData.DurationUnit);
+        var dto = result.Value;
 
         var culture = new System.Globalization.CultureInfo("es-MX");
-        string startStr = baseDate.ToString("dd MMM yyyy", culture);
-        string endStr = expirationDate.ToString("dd MMM yyyy", culture);
+
+        string startStr = dto.StartDate.ToString("dd MMM yyyy", culture);
+        string endStr = dto.EndDate.ToString("dd MMM yyyy", culture);
 
         string notaVigenciaHtml = "<div id='nota-vigencia' hx-swap-oob='true'></div>"; // Vacío por defecto
 
-        if (hasActiveSub)
+        if (dto.IsRenewal)
         {
-            notaVigenciaHtml = $@"
-                <div id='nota-vigencia' hx-swap-oob='true' class='text-[11px] text-blue-600/80 dark:text-blue-400 mt-2 italic border-t border-blue-200 dark:border-blue-800 pt-2 leading-tight'>
-                    * Al estar vigente, los días del nuevo plan se sumarán a partir del <span class='font-bold'>{startStr}</span>.
-                </div>";
+            notaVigenciaHtml = $@"            
+            <div id='nota-vigencia' hx-swap-oob='true' class='text-[11px] text-blue-600/80 dark:text-blue-400 mt-2 italic border-t border-blue-200 dark:border-blue-800 pt-2 leading-tight'>                
+                * Al estar vigente, los días del nuevo plan se sumarán a partir del <span class='font-bold'>{startStr}</span>.            
+            </div>";
         }
 
-        string htmlResponse = $@"
-            <strong id='fecha-inicio' hx-swap-oob='true' class='text-base md:text-lg text-blue-900 dark:text-blue-200'>
-                {startStr}
-            </strong>
-            {notaVigenciaHtml}
-            {endStr}
-        ";
+        string htmlResponse = $@"        
+        <strong id='fecha-inicio' hx-swap-oob='true' class='text-base md:text-lg text-blue-900 dark:text-blue-200'>            
+            {startStr}        
+        </strong>        
+        {notaVigenciaHtml}        
+        {endStr}";
 
         return Content(htmlResponse, "text/html");
     }
-
 
     private static List<NewMemberDto> MapBeneficiaries(IEnumerable<AddRenewMemberInput> requestBeneficiaries)
     {

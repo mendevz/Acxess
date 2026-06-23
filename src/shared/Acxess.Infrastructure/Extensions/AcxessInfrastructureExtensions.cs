@@ -26,6 +26,7 @@ public static class AcxessInfrastructureExtensions
             cfg.RegisterServicesFromAssemblies(moduleAssemblies);
             cfg.RegisterServicesFromAssembly(typeof(AcxessInfrastructureExtensions).Assembly);
             cfg.AddOpenBehavior(typeof(BehaviorsMediatR.LoggingBehavior<,>));
+            cfg.AddOpenBehavior(typeof(BehaviorsMediatR.TenantPipelineBehavior<,>));
             cfg.AddOpenBehavior(typeof(BehaviorsMediatR.TracingBehavior<,>));
             cfg.AddOpenBehavior(typeof(BehaviorsMediatR.IdempotencyBehavior<,>));
             cfg.AddOpenBehavior(typeof(BehaviorsMediatR.DatabaseExceptionBehavior<,>));

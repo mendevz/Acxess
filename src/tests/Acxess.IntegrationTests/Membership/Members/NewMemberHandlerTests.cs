@@ -1,13 +1,13 @@
 ﻿using Acxess.Catalog.Domain.Errors;
 using Acxess.IntegrationTests.Setup;
-using Acxess.Membership.Application.Features.Members.Commands.NewMember;
+using Acxess.Membership.Application.Features.Members.Commands;
 using Acxess.Membership.Application.Features.Members.DTOs;
 using Acxess.Membership.Domain.Entities;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.Enums;
 using Acxess.Shared.IntegrationEvents.Membership;
-using Acxess.Shared.IntegrationServices.Catalog;
+using Acxess.Shared.IntegrationServices;
 using Acxess.Shared.ResultManager;
 using FluentAssertions;
 using MediatR;
@@ -30,6 +30,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
     {
         // Arrange
         var catalogMock = new Mock<ICatalogIntegrationService>();
+        var timeServiceMock = new Mock<ITimeService>();
         var imageStorageMock = new Mock<IImageStorageService>();
         var mediatorMock = new Mock<IMediator>();
 
@@ -63,16 +64,16 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
 
         var handler = new NewMemberHandler(
             dbContext,
-            Mock.Of<ILogger<NewMemberHandler>>(), // Logger falso, no nos importa
+            Mock.Of<ILogger<NewMemberHandler>>(),
             catalogMock.Object,
             mediatorMock.Object,
-            imageStorageMock.Object
+            imageStorageMock.Object,
+            timeServiceMock.Object
         );
 
         var command = new NewMemberCommand(
             MemberDto: new NewMemberDto(1,"Bruce", "Wayne", "12345", "base64String..."),
             SellingPlanId: 1,
-            IdTenant: 1,
             AddOnIds: [],
             PaymentMethodId: 1,
             AmountPaid: 600m,
@@ -113,10 +114,12 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
     public async Task Handle_Should_Subscribe_NewMember_With_Beneficiries_One_Existing()
     {
         // Arrange
+
+        var timeServiceMock = new Mock<ITimeService>();
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MembershipModuleContext>();
 
-        var socioExistente = Member.Create(1, "Dick", "Grayson", 1, "000", null, null);
+        var socioExistente = Member.Create(1, "Dick", "Grayson", 1, DateTime.UtcNow, "000", null, null);
         dbContext.Members.Add(socioExistente);
         await dbContext.SaveChangesAsync();
 
@@ -144,7 +147,8 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
             Mock.Of<ILogger<NewMemberHandler>>(),
             catalogMock.Object,
             mediatorSpy.Object,
-            imageStorageMock.Object);
+            imageStorageMock.Object,
+            timeServiceMock.Object);
 
         var titularDto = new NewMemberDto(1, "Bruce", "Wayne", "123", "base64-titular-img");
 
@@ -155,7 +159,6 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
         };
 
         var command = new NewMemberCommand(
-            IdTenant: 1,
             CreatedUserId: 1,
             SellingPlanId: 99,
             PaymentMethodId: 1,
@@ -217,6 +220,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
 
         var addOnsIds = new List<int> { 1};
 
+        var timeServiceMock = new Mock<ITimeService>();
         var catalogMock = new Mock<ICatalogIntegrationService>();
         catalogMock.Setup(c => c.GetPlanInfoAsync(99, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<PlanIntegrationDto>.Success(
@@ -240,7 +244,8 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
             Mock.Of<ILogger<NewMemberHandler>>(),
             catalogMock.Object,
             mediatorSpy.Object,
-            imageStorageMock.Object);
+            imageStorageMock.Object,
+            timeServiceMock.Object);
 
         var titularDto = new NewMemberDto(1, "Bruce", "Wayne", "123", "base64-titular-img");
 
@@ -250,7 +255,6 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
         };
 
         var command = new NewMemberCommand(
-            IdTenant: 1,
             CreatedUserId: 1,
             SellingPlanId: 99,
             PaymentMethodId: 1,
@@ -308,6 +312,7 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
     public async Task Handle_Should_Fail_SellingPlan_NotExists()
     {
         // Arrange
+        var timeServiceMock = new Mock<ITimeService>();
         var catalogMock = new Mock<ICatalogIntegrationService>();
 
         catalogMock
@@ -318,11 +323,15 @@ public class NewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsync
         var dbContext = scope.ServiceProvider.GetRequiredService<MembershipModuleContext>();
 
         var handler = new NewMemberHandler(
-            dbContext, Mock.Of<ILogger<NewMemberHandler>>(), catalogMock.Object, Mock.Of<IMediator>(), Mock.Of<IImageStorageService>()
+            dbContext, 
+            Mock.Of<ILogger<NewMemberHandler>>(), 
+            catalogMock.Object, 
+            Mock.Of<IMediator>(), 
+            Mock.Of<IImageStorageService>(),
+            timeServiceMock.Object
         );
 
         var command = new NewMemberCommand(
-           IdTenant: 1,
            CreatedUserId: 1,
            SellingPlanId: 1,
            PaymentMethodId: 1,

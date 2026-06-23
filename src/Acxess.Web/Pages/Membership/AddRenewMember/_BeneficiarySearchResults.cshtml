@@ -1,5 +1,6 @@
 @using System.Text.Json
-@model List<Acxess.Membership.Application.Features.Members.Queries.SearchEligibleMembers.EligibleMemberDto>
+@using Acxess.Membership.Application.Features.Members.Queries
+@model List<EligibleMemberDto>
 @{
     var targetIndex = (int)(ViewData["TargetIndex"] ?? 0);
 }

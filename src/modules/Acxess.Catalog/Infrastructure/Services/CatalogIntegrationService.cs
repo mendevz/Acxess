@@ -1,7 +1,7 @@
 using Acxess.Catalog.Domain.Constants;
 using Acxess.Catalog.Domain.Errors;
 using Acxess.Catalog.Infrastructure.Persistence;
-using Acxess.Shared.IntegrationServices.Catalog;
+using Acxess.Shared.IntegrationServices;
 using Acxess.Shared.ResultManager;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

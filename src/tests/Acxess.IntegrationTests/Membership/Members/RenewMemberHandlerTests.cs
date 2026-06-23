@@ -1,11 +1,11 @@
 ﻿using Acxess.IntegrationTests.Setup;
-using Acxess.Membership.Application.Features.Members.Commands.RenewMember;
+using Acxess.Membership.Application.Features.Members.Commands;
 using Acxess.Membership.Domain.Entities;
 using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.Enums;
 using Acxess.Shared.IntegrationEvents.Membership;
-using Acxess.Shared.IntegrationServices.Catalog;
+using Acxess.Shared.IntegrationServices;
 using Acxess.Shared.ResultManager;
 using FluentAssertions;
 using MediatR;
@@ -36,7 +36,8 @@ public class RenewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsy
         var mainMember = Member.Create(1,
             "Mauro",
             "Mendez",
-            1);
+            1,
+            DateTime.UtcNow);
 
         var startActiveSubscription = new DateTime(2026, 4, 25);
         mainMember.Subscribe(1, "Mensualidad", 500m, 1, 1, DurationSubscriptionUnit.Months, [], [], startActiveSubscription);
@@ -49,13 +50,13 @@ public class RenewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsy
                   new PlanIntegrationDto(1, "Mensualidad", 400m, 1, DurationSubscriptionUnit.Months, 1)
             ));
 
+        var timeServiceMock = new Mock<ITimeService>();
         var imageStorageMock = new Mock<IImageStorageService>();
         var mediatorSpy = new Mock<IMediator>();
 
         var renewMemberCommand = new RenewMemberCommand(
             IdMember: mainMember.IdMember,
             SellingPlanId: 1,
-            IdTenant: 1,
             AddOnIds: [],
             PaymentMethodId:   1,
             AmountPaid: 400m,
@@ -67,7 +68,8 @@ public class RenewMemberHandlerTests(CustomWebApplicationFactory factory) : IAsy
             dbContext, 
             catalogMock.Object,
             mediatorSpy.Object, 
-            imageStorageMock.Object, 
+            imageStorageMock.Object,
+            timeServiceMock.Object,
             Mock.Of<ILogger<RenewMemberHandler>>());
 
         // Act

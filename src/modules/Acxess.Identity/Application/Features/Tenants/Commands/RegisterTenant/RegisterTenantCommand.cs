@@ -7,5 +7,6 @@ public record RegisterTenantCommand(
     string UsernameAdmin,
     string FullNameAdmin,
     string PasswordAdmin,
+    string TimeZoneId,
     string? EmailAdmin
 ) : IRequest<Result>;

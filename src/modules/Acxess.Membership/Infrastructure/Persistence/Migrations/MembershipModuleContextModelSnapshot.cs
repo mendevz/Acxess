@@ -121,11 +121,6 @@ namespace Acxess.Membership.Infrastructure.Persistence.Migrations
                     b.Property<int>("IdTenant")
                         .HasColumnType("int");
 
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
                     b.Property<string>("Notes")
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");

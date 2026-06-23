@@ -1,6 +1,6 @@
 ﻿using Acxess.Membership.Domain.Entities;
 using Acxess.Shared.Enums;
-using Acxess.Shared.IntegrationServices.Catalog;
+using Acxess.Shared.IntegrationServices;
 using FluentAssertions;
 
 namespace Acxess.UnitTests.Membership.Entities;
@@ -26,6 +26,7 @@ public class MemberTests
             "Bruce",
              "Wayne",
              1,
+             DateTime.UtcNow,
             phone: "123");
 
         var fechaInicio = DateTime.Parse(fechaInicioStr);
@@ -74,7 +75,7 @@ public class MemberTests
     public void Subscribe_WhenHasActiveSubscription_ShouldStartOnPreviousEndDate()
     {
         // Arrange
-        var titular = Member.Create(1, "Clark", "Kent", 1);
+        var titular = Member.Create(1, "Clark", "Kent", 1, DateTime.UtcNow);
         var startActiveSubscription = new DateTime(2026, 4, 25);
         var startNewSubscription = new DateTime(2026, 5, 23);
 
@@ -94,7 +95,7 @@ public class MemberTests
     public void Subscribe_WhenInGracePeriod_ShouldStartOnPreviousEndDate()
     {
         // Arrange
-        var titular = Member.Create(1, "Clark", "Kent", 1);
+        var titular = Member.Create(1, "Clark", "Kent", 1, DateTime.UtcNow);
         var startProrrogaSubscription = new DateTime(2026, 4, 22);
         var startNewSubscription = new DateTime(2026, 5, 23);
 
@@ -114,7 +115,7 @@ public class MemberTests
     public void Subscribe_WhenGracePeriodPassed_ShouldStartToday()
     {
         // Arrange
-        var titular = Member.Create(1, "Clark", "Kent", 1);
+        var titular = Member.Create(1, "Clark", "Kent", 1, DateTime.UtcNow);
         var startExpiredSubscription = new DateTime(2026, 4, 19);
         var startNewSubscription = new DateTime(2026, 5, 23);
 

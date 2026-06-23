@@ -1,3 +1,4 @@
+using Acxess.Membership.Domain.Constants;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.ResultManager;
 
@@ -9,6 +10,7 @@ public class Subscription : IHasTenant
         int tenantId, 
         int ownerMemberId, 
         int sellingPlanId, 
+        DateTime createdAt,
         DateTime startDate,
         DateTime endDate, 
         decimal priceSnapshot,
@@ -24,8 +26,7 @@ public class Subscription : IHasTenant
         Notes = notes;
         StartDate = startDate;
         EndDate = endDate;
-        CreatedAt =  DateTime.Now;
-        IsActive = true;
+        CreatedAt = createdAt;
         SellingPlanName = sellingPlanName;
     }
 
@@ -37,12 +38,11 @@ public class Subscription : IHasTenant
     public int IdMemberOwner { get; private set; }
     public int IdSellingPlan { get; private set; }
     public string SellingPlanName { get; private set; } = string.Empty;
-    public bool IsActive { get; private set; } = true;
     public DateTime StartDate { get; private set; }
     public DateTime EndDate { get; private set; }
     public decimal PriceSnapshot { get; private set; }
     public string? Notes { get; private set; }
-    public DateTime CreatedAt { get; private set; } =  DateTime.Now;
+    public DateTime CreatedAt { get; private set; }
     public int CreatedByUser { get; private set; }
     
     public DateTime? CancelledAt { get; private set; }
@@ -58,19 +58,21 @@ public class Subscription : IHasTenant
     public virtual IReadOnlyCollection<SubscriptionAddOns> AddOns => _addOns.AsReadOnly();
 
     public static Subscription Create(
-        int tenantId, 
-        Member owner, 
+        int tenantId,
+        Member owner,
         int sellingPlanId,
-        DateTime startDate, 
-        DateTime endDate, 
-        decimal priceSnapshot, 
+        DateTime createdAt,
+        DateTime startDate,
+        DateTime endDate,
+        decimal priceSnapshot,
         int userId,
         string sellingPlanName)
     {
-        Subscription subscription = new (
-            tenantId, 
-            owner.IdMember, 
+        Subscription subscription = new(
+            tenantId,
+            owner.IdMember,
             sellingPlanId, 
+            createdAt,
             startDate, 
             endDate, 
             priceSnapshot, 
@@ -83,7 +85,15 @@ public class Subscription : IHasTenant
         
         return subscription;
     }
-    
+
+    public bool IsActive(DateTime atDate)
+        => EndDate >= atDate && !CancelledAt.HasValue;
+    public bool IsInGracePeriod(DateTime atDate)
+    {
+        var gracePeriodEnd = EndDate.AddDays(Configurations.PRORROGA_DAYS);
+        return EndDate <= atDate && !CancelledAt.HasValue && atDate <= gracePeriodEnd;
+    }
+
     private void AddOwnerMember(Member owner)
     {
         var membership = Membership.Domain.Entities.SubscriptionMembers.CreateForOwner(owner, this.IdSubscription, this.IdTenant);
@@ -107,26 +117,15 @@ public class Subscription : IHasTenant
         _addOns.Add(addon);
     }
     
-    public Result Cancel(string reason, int userId)
+    public Result Cancel(
+        string reason, 
+        int userId,
+        DateTime canceledAt)
     {
-        if (!IsActive)  return Result.Failure("Subsctiprion.IsCanceled","Subscription is already cancel");
-
-        IsActive = false;
-        
-        CancelledAt = DateTime.Now;
+        CancelledAt = canceledAt;
         CancellationReason = reason;
         CancelledBy = userId;
 
         return Result.Success();
-    }
-    public void Deactivate()
-    {
-        IsActive = false;
-        CancelledBy = 1; // user system
-    }
-    
-    public void MarkAsExpired()
-    {
-        if (IsActive && EndDate < DateTime.Now) IsActive = false;
     }
 }

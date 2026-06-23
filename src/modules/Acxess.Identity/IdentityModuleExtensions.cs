@@ -5,11 +5,13 @@ using Acxess.Identity.Infrastructure.Services;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.IntegrationServices;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 namespace Acxess.Identity;
 
 public static class IdentityModuleExtensions
@@ -26,15 +28,15 @@ public static class IdentityModuleExtensions
             .ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning)); ;
         });
 
-        services.AddApplicationIdentity();
+        services.AddApplicationIdentity(configuration);
 
         services.AddScoped<IDataSeeder, IdentitySeeder>();
         services.AddScoped<IIdentityIntegrationService, IdentityIntegrationService>();
-
+        services.AddScoped<ITimeService, TimeService>();
         return services;
     }
 
-    private static IServiceCollection AddApplicationIdentity(this IServiceCollection services)
+    private static IServiceCollection AddApplicationIdentity(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {
@@ -50,6 +52,15 @@ public static class IdentityModuleExtensions
         .AddDefaultTokenProviders()
         .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>();
 
+        string redisConnectionString = configuration.GetConnectionString("Redis")
+            ?? throw new InvalidOperationException("Redis connection string is missing.");
+
+        var redis = ConnectionMultiplexer.Connect(redisConnectionString);
+
+        services.AddDataProtection()
+        .PersistKeysToStackExchangeRedis(redis, "Acxess:DataProtection:Keys")
+        .SetApplicationName("AcxessApp");
+
         services.AddAuthentication(options =>
         {
             options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -63,7 +74,6 @@ public static class IdentityModuleExtensions
             options.Cookie.HttpOnly = true;
             options.AccessDeniedPath = "/Identity/AccessDenied";
         });
-
 
         return services;
     }

@@ -1,6 +1,6 @@
 using System.Globalization;
 using Acxess.Billing.Infrastructure.Persistence;
-using Acxess.Shared.IntegrationServices.Billing;
+using Acxess.Shared.IntegrationServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -72,8 +72,9 @@ public class BillingIntegrationService(
                 t.IdMemberTransaction,
                 t.TransactionDate,
                 t.Total,
-                "Pagado", 
-                t.Details.Select(d => $"{d.Description ?? "item"} - {d.TotalLine.ToString("C", new CultureInfo("es-MX"))}" ).ToList()
+                "Pagado",
+                t.Details.Select(d => new ItemTransactionDetail( d.Description, d.TotalLine)).ToList()
+            //t.Details.Select(d => $"{d.Description ?? "item"} - {d.TotalLine.ToString("C", new CultureInfo("es-MX"))}" ).ToList()
             ))
             .ToListAsync(cancellationToken);
     }
