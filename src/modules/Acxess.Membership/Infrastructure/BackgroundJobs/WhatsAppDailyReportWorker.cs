@@ -16,7 +16,6 @@ public class WhatsAppDailyReportWorker(
 {
     private const int TargetHour = 8;
     private const int TargetMinute = 30;
-    private const int TargetSecond = 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         const string JobName = nameof(WhatsAppDailyReportWorker);
