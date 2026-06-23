@@ -1,22 +1,14 @@
-using System.Security.Claims;
-using Acxess.Marketing.Application.Features.Promotions.Commands.NewPromotion;
-using Acxess.Marketing.Application.Features.Promotions.Commands.UpdatePromotion;
+using Acxess.Marketing.Application.Features.Promotions.Commands;
 using Acxess.Marketing.Application.Features.Promotions.DTOs;
-using Acxess.Marketing.Application.Features.Promotions.Queries.GetPromotionById;
-using Acxess.Marketing.Application.Features.Promotions.Queries.GetPromotions;
-using Acxess.Shared.Abstractions;
+using Acxess.Marketing.Application.Features.Promotions.Queries;
 using Acxess.Shared.ResultManager;
 using Acxess.Web.Pages.Catalog.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace Acxess.Web.Pages.Catalog.Promotions;
 
-public class IndexModel(
-    IMediator mediator,
-    ICurrentTenant currentTenant) : BaseCatalogPageModel<PromotionInputModel, PromotionDto>
+public class IndexModel(IMediator mediator) : BaseCatalogPageModel<PromotionInputModel, PromotionDto>
 {
     public async Task<IActionResult> OnGetItemsAsync()
     {
@@ -66,12 +58,9 @@ public class IndexModel(
     public async Task<IActionResult> OnPostSaveAsync()
     {
         if (!ModelState.IsValid) return FormView();
-        
-        if (!currentTenant.IsAvailable)  return ErrorState("No estas autenticado");
     
         IRequest<Result<string>> command = Input.IdPromotion == 0
             ? new NewPromotionCommand(
-                currentTenant.Id ?? 0,
                 Input.Name,
                 Input.DiscountType,
                 Input.Discount,
@@ -106,6 +95,4 @@ public class IndexModel(
         ModelState.Clear();
         return FormView(successMessage: resultSaved.Value);
     }
-
-
 }

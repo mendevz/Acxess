@@ -2,7 +2,7 @@ using Acxess.Membership.Domain.Constants;
 using Acxess.Membership.Domain.Services;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.Enums;
-using Acxess.Shared.IntegrationServices.Catalog;
+using Acxess.Shared.IntegrationServices;
 
 namespace Acxess.Membership.Domain.Entities;
 
@@ -16,8 +16,8 @@ public class Member : IHasTenant
     public string? Phone { get; private set; }
     public string? PhotoUrl { get; private set; }
     public bool IsDeleted { get; private set; }
-    public DateTime CreatedAt { get; private set; } = DateTime.Now;
-    public DateTime UpdatedAt { get; private set; } = DateTime.Now;
+    public DateTime CreatedAt { get; private set; }
+    public DateTime UpdatedAt { get; private set; }
     public int CreatedByUser { get; private set; }
     
     private readonly List<Subscription> _ownedSubscriptions = [];
@@ -30,7 +30,15 @@ public class Member : IHasTenant
     {
     }
 
-    private Member(int idTenant, string firstName, string lastName, int createdByUser, string? email, string? phone, string? photoUrl)
+    private Member(
+        int idTenant, 
+        string firstName, 
+        string lastName, 
+        int createdByUser, 
+        DateTime createdAt,
+        string? email, 
+        string? phone, 
+        string? photoUrl)
     {
         IdTenant = idTenant;
         FirstName = firstName;
@@ -40,8 +48,8 @@ public class Member : IHasTenant
         PhotoUrl = photoUrl;
         CreatedByUser = createdByUser;
         
-        CreatedAt = DateTime.Now;
-        UpdatedAt = DateTime.Now;
+        CreatedAt = createdAt;
+        UpdatedAt = createdAt;
     }
 
     public static Member Create(
@@ -49,6 +57,7 @@ public class Member : IHasTenant
         string firstName, 
         string lastName, 
         int createdByUser,
+        DateTime createdAt,
         string? phone = null,
         string? email = null,
         string? photoUrl = null)
@@ -58,6 +67,7 @@ public class Member : IHasTenant
             firstName, 
             lastName, 
             createdByUser, 
+            createdAt,
             email, 
             phone,
             photoUrl);
@@ -74,25 +84,31 @@ public class Member : IHasTenant
     {
         IsDeleted = false;
     }
-    public bool HasActiveSubscription()
+    public bool HasActiveSubscription(DateTime today)
     {
-        var today = DateTime.Now.Date;
         return _subscriptionMemberships.Any(sm =>  sm.Subscription.IsActive(today));
     }
     
-    public void UpdateInformation(string firstName, string lastName, string? phone, string? email)
+    public void UpdateInformation(
+        string firstName, 
+        string lastName, 
+        DateTime updatedAt,
+        string? phone, 
+        string? email)
     {
         FirstName = firstName;
         LastName = lastName;
         Phone = phone;
         Email = email;
-        UpdatedAt = DateTime.Now;
+        UpdatedAt = updatedAt;
     }
     
-    public void UpdatePhoto(string photoUrl)
+    public void UpdatePhoto(
+        string photoUrl,
+        DateTime updatedAt)
     {
         PhotoUrl = photoUrl;
-        UpdatedAt = DateTime.Now;
+        UpdatedAt = updatedAt;
     }
 
     public void Subscribe(int idPlan,
@@ -111,6 +127,7 @@ public class Member : IHasTenant
             this.IdTenant,
             this,
             idPlan,
+            currentDate,
             startDate,
             endDate,
             priceSnapshot,
@@ -129,7 +146,7 @@ public class Member : IHasTenant
         }
         
         _ownedSubscriptions.Add(subscription);
-        UpdatedAt = DateTime.Now;
+        UpdatedAt = currentDate;
     }
 
     private (DateTime Start, DateTime End) CalculateSubscriptionDates(int duration, DurationSubscriptionUnit unitValue, DateTime today)
@@ -137,11 +154,11 @@ public class Member : IHasTenant
         var startDate = today;
 
         var ownedActiveSubs = _ownedSubscriptions
-                .Where(s => s.IsInGracePeriod(startDate));
+               .Where(s => s.IsActive(startDate) || s.IsInGracePeriod(startDate));
 
         var membershipActiveSubs = _subscriptionMemberships
             .Select(sm => sm.Subscription)
-            .Where(s => s.IsInGracePeriod(startDate));
+            .Where(s => s.IsActive(startDate) || s.IsInGracePeriod(startDate));
 
         var lastActiveSub = ownedActiveSubs
             .Union(membershipActiveSubs)
@@ -150,11 +167,11 @@ public class Member : IHasTenant
 
         if (lastActiveSub != null)
         {
-            var lastEnd = lastActiveSub.EndDate.Date;
+            var lastEnd = lastActiveSub.EndDate;
             
             startDate = (lastEnd >= today || today <= lastEnd.AddDays(Configurations.PRORROGA_DAYS))
                 ? lastEnd
-                : today.Date;
+                : today;
         }
 
         var endDate = SubscriptionDateCalculator.CalculateEndDate(startDate, duration, unitValue);

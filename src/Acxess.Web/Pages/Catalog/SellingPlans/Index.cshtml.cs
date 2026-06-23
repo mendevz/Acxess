@@ -1,9 +1,8 @@
-using Acxess.Catalog.Application.Features.AccessTiers.Queries.GetAccessTiers;
-using Acxess.Catalog.Application.Features.SellingPlans.Commands.NewSellingPlan;
-using Acxess.Catalog.Application.Features.SellingPlans.Commands.UpdateSellingPlan;
-using Acxess.Catalog.Application.Features.SellingPlans.Queries.GetSellingPlanById;
-using Acxess.Catalog.Application.Features.SellingPlans.Queries.GetSellingPlans;
-using Acxess.Shared.Abstractions;
+using Acxess.Catalog.Application.Features.AccessTiers.DTOs;
+using Acxess.Catalog.Application.Features.AccessTiers.Queries;
+using Acxess.Catalog.Application.Features.SellingPlans.Commands;
+using Acxess.Catalog.Application.Features.SellingPlans.DTOs;
+using Acxess.Catalog.Application.Features.SellingPlans.Queries;
 using Acxess.Shared.Enums;
 using Acxess.Shared.ResultManager;
 using Acxess.Web.Pages.Catalog.Shared;
@@ -12,11 +11,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Acxess.Web.Pages.Catalog.SellingPlans;
 
-public class IndexModel(
-    IMediator mediator,
-    ICurrentTenant currentTenant) : BaseCatalogPageModel<SellingPlanInputModel, SellingPlanDto>
+public class IndexModel(IMediator mediator) : BaseCatalogPageModel<SellingPlanInputModel, SellingPlanDto>
 {
-
     public List<AccessTierDto> AccessTiers = [];
 
     public async Task<IActionResult> OnGetItemsAsync()
@@ -26,7 +22,7 @@ public class IndexModel(
         
         Items = string.IsNullOrEmpty(Search) 
             ? result.Value 
-            : result.Value.Where(x => x.Name.Contains(Search, StringComparison.OrdinalIgnoreCase)).ToList();
+            : [.. result.Value.Where(x => x.Name.Contains(Search, StringComparison.OrdinalIgnoreCase))];
 
         return Partial("_List", this);
     }
@@ -81,10 +77,8 @@ public class IndexModel(
 
         if (!ModelState.IsValid)  return FormView();
 
-
         IRequest<Result<string>> command = Input.IdSellingPlan == 0 
             ? new NewSellingPlanCommand(
-                currentTenant.Id ?? 0,
                 Input.TotalMembers,
                 Input.DurationInValue,
                 (DurationSubscriptionUnit)Input.DurationUnit,

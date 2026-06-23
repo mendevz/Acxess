@@ -1,18 +1,13 @@
-using Acxess.Catalog.Application.Features.AddOns.Commands.NewAddOn;
-using Acxess.Catalog.Application.Features.AddOns.Commands.UpdateAddOn;
-using Acxess.Catalog.Application.Features.AddOns.Queries.GetAddOnById;
-using Acxess.Catalog.Application.Features.AddOns.Queries.GetAddOns;
-using Acxess.Shared.Abstractions;
+using Acxess.Catalog.Application.Features.AddOns.Commands;
+using Acxess.Catalog.Application.Features.AddOns.DTOs;
+using Acxess.Catalog.Application.Features.AddOns.Queries;
 using Acxess.Shared.ResultManager;
 using Acxess.Web.Pages.Catalog.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Acxess.Web.Pages.Catalog.AddOns;
-public class IndexModel(
-    IMediator mediator,
-    ICurrentTenant currentTenant
-) : BaseCatalogPageModel<AddOnInput,AddOnDto>
+public class IndexModel(IMediator mediator) : BaseCatalogPageModel<AddOnInput,AddOnDto>
 {
     public async Task<IActionResult> OnGetItemsAsync()
     {
@@ -66,7 +61,6 @@ public class IndexModel(
 
         IRequest<Result<string>> command = Input.IdAddOn == 0 
             ? new NewAddOnCommand(
-                currentTenant.Id??0, 
                 Input.AddOnKey,
                 Input.Name,
                 Input.Price,

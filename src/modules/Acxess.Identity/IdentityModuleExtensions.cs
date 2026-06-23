@@ -32,7 +32,7 @@ public static class IdentityModuleExtensions
 
         services.AddScoped<IDataSeeder, IdentitySeeder>();
         services.AddScoped<IIdentityIntegrationService, IdentityIntegrationService>();
-        services.AddScoped<ITenantTimeService, TenantTimeService>();
+        services.AddScoped<ITimeService, TimeService>();
         return services;
     }
 

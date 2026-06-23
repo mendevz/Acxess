@@ -13,7 +13,7 @@ public class SellingPlan : IHasTenant
     public DurationSubscriptionUnit DurationUnit { get; private set; }
     public decimal Price { get; private set; }
     public bool IsActive { get; private set; } = true;
-    public DateTime CreatedAt { get; private set; } = DateTime.Now;
+    public DateTime CreatedAt { get; private set; }
     public int CreatedByUser { get; private set; }
 
     public virtual ICollection<PlanAccessTiers> AccessTiers { get; private set; } = new List<PlanAccessTiers>();
@@ -27,7 +27,8 @@ public class SellingPlan : IHasTenant
         int durationInValue, 
         DurationSubscriptionUnit durationUnit, 
         decimal price, 
-        int createdByUser)
+        int createdByUser,
+        DateTime createdAt)
     {
         IdTenant = tenantId;
         Name = name;
@@ -36,6 +37,7 @@ public class SellingPlan : IHasTenant
         DurationUnit = durationUnit;
         Price = price;
         CreatedByUser = createdByUser;
+        CreatedAt = createdAt;
     }
 
     public static SellingPlan Create(
@@ -45,7 +47,8 @@ public class SellingPlan : IHasTenant
         int durationInValue, 
         DurationSubscriptionUnit durationSubscriptionUnit, 
         decimal price, 
-        int createdByUser)
+        int createdByUser,
+        DateTime createdAt)
     {
         return new SellingPlan(
             tenantId, 
@@ -54,7 +57,8 @@ public class SellingPlan : IHasTenant
             durationInValue, 
             durationSubscriptionUnit, 
             price, 
-            createdByUser);
+            createdByUser,
+            createdAt);
     }
 
     public void  Update(

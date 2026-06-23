@@ -14,7 +14,7 @@ public class MemberTransaction : IHasTenant
     public decimal Received { get; private set; }
     public decimal Difference { get; private set; }
     public string? Notes { get; private set; }
-    public DateTime TransactionDate { get; private set; } = DateTime.Now;
+    public DateTime TransactionDate { get; private set; }
     public int CreatedByUser { get; private set; }
     
     private readonly List<MemberTransactionDetail> _details = [];
@@ -45,13 +45,20 @@ public class MemberTransaction : IHasTenant
     }
 
     public static MemberTransaction Create(
-        int idTenant, int? idMember, string? member, int idPaymentMethod, decimal received, int userId, string? notes = null)
+        int idTenant, 
+        int? idMember, 
+        string? member, 
+        int idPaymentMethod, 
+        decimal received, 
+        int userId, 
+        DateTime createdAt,
+        string? notes = null)
     {
         return new MemberTransaction(
             idTenant, 
             idMember,member, 
-            idPaymentMethod, 
-            DateTime.Now, 
+            idPaymentMethod,
+            createdAt, 
             notes, 
             userId, 
             received);

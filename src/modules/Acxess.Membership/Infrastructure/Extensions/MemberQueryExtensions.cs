@@ -36,22 +36,13 @@ public static class MemberQueryExtensions
             )
         );
 
-    public static IQueryable<Member> NewMembersToday(
+    public static IQueryable<Member> CreatedBetween(
         this IQueryable<Member> query,
-        DateTime today)
+        DateTime startUtc,
+        DateTime endUtc)
     {
-        var endOfToday = today.AddDays(1).AddTicks(-1);
-        return query.Where(m => 
-            m.CreatedAt >= today && m.CreatedAt <= endOfToday
+        return query.Where(m =>
+            m.CreatedAt >= startUtc && m.CreatedAt < endUtc
         );
     }
-
-    public static IEnumerable<SubscriptionMembers> WhereActiveAndNotShared(
-        this IEnumerable<SubscriptionMembers> subscriptionMemberships,
-        DateTime today,
-        ICollection<int> sharedSubscriptionIds)
-    => subscriptionMemberships.Where(sm =>
-        sm.Subscription.IsSubscriptionActive(today)
-        && !sharedSubscriptionIds.Contains(sm.IdSubscription)
-    );
 }

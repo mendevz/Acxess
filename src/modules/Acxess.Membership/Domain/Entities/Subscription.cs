@@ -10,6 +10,7 @@ public class Subscription : IHasTenant
         int tenantId, 
         int ownerMemberId, 
         int sellingPlanId, 
+        DateTime createdAt,
         DateTime startDate,
         DateTime endDate, 
         decimal priceSnapshot,
@@ -25,7 +26,7 @@ public class Subscription : IHasTenant
         Notes = notes;
         StartDate = startDate;
         EndDate = endDate;
-        CreatedAt =  DateTime.Now;
+        CreatedAt = createdAt;
         SellingPlanName = sellingPlanName;
     }
 
@@ -41,7 +42,7 @@ public class Subscription : IHasTenant
     public DateTime EndDate { get; private set; }
     public decimal PriceSnapshot { get; private set; }
     public string? Notes { get; private set; }
-    public DateTime CreatedAt { get; private set; } =  DateTime.Now;
+    public DateTime CreatedAt { get; private set; }
     public int CreatedByUser { get; private set; }
     
     public DateTime? CancelledAt { get; private set; }
@@ -57,19 +58,21 @@ public class Subscription : IHasTenant
     public virtual IReadOnlyCollection<SubscriptionAddOns> AddOns => _addOns.AsReadOnly();
 
     public static Subscription Create(
-        int tenantId, 
-        Member owner, 
+        int tenantId,
+        Member owner,
         int sellingPlanId,
-        DateTime startDate, 
-        DateTime endDate, 
-        decimal priceSnapshot, 
+        DateTime createdAt,
+        DateTime startDate,
+        DateTime endDate,
+        decimal priceSnapshot,
         int userId,
         string sellingPlanName)
     {
-        Subscription subscription = new (
-            tenantId, 
-            owner.IdMember, 
+        Subscription subscription = new(
+            tenantId,
+            owner.IdMember,
             sellingPlanId, 
+            createdAt,
             startDate, 
             endDate, 
             priceSnapshot, 
@@ -84,11 +87,11 @@ public class Subscription : IHasTenant
     }
 
     public bool IsActive(DateTime atDate)
-        => EndDate.Date >= atDate.Date && !CancelledAt.HasValue;
+        => EndDate >= atDate && !CancelledAt.HasValue;
     public bool IsInGracePeriod(DateTime atDate)
     {
         var gracePeriodEnd = EndDate.AddDays(Configurations.PRORROGA_DAYS);
-        return EndDate.Date <= atDate.Date && !CancelledAt.HasValue && atDate.Date <= gracePeriodEnd.Date;
+        return EndDate <= atDate && !CancelledAt.HasValue && atDate <= gracePeriodEnd;
     }
 
     private void AddOwnerMember(Member owner)
@@ -114,9 +117,12 @@ public class Subscription : IHasTenant
         _addOns.Add(addon);
     }
     
-    public Result Cancel(string reason, int userId)
+    public Result Cancel(
+        string reason, 
+        int userId,
+        DateTime canceledAt)
     {
-        CancelledAt = DateTime.Now;
+        CancelledAt = canceledAt;
         CancellationReason = reason;
         CancelledBy = userId;
 

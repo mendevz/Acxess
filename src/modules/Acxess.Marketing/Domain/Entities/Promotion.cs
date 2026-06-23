@@ -9,7 +9,18 @@ public class Promotion : IHasTenant
     {
     }
 
-    private Promotion( int idTenant, string name, DiscountType discountType, decimal discount, bool requiresCoupon, bool autoApply, DateTime? availableFrom, DateTime? availableTo, bool isActive, int createdByUser)
+    private Promotion( 
+        int idTenant, 
+        string name, 
+        DiscountType discountType, 
+        decimal discount, 
+        bool requiresCoupon, 
+        bool autoApply, 
+        DateTime createdAt,
+        DateTime? availableFrom, 
+        DateTime? availableTo, 
+        bool isActive, 
+        int createdByUser)
     {
         
         IdTenant = idTenant;
@@ -22,6 +33,7 @@ public class Promotion : IHasTenant
         AvailableTo = availableTo;
         IsActive = isActive;
         CreatedByUser = createdByUser;
+        CreatedAt = createdAt;
     }
 
     public int IdPromotion { get; private set; }
@@ -38,7 +50,7 @@ public class Promotion : IHasTenant
     private readonly List<Coupon> _coupons = [];
     public virtual IReadOnlyCollection<Coupon> Coupons => _coupons.AsReadOnly();
 
-    public DateTime CreatedAt { get; private set; } = DateTime.Now;
+    public DateTime CreatedAt { get; private set; }
     public int CreatedByUser { get; private set; }
 
     public static Promotion Create(
@@ -49,6 +61,7 @@ public class Promotion : IHasTenant
         bool requiresCoupon,
         bool autoApply,
         bool isActive,
+        DateTime createdAt,
         DateTime? availableFrom,
         DateTime? availableTo,
         int  createdByUser
@@ -59,7 +72,13 @@ public class Promotion : IHasTenant
             name,
             discountType,
             discount,
-            requiresCoupon, autoApply, availableFrom, availableTo, isActive, createdByUser
+            requiresCoupon, 
+            autoApply, 
+            createdAt,
+            availableFrom, 
+            availableTo, 
+            isActive, 
+            createdByUser
         );
     }
 

@@ -1,5 +1,6 @@
 using Acxess.Membership.Infrastructure.Extensions;
 using Acxess.Membership.Infrastructure.Persistence;
+using Acxess.Shared.Abstractions;
 using Acxess.Shared.ResultManager;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -7,14 +8,23 @@ using Microsoft.Extensions.Logging;
 
 namespace Acxess.Membership.Application.Features.Subscriptions.Commands;
 
-public record CancelSubscriptionCommand(int SubscriptionId, string Reason, int UserId) : IRequest<Result<string>>;
+public record CancelSubscriptionCommand(
+    int SubscriptionId, 
+    string Reason, 
+    int UserId
+) : IRequest<Result<string>>, ITenantRequest
+{
+    public int IdTenant { get; set; }
+}
 public class CancelSubscriptionHandler(
     MembershipModuleContext context,
+    ITimeService timeService,
     ILogger<CancelSubscriptionHandler> logger) : IRequestHandler<CancelSubscriptionCommand, Result<string>>
 {
     public async Task<Result<string>> Handle(CancelSubscriptionCommand request, CancellationToken cancellationToken)
     {
-        var today = DateTime.Now.Date;
+        var utcToday = timeService.GetUtcNow();
+        var today = timeService.GetUtcNow();
 
         var memberId = await context.SubscriptionMembers
             .Where(sm => sm.IdSubscription == request.SubscriptionId)
@@ -41,7 +51,7 @@ public class CancelSubscriptionHandler(
 
         foreach (var sub in activeSubscriptionsToCancel)
         {
-            sub.Cancel(request.Reason, request.UserId);
+            sub.Cancel(request.Reason, request.UserId, utcToday);
         }
 
         await context.SaveChangesAsync(cancellationToken);

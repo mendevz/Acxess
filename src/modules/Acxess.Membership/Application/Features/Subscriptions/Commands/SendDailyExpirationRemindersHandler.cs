@@ -1,6 +1,5 @@
 ﻿namespace Acxess.Membership.Application.Features.Subscriptions.Commands;
 
-using Acxess.Membership.Application.Features.Subscriptions.Queries.GetExpiringSubscriptions;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.IntegrationServices;
 using Acxess.Shared.ResultManager;
@@ -10,8 +9,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using Acxess.Membership.Application.Features.Subscriptions.Queries;
 
-public record SendDailyExpirationRemindersCommand() : IRequest<Result>;
+public record SendDailyExpirationRemindersCommand() : IRequest<Result>, ITenantRequest
+{
+    public int IdTenant { get; set; }
+}
 
 public class SendDailyExpirationRemindersHandler(
     IMediator mediator,
@@ -23,7 +26,13 @@ public class SendDailyExpirationRemindersHandler(
     {
         logger.LogInformation("Executing daily expiration reminders orchestration");
 
-        var expiringResult = await mediator.Send(new GetExpiringSubscriptionsQuery(), cancellationToken);
+        var expiringResult = await mediator.Send(
+            new GetExpiringSubscriptionsQuery()
+            {
+                IdTenant = request.IdTenant
+            }, 
+            cancellationToken
+        );
 
         if (expiringResult.IsFailure || expiringResult.Value == null || expiringResult.Value.Count == 0)
         {
