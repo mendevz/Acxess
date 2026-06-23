@@ -29,8 +29,8 @@ public record SubscriptionMetrics
 
         if (hasActiveSub && chainStartDate.HasValue && absoluteEndDate.HasValue)
         {
-            var currentStart = chainStartDate.Value.Date;
-            var currentEnd = absoluteEndDate.Value.Date;
+            var currentStart = chainStartDate.Value;
+            var currentEnd = absoluteEndDate.Value;
             
             remainingDays = Math.Max(0, (currentEnd - currentDate).Days);
             totalDaysDuration = Math.Max(1, (currentEnd - currentStart).Days);
