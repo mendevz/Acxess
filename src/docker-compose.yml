@@ -48,7 +48,6 @@ services:
       - redis_data:/data
     networks:
       - acxess-network
-    # profiles: ["tools", "app"]
 
   # ==============================
   #  Data base migrator 
@@ -74,7 +73,6 @@ services:
       - WhatsApp__InstanceName=${EVOLUTION_API_INSTANCE}
     networks:
       - acxess-network
-    # profiles: ["tools", "app"]
     
   
   # ==============================
@@ -95,7 +93,6 @@ services:
       - seq_data:/data
     networks:
       - acxess-network
-    # profiles: ["tools", "app"]
 
   # ==============================
   #  App Web
@@ -106,9 +103,11 @@ services:
       dockerfile: src/Acxess.Web/DOCKERFILE
     container_name: acxess_web
     mem_limit: 512m
-    restart: "no"
+    restart: unless-stopped
     depends_on:
       acxess-db:
+        condition: service_healthy
+      acxess-redis:
         condition: service_healthy
       acxess-migrator:
         condition: service_completed_successfully
@@ -133,7 +132,6 @@ services:
       - "5000:8080" 
     networks:
       - acxess-network
-    # profiles: ["app"]
 
   # ==============================
   # Stack WhatsApp (Evolution API)
@@ -141,6 +139,7 @@ services:
   evolution-postgres:
     image: postgres:15-alpine
     container_name: evolution_db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: evolution
       POSTGRES_PASSWORD: evolution_password
@@ -156,7 +155,6 @@ services:
       retries: 5
     networks:
       - acxess-network
-    # profiles: ["tools", "app"]
 
   evolution-redis:
     image: redis:7-alpine
@@ -172,6 +170,7 @@ services:
   evolution-api:
     image: evoapicloud/evolution-api:latest
     container_name: evolution_api
+    restart: unless-stopped
     mem_limit: 512m
     depends_on:
       evolution-postgres:
@@ -204,7 +203,6 @@ services:
       - evolution_instances:/evolution/instances
     networks:
       - acxess-network
-    # profiles: ["tools", "app"]
 
 volumes:
   sql_data:

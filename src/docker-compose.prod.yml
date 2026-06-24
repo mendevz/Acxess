@@ -100,9 +100,11 @@ services:
     image: ghcr.io/mendevz/acxess-web:${APP_VERSION:-latest}
     container_name: acxess_web
     mem_limit: 512m
-    restart: "no"
+    restart: "unless-stopped"
     depends_on:
       acxess-db:
+        condition: service_healthy
+      acxess-redis:
         condition: service_healthy
       acxess-migrator:
         condition: service_completed_successfully
@@ -110,7 +112,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT} 
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__Default=Server=acxess-db;Database=AcxessDB;User Id=${DB_USER};Password=${DB_PASSWORD};TrustServerCertificate=True;
-      - ConnectionStrings__Redis=acxess-redis:6379,password=${REDIS_PASSWORD},abortConnect=False
+      - ConnectionStrings__Redis=acxess-redis:6379,password=${REDIS_PASSWORD},abortConnect=False,connectTimeout=10000,syncTimeout=10000
       - SystemUser__Password=${SYSTEM_USER_PASSWORD}
       - RUN_MIGRATIONS=false
       - TZ=America/Mexico_City 
@@ -133,6 +135,7 @@ services:
   evolution-postgres:
     image: postgres:15-alpine
     container_name: evolution_db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: evolution
       POSTGRES_PASSWORD: evolution_password
@@ -154,6 +157,7 @@ services:
   evolution-redis:
     image: redis:7-alpine
     container_name: evolution_redis
+    restart: unless-stopped
     ports:
       - "6380:6379"
     volumes:
@@ -166,7 +170,7 @@ services:
     image: evoapicloud/evolution-api:latest
     container_name: evolution_api
     mem_limit: 512m
-    restart: always
+    restart: unless-stopped
     depends_on:
       evolution-postgres:
         condition: service_healthy
