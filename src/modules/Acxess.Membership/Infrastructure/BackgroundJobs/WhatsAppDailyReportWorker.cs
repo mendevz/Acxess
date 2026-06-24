@@ -24,6 +24,9 @@ public class WhatsAppDailyReportWorker(
         {
             logger.LogInformation("Background job started | JobName: {JobName} ", JobName);
 
+            logger.LogInformation("Waiting 30 seconds for database migrations to stabilize...");
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 try

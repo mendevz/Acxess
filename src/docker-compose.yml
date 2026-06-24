@@ -134,8 +134,6 @@ services:
     networks:
       - acxess-network
     # profiles: ["app"]
-    volumes:
-      - acxess_keys:/root/.aspnet/DataProtection-Keys
 
   # ==============================
   # Stack WhatsApp (Evolution API)
@@ -215,7 +213,6 @@ volumes:
   evolution_pgdata:       
   evolution_redis_data:   
   evolution_instances:
-  acxess_keys:
 
 networks:
   acxess-network:

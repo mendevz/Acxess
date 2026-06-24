@@ -74,23 +74,6 @@ public class BillingIntegrationService(
                 t.Total,
                 "Pagado",
                 t.Details.Select(d => new ItemTransactionDetail( d.Description, d.TotalLine)).ToList()
-            //t.Details.Select(d => $"{d.Description ?? "item"} - {d.TotalLine.ToString("C", new CultureInfo("es-MX"))}" ).ToList()
-            ))
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task<List<RecentActivityDto>> GetRecentActivityAsync(int count, CancellationToken cancellationToken = default)
-    {
-        return await context.MemberTransactions
-            .AsNoTracking()
-            .OrderByDescending(t => t.TransactionDate)
-            .Take(count)
-            .Select(t => new RecentActivityDto(
-                t.Notes ?? "Pago Recibido",
-                t.Member ?? "",
-                t.Total,
-                t.TransactionDate,
-                "payment"
             ))
             .ToListAsync(cancellationToken);
     }
