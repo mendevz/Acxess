@@ -1,5 +1,4 @@
-﻿using Acxess.Membership.Infrastructure.Extensions;
-using Acxess.Membership.Infrastructure.Persistence;
+﻿using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.ResultManager;
 using MediatR;
@@ -20,12 +19,13 @@ public class GetExpiringSubscriptionsHandler(
 {
     public async Task<Result<List<TenantExpiringDataDto>>> Handle(GetExpiringSubscriptionsQuery request, CancellationToken cancellationToken)
     {
-        var startOfToday = timeService.GetUtcNow();
+        var startOfToday = timeService.GetUtcNow().Date;
         var endOfToday = startOfToday.AddDays(1);
 
         var expiringData = await dbContext.Subscriptions
             .IgnoreQueryFilters()
             .AsNoTracking()
+            .Where(s => s.IdTenant == request.IdTenant)
             .Where(s => !s.CancelledAt.HasValue && s.EndDate >= startOfToday && s.EndDate < endOfToday)
             .Where(s => !dbContext.Subscriptions.Any(futureSub =>
                 futureSub.IdSubscription != s.IdSubscription &&
