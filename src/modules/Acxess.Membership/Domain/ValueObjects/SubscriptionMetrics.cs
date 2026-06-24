@@ -29,12 +29,13 @@ public record SubscriptionMetrics
 
         if (hasActiveSub && chainStartDate.HasValue && absoluteEndDate.HasValue)
         {
-            var currentStart = chainStartDate.Value;
-            var currentEnd = absoluteEndDate.Value;
-            
-            remainingDays = Math.Max(0, (currentEnd - currentDate).Days);
+            var currentStart = chainStartDate.Value.Date;
+            var currentEnd = absoluteEndDate.Value.Date;
+            var today = currentDate.Date;
+
+            remainingDays = Math.Max(0, (currentEnd - today).Days);
             totalDaysDuration = Math.Max(1, (currentEnd - currentStart).Days);
-            var daysPassed = (currentDate - currentStart).TotalDays;
+            var daysPassed = (today - currentStart).TotalDays;
             
             progress = Math.Clamp((daysPassed / totalDaysDuration) * 100, 0, 100);
         }

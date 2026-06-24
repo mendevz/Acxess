@@ -96,21 +96,15 @@ public class WhatsAppDailyReportWorker(
                         var command = new SendDailyExpirationRemindersCommand { IdTenant = tenantId };
                         var result = await mediator.Send(command, stoppingToken);
 
-                        if (result.IsSuccess)
+                        if (result.IsFailure)
                         {
-
-                            logger.LogInformation("WhatsApp daily reports job completed | DurationMs: {DurationMs}",
-                                stopwatch.ElapsedMilliseconds);
-                        }
-                        else
-                        {
-
-                            logger.LogError("WhatsApp daily reports job failed | ErrorCode: {ErrorCode}, DurationMs: {DurationMs}",
-                                result.Error.Code, stopwatch.ElapsedMilliseconds);
+                            logger.LogError("Send WhatsApp daily reports failed For TenantId:{TenantId} | ErrorCode: {ErrorCode}, DurationMs: {DurationMs}",
+                                    tenantId, result.Error.Code, stopwatch.ElapsedMilliseconds);
                         }
                     }
 
                     stopwatch.Stop();
+
                     logger.LogInformation("Batch completed in {DurationMs} ms", stopwatch.ElapsedMilliseconds);
                 }
                 catch (OperationCanceledException)

@@ -78,7 +78,7 @@ public class GetDashboardStatsHandler(
 
                 var referenceDateLocal = timeService.ConvertDateFromZoneId(referenceDateUtc, timeZoneId);
 
-                var daysDiff = (referenceDateLocal.Date - localToday).Days;
+                var daysDiff = (referenceDateLocal.Date - localToday.Date).Days;
 
                 var namePlan = MembershipDisplayFormatters.GetSellingPlanName(x.RelevantSub.SellingPlanName, isCanceled);
 
