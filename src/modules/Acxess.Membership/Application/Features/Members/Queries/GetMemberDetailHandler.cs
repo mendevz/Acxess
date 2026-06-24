@@ -138,7 +138,7 @@ public class GetMemberDetailHandler(
         
         var billingInfo = await billingService.GetMemberStatsAsync(member.IdMember, cancellationToken);
         var cultureMx = new CultureInfo("es-MX");
-        var datePart = cultureMx.TextInfo.ToTitleCase(member.CreatedAt.ToString("dd MMM yyyy", cultureMx));
+        var datePart = cultureMx.TextInfo.ToTitleCase(localJoinedDate.ToString("dd MMM yyyy", cultureMx));
         var activeSub = activeSubscriptions.OrderBy(s => s.StartDate).FirstOrDefault();
 
         logger.LogInformation("Query completed. Detail member obtained successfully. IdMember: {idMember}", member.IdMember);
@@ -162,9 +162,9 @@ public class GetMemberDetailHandler(
             ActiveAddOns = addOnNames,
             
             JoinedDate = localJoinedDate,
-            StartDate = chainStartDateUtc,
-            AbsoluteExpirationDate = absoluteEndDateUtc,
-            
+            StartDate = localChainStart,        
+            AbsoluteExpirationDate = localAbsoluteEnd,
+
             RemainingDays = metrics.RemainingDays,
             TotalDays = metrics.TotalDays,
             ProgressPercentage = metrics.ProgressPercentage,
