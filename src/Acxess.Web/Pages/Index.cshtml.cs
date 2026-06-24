@@ -1,12 +1,12 @@
+using Acxess.Billing.Application.Features.Transactions.Queries;
 using Acxess.Membership.Application.Features.Dashboard.DTOs;
 using Acxess.Membership.Application.Features.Dashboard.Queries;
-using Acxess.Shared.IntegrationServices;
 using MediatR;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Acxess.Web.Pages;
 
-public class IndexModel(IMediator mediator, IBillingIntegrationService billingService) : PageModel
+public class IndexModel(IMediator mediator) : PageModel
 {
     public DashboardStatsDto Stats { get; private set; } = new();
     public List<RecentActivityDto> RecentActivity { get; private set; } = [];
@@ -18,6 +18,8 @@ public class IndexModel(IMediator mediator, IBillingIntegrationService billingSe
         {
             Stats = statsResult.Value;
         }
-        RecentActivity = await billingService.GetRecentActivityAsync(5);
+
+        var recentActiivyQuery = new GetRecentActivityQuery(7);
+        RecentActivity = await mediator.Send(recentActiivyQuery);
     }
 }

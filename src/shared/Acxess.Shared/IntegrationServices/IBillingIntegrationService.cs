@@ -4,7 +4,6 @@ public interface IBillingIntegrationService
 {
     Task<MemberFinancialStatsDto> GetMemberStatsAsync(int memberId, CancellationToken cancellationToken = default);
     Task<List<MemberTransactionSummaryDto>> GetMemberTransactionsAsync(int memberId, CancellationToken cancellationToken = default);
-    Task<List<RecentActivityDto>> GetRecentActivityAsync(int count, CancellationToken cancellationToken = default);
 }
 
 public record MemberFinancialStatsDto(
@@ -24,11 +23,3 @@ public record MemberTransactionSummaryDto(
 );
 
 public record ItemTransactionDetail(string Description, decimal Total);
-
-public record RecentActivityDto(
-    string Title,
-    string Ticket,
-    decimal Total,
-    DateTime Date,
-    string Status
-    );
