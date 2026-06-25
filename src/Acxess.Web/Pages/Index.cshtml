@@ -142,93 +142,119 @@
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-gray-800 dark:text-white text-sm lg:text-base">Próximos a Vencer / Vencidos</h3>
                 </div>
-                <div class="overflow-x-auto custom-scrollbar pb-2">
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-[10px] lg:text-xs text-gray-400 uppercase bg-gray-50 dark:bg-slate-900/50">
-                            <tr>
-                                <th class="px-3 lg:px-4 py-2 rounded-l-lg whitespace-nowrap">Socio</th>
-                                <th class="px-3 lg:px-4 py-2 whitespace-nowrap">Vence</th>
-                                <th class="px-3 lg:px-4 py-2 whitespace-nowrap">Plan</th>
-                                <th class="px-3 lg:px-4 py-2 rounded-r-lg text-right whitespace-nowrap">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
-                        @foreach (var item in Model.Stats.TopExpiringMembers)
-                        {
-                            string dayLabel;
-                            string colorClass;
-    
-                            switch (item.DaysLeft)
+
+                <div id="tabla-vencidos-dashboard">
+                 
+                 
+            
+                    <div class="overflow-x-auto custom-scrollbar pb-2">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-[10px] lg:text-xs text-gray-400 uppercase bg-gray-50 dark:bg-slate-900/50">
+                                <tr>
+                                    <th class="px-3 lg:px-4 py-2 rounded-l-lg whitespace-nowrap">Socio</th>
+                                    <th class="px-3 lg:px-4 py-2 whitespace-nowrap">Vence</th>
+                                    <th class="px-3 lg:px-4 py-2 whitespace-nowrap">Plan</th>
+                                    <th class="px-3 lg:px-4 py-2 rounded-r-lg text-right whitespace-nowrap">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+                            @foreach (var item in Model.Stats.TopExpiringMembers)
                             {
-                                case < 0:
+                                string dayLabel;
+                                string colorClass;
+    
+                                switch (item.DaysLeft)
                                 {
-                                    var absDays = Math.Abs(item.DaysLeft);
-                                    dayLabel = absDays == 1 ? "Venció ayer" : $"Venció hace {absDays} días";
-                                    colorClass = "text-red-700 dark:text-red-400"; 
-                                    break;
-                                }
-                                case 0:
-                                    dayLabel = "Hoy";
-                                    colorClass = "text-red-500 font-black";
-                                    break;
-                                case 1:
-                                    dayLabel = "Mañana";
-                                    colorClass = "text-orange-500";
-                                    break;
-                                default:
-                                    dayLabel = $"En {item.DaysLeft} días";
-                                    colorClass = "text-orange-400";
-                                    break;
-                            }
-    
-                            // Inyectamos Alpine en la fila para controlar el Lightbox de este socio
-                            <tr x-data="{ showLightbox: false }" class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition text-xs lg:text-sm">
-                                
-                                <td class="px-3 lg:px-4 py-3 font-medium text-gray-800 dark:text-white whitespace-nowrap">
-                                    <div class="flex items-center gap-3">
-                                        <div @@click="@(string.IsNullOrEmpty(item.PhotoUrl) ? "" : "showLightbox = true")" 
-                                             class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-300 font-bold text-[10px] border border-slate-300 dark:border-slate-600 shrink-0 @(!string.IsNullOrEmpty(item.PhotoUrl) ? "cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all" : "")">
-                                            @if (!string.IsNullOrEmpty(item.PhotoUrl))
-                                            {
-                                                <img src="@item.PhotoUrl" alt="Foto de @item.FullName" class="w-full h-full object-cover rounded-full aspect-square">
-                                            }
-                                            else
-                                            {
-                                                <span>@item.Initials</span>
-                                            }
-                                        </div>
-                                        
-                                        <span>@item.FullName</span>
-                                    </div>
-    
-                                    @if (!string.IsNullOrEmpty(item.PhotoUrl))
+                                    case < 0:
                                     {
-                                        <div x-show="showLightbox" style="display: none;" 
-                                             class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-200"
-                                             @@click="showLightbox = false"
-                                             @@keydown.escape.window="showLightbox = false">
-                                            
-                                            <button type="button" class="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/50 hover:text-white transition-colors bg-black/50 rounded-full p-2">
-                                                <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                            </button>
-    
-                                            <img src="@item.PhotoUrl" alt="Foto en grande de @item.FullName" class="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain border border-slate-700" @@click.stop />
-                                        </div>
+                                        var absDays = Math.Abs(item.DaysLeft);
+                                        dayLabel = absDays == 1 ? "Venció ayer" : $"Venció hace {absDays} días";
+                                        colorClass = "text-red-700 dark:text-red-400"; 
+                                        break;
                                     }
-                                </td>
+                                    case 0:
+                                        dayLabel = "Hoy";
+                                        colorClass = "text-red-500 font-black";
+                                        break;
+                                    case 1:
+                                        dayLabel = "Mañana";
+                                        colorClass = "text-orange-500";
+                                        break;
+                                    default:
+                                        dayLabel = $"En {item.DaysLeft} días";
+                                        colorClass = "text-orange-400";
+                                        break;
+                                }
     
-                                <td class="px-3 lg:px-4 py-3 @colorClass font-bold whitespace-nowrap">@dayLabel</td>
-                                <td class="px-3 lg:px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">@item.PlanName</td>
-                                <td class="px-3 lg:px-4 py-3 text-right whitespace-nowrap">
-                                    <a href="/Membership/AddRenewMember?MemberId=@item.Id&mode=renew" 
-                                       class="text-[10px] lg:text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded hover:bg-blue-100 transition">
-                                        Renovar
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
+                                // Inyectamos Alpine en la fila para controlar el Lightbox de este socio
+                                <tr x-data="{ showLightbox: false }" class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition text-xs lg:text-sm">
+                                
+                                    <td class="px-3 lg:px-4 py-3 font-medium text-gray-800 dark:text-white whitespace-nowrap">
+                                        <div class="flex items-center gap-3">
+                                            <div @@click="@(string.IsNullOrEmpty(item.PhotoUrl) ? "" : "showLightbox = true")" 
+                                                 class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-300 font-bold text-[10px] border border-slate-300 dark:border-slate-600 shrink-0 @(!string.IsNullOrEmpty(item.PhotoUrl) ? "cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all" : "")">
+                                                @if (!string.IsNullOrEmpty(item.PhotoUrl))
+                                                {
+                                                    <img src="@item.PhotoUrl" alt="Foto de @item.FullName" class="w-full h-full object-cover rounded-full aspect-square">
+                                                }
+                                                else
+                                                {
+                                                    <span>@item.Initials</span>
+                                                }
+                                            </div>
+                                        
+                                            <span>@item.FullName</span>
+                                        </div>
+    
+                                        @if (!string.IsNullOrEmpty(item.PhotoUrl))
+                                        {
+                                            <div x-show="showLightbox" style="display: none;" 
+                                                 class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-200"
+                                                 @@click="showLightbox = false"
+                                                 @@keydown.escape.window="showLightbox = false">
+                                            
+                                                <button type="button" class="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/50 hover:text-white transition-colors bg-black/50 rounded-full p-2">
+                                                    <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                </button>
+    
+                                                <img src="@item.PhotoUrl" alt="Foto en grande de @item.FullName" class="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain border border-slate-700" @@click.stop />
+                                            </div>
+                                        }
+                                    </td>
+    
+                                    <td class="px-3 lg:px-4 py-3 @colorClass font-bold whitespace-nowrap">@dayLabel</td>
+                                    <td class="px-3 lg:px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">@item.PlanName</td>
+                                        <td class="px-3 lg:px-4 py-3 text-right whitespace-nowrap">
+                                            <div class="flex items-center justify-end gap-2 lg:gap-3">
+
+                                                <a href="@Url.Page("/Membership/DigitalExpedient/Index", new { memberId = item.Id })"
+                                                   class="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                                   title="Ver Expediente">
+                                                    <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                </a>
+
+                                                <a href="/Membership/AddRenewMember?MemberId=@item.Id&mode=renew"
+                                                   class="text-[10px] lg:text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded hover:bg-blue-100 transition"
+                                                   title="Renovar Suscripción">
+                                                    Renovar
+                                                </a>
+
+                                                <button hx-get="@Url.Page("/Membership/DigitalExpedient/Index", "DeleteMemberModal", new { id = item.Id })"
+                                                        hx-target="#modal-container"
+                                                        hx-swap="innerHTML"
+                                                        class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                                        title="Eliminar Socio">
+                                                    <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+
+                                            </div>
+                                        </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
             </div>
 
@@ -269,4 +295,14 @@
 
     </main>
 
+</div>
+
+<div id="modal-container"></div>
+
+<div style="display: none;"
+     hx-get=""
+     hx-trigger="reloadMembersList from:body"
+     hx-target="#tabla-vencidos-dashboard"
+     hx-select="#tabla-vencidos-dashboard"
+     hx-swap="outerHTML">
 </div>

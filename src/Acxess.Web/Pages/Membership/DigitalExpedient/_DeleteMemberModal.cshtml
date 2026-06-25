@@ -18,7 +18,7 @@
                 El socio <strong>@Model.SelectedMember?.FullName</strong> será marcado como eliminado. Podrás restaurarlo después si es necesario.
             </p>
 
-            <form hx-post="@Url.Page("Index", "DeleteMember")"
+            <form hx-post="@Url.Page("/Membership/DigitalExpedient/Index", "DeleteMember")"
                   hx-target="#modal-container"
                   hx-swap="innerHTML"
                   method="post"
