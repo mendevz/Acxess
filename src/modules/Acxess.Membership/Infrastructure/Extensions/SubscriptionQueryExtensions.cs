@@ -4,7 +4,7 @@ namespace Acxess.Membership.Infrastructure.Extensions;
 public static class SubscriptionQueryExtensions
 {
     public static bool IsSubscriptionActive(this Subscription s, DateTime today)
-        => s.EndDate.Date >= today && !s.CancelledAt.HasValue;
+        => s.EndDate.Date >= today.Date && !s.CancelledAt.HasValue;
 
     public static bool AnyConflictingSubscriptionMember(
         this IEnumerable<Subscription> subscriptions,
