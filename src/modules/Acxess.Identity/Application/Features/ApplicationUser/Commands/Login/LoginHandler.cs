@@ -12,8 +12,8 @@ public class LoginHandler(
         var result = await signInManager.PasswordSignInAsync(
             request.Username, 
             request.Password, 
-            true, 
-            false);
+            isPersistent: true, 
+            lockoutOnFailure: false);
         
         return result.Succeeded 
             ? Result.Success() 

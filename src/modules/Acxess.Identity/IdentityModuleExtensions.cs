@@ -6,6 +6,7 @@ using Acxess.Shared.Abstractions;
 using Acxess.Shared.IntegrationServices;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -58,21 +59,27 @@ public static class IdentityModuleExtensions
         var redis = ConnectionMultiplexer.Connect(redisConnectionString);
 
         services.AddDataProtection()
-        .PersistKeysToStackExchangeRedis(redis, "Acxess:DataProtection:Keys")
-        .SetApplicationName("AcxessApp");
+                .PersistKeysToStackExchangeRedis(redis, "Acxess:DataProtection:Keys")
+                .SetApplicationName("AcxessApp");
 
-        services.AddAuthentication(options =>
+        services.ConfigureApplicationCookie(options =>
         {
-            options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        }).AddCookie(options =>
-        {
-            options.LoginPath = "/Identity/Login"; 
+            options.Cookie.Name = "Acxess.Auth.Session"; // Un nombre limpio para tu PWA
+            options.LoginPath = "/Identity/Login";
             options.LogoutPath = "/Identity/Logout";
+            options.AccessDeniedPath = "/Identity/AccessDenied";
+
             options.ExpireTimeSpan = TimeSpan.FromDays(30);
             options.SlidingExpiration = true;
             options.Cookie.HttpOnly = true;
-            options.AccessDeniedPath = "/Identity/AccessDenied";
+
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        });
+
+        services.Configure<SecurityStampValidatorOptions>(options =>
+        {
+            options.ValidationInterval = TimeSpan.FromDays(7);
         });
 
         return services;
