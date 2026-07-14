@@ -54,6 +54,10 @@ public class SendDailyExpirationRemindersHandler(
         int totalDispatched = 0;
         int totalFailed = 0;
 
+        var saludos = new[] { "Hola", "Buen día", "Qué tal", "Saludos" };
+        var sugerencias = new[] { "Sugerimos contactarlos para gestionar su renovación.", "Te recomendamos avisarles para su renovación.", "Ideal contactarlos hoy mismo para renovar." };
+        var despedidas = new[] { "Sistema automático. No responder.", "Mensaje generado por Acxess.", "Aviso automatizado, por favor no respondas." };
+
         foreach (var tenantContact in adminsContacts)
         {
             if (!expirationMap.TryGetValue(tenantContact.TenantId, out var membershipData))
@@ -63,10 +67,14 @@ public class SendDailyExpirationRemindersHandler(
             {
                 if (string.IsNullOrWhiteSpace(admin.PhoneNumber)) continue;
 
+                string saludoAleatorio = saludos[Random.Shared.Next(saludos.Length)];
+                string sugerenciaAleatoria = sugerencias[Random.Shared.Next(sugerencias.Length)];
+                string despedidaAleatoria = despedidas[Random.Shared.Next(despedidas.Length)];
+
                 // Construcción de mensaje formato Minimalista/Profesional
                 var messageBuilder = new StringBuilder();
                 messageBuilder.AppendLine($"*Acxess* | _{tenantContact.TenantName}_");
-                messageBuilder.AppendLine($"Hola {admin.FullName}, estas suscripciones vencen hoy:");
+                messageBuilder.AppendLine($"{saludoAleatorio} {admin.FullName}, estas suscripciones vencen hoy:");
                 messageBuilder.AppendLine();
 
                 var counter = 1;
@@ -77,9 +85,9 @@ public class SendDailyExpirationRemindersHandler(
                 }
 
                 messageBuilder.AppendLine();
-                messageBuilder.AppendLine("Sugerimos contactarlos para gestionar su renovación.");
+                messageBuilder.AppendLine(sugerenciaAleatoria);
                 messageBuilder.AppendLine("—");
-                messageBuilder.AppendLine("_Sistema automático. No responder._");
+                messageBuilder.AppendLine($"_{despedidaAleatoria}_");
 
                 string completeMessage = messageBuilder.ToString();
 
@@ -98,6 +106,10 @@ public class SendDailyExpirationRemindersHandler(
                     logger.LogError("WhatsApp message dispatch failed | TenantName: {TenantName}, AdminName: {AdminName}, Phone: {Phone}",
                         tenantContact.TenantName, admin.FullName, admin.PhoneNumber);
                 }
+
+                int humanDelayMs = Random.Shared.Next(8000, 18000);
+                logger.LogInformation("Anti-ban activo: Esperando {Delay} segundos antes del siguiente envío...", humanDelayMs / 1000.0);
+                await Task.Delay(humanDelayMs, cancellationToken);
             }
         }
 
