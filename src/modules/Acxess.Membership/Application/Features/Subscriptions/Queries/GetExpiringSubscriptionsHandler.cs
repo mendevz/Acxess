@@ -19,7 +19,7 @@ public class GetExpiringSubscriptionsHandler(
 {
     public async Task<Result<List<TenantExpiringDataDto>>> Handle(GetExpiringSubscriptionsQuery request, CancellationToken cancellationToken)
     {
-        var startOfToday = timeService.GetUtcNow().Date;
+        var startOfToday = timeService.GetUtcNow();
         var endOfToday = startOfToday.AddDays(1);
 
         var expiringData = await dbContext.Subscriptions
