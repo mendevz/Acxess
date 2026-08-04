@@ -128,6 +128,7 @@ jobs:
             S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }}
             S3_SERVICE_URL=${{ secrets.S3_SERVICE_URL }}
             S3_PUBLIC_DOMAIN=${{ secrets.S3_PUBLIC_DOMAIN }}
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
             TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }}
             TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }}
             TWILIO_FROM_PHONE_NUMBER=${{ secrets.TWILIO_FROM_PHONE_NUMBER }}
@@ -138,7 +139,7 @@ jobs:
             docker compose pull
 
             # Start everything: The DB, run the migrator and start the app
-            docker compose --profile app up -d --force-recreate
+            docker compose --profile app up -d --force-recreate --remove-orphans
             
             # Cleanup: Delete old Docker images to prevent the server's hard drive from filling up
             docker image prune -f
