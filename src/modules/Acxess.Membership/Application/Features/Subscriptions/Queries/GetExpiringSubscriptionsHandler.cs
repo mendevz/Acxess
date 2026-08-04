@@ -1,4 +1,4 @@
-﻿using Acxess.Membership.Infrastructure.Persistence;
+using Acxess.Membership.Infrastructure.Persistence;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.ResultManager;
 using MediatR;
@@ -19,8 +19,12 @@ public class GetExpiringSubscriptionsHandler(
 {
     public async Task<Result<List<TenantExpiringDataDto>>> Handle(GetExpiringSubscriptionsQuery request, CancellationToken cancellationToken)
     {
-        var startOfToday = timeService.GetUtcNow();
-        var endOfToday = startOfToday.AddDays(1);
+        var localToday = await timeService.GetLocalTodayAsync(request.IdTenant, cancellationToken);
+        var timeZoneId = await timeService.GetTenantTimeZoneIdAsync(request.IdTenant, cancellationToken);
+        var zoneInfo = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+
+        var startOfToday = TimeZoneInfo.ConvertTimeToUtc(localToday, zoneInfo);
+        var endOfToday = TimeZoneInfo.ConvertTimeToUtc(localToday.AddDays(1), zoneInfo);
 
         var expiringData = await dbContext.Subscriptions
             .IgnoreQueryFilters()

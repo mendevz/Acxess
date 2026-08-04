@@ -12,7 +12,7 @@ public static class MembershipModuleExtensions
 {
     public static IServiceCollection AddMembershipModule(this IServiceCollection services, IConfiguration configuration)
     {
-        
+
         var connectionString = configuration.GetConnectionString("Default");
 
         services.AddDbContext<MembershipModuleContext>(options =>
@@ -25,7 +25,7 @@ public static class MembershipModuleExtensions
 
         services.AddScoped<IDataSeeder, MembershipSeeder>();
 
-        services.AddHostedService<WhatsAppDailyReportWorker>();
+        services.AddHostedService<DailyExpirationReportWorker>();
 
         return services;
     }

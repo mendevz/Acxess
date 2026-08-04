@@ -1,6 +1,6 @@
 ﻿namespace Acxess.Shared.Abstractions;
 
-public interface IWhatsAppService
+public interface ISendRemindersService
 {
     Task<bool> SendTextMessageAsync(string phoneNumber, string message, CancellationToken cancellationToken = default);
 }

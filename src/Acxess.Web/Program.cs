@@ -40,7 +40,7 @@ try
     
     builder.Services.AddAcxessTelemetry(builder.Configuration);
     builder.Services.AddDistributedCacheRedis(builder.Configuration);
-    builder.Services.AddWhatsAppInfrastructure(builder.Configuration);
+    builder.Services.AddSmsInfrastructure(builder.Configuration);
 
     builder.Services
         .AddExceptionHandler<GlobalExceptionHandler>()

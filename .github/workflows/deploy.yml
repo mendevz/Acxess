@@ -128,10 +128,9 @@ jobs:
             S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }}
             S3_SERVICE_URL=${{ secrets.S3_SERVICE_URL }}
             S3_PUBLIC_DOMAIN=${{ secrets.S3_PUBLIC_DOMAIN }}
-            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-            EVOLUTION_API_KEY=${{ secrets.EVOLUTION_API_KEY }}
-            EVOLUTION_API_INSTANCE=${{ secrets.EVOLUTION_API_INSTANCE }}
-            EVO_SERVER_URL=${{ secrets.EVO_SERVER_URL }}
+            TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }}
+            TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }}
+            TWILIO_FROM_PHONE_NUMBER=${{ secrets.TWILIO_FROM_PHONE_NUMBER }}
             APP_VERSION=${APP_VERSION}
             EOF
             

@@ -1,24 +1,24 @@
-﻿using Acxess.Membership.Application.Features.Subscriptions.Commands;
+﻿using System.Diagnostics;
+using Acxess.Membership.Application.Features.Subscriptions.Commands;
 using Acxess.Shared.IntegrationServices;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
-using System.Diagnostics;
 
 namespace Acxess.Membership.Infrastructure.BackgroundJobs;
 
-public class WhatsAppDailyReportWorker(
+public class DailyExpirationReportWorker(
     IServiceScopeFactory scopeFactory,
     TimeProvider timeProvider,
-    ILogger<WhatsAppDailyReportWorker> logger) : BackgroundService
+    ILogger<DailyExpirationReportWorker> logger) : BackgroundService
 {
     private const int TargetHour = 8;
     private const int TargetMinute = 30;
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        const string JobName = nameof(WhatsAppDailyReportWorker);
+        const string JobName = nameof(DailyExpirationReportWorker);
 
         using (LogContext.PushProperty("BackgroundJob", JobName))
         {

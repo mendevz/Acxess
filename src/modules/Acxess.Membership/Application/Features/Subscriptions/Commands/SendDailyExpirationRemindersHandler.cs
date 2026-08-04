@@ -1,15 +1,13 @@
-﻿namespace Acxess.Membership.Application.Features.Subscriptions.Commands;
-
+namespace Acxess.Membership.Application.Features.Subscriptions.Commands;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Acxess.Membership.Application.Features.Subscriptions.Queries;
 using Acxess.Shared.Abstractions;
 using Acxess.Shared.IntegrationServices;
 using Acxess.Shared.ResultManager;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
-using Acxess.Membership.Application.Features.Subscriptions.Queries;
 
 public record SendDailyExpirationRemindersCommand() : IRequest<Result>, ITenantRequest
 {
@@ -18,7 +16,7 @@ public record SendDailyExpirationRemindersCommand() : IRequest<Result>, ITenantR
 
 public class SendDailyExpirationRemindersHandler(
     IMediator mediator,
-    IWhatsAppService whatsAppService,
+    ISendRemindersService whatsAppService,
     IIdentityIntegrationService identityIntegrationService,
     ILogger<SendDailyExpirationRemindersHandler> logger) : IRequestHandler<SendDailyExpirationRemindersCommand, Result>
 {
@@ -30,7 +28,7 @@ public class SendDailyExpirationRemindersHandler(
             new GetExpiringSubscriptionsQuery()
             {
                 IdTenant = request.IdTenant
-            }, 
+            },
             cancellationToken
         );
 
@@ -55,8 +53,7 @@ public class SendDailyExpirationRemindersHandler(
         int totalFailed = 0;
 
         var saludos = new[] { "Hola", "Buen día", "Qué tal", "Saludos" };
-        var sugerencias = new[] { "Sugerimos contactarlos para gestionar su renovación.", "Te recomendamos avisarles para su renovación.", "Ideal contactarlos hoy mismo para renovar." };
-        var despedidas = new[] { "Sistema automático. No responder.", "Mensaje generado por Acxess.", "Aviso automatizado, por favor no respondas." };
+        var despedidas = new[] { "Sistema automático - Acxess App." };
 
         foreach (var tenantContact in adminsContacts)
         {
@@ -68,30 +65,14 @@ public class SendDailyExpirationRemindersHandler(
                 if (string.IsNullOrWhiteSpace(admin.PhoneNumber)) continue;
 
                 string saludoAleatorio = saludos[Random.Shared.Next(saludos.Length)];
-                string sugerenciaAleatoria = sugerencias[Random.Shared.Next(sugerencias.Length)];
                 string despedidaAleatoria = despedidas[Random.Shared.Next(despedidas.Length)];
 
-                // Construcción de mensaje formato Minimalista/Profesional
-                var messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine($"*Acxess* | _{tenantContact.TenantName}_");
-                messageBuilder.AppendLine($"{saludoAleatorio} {admin.FullName}, estas suscripciones vencen hoy:");
-                messageBuilder.AppendLine();
+                var count = membershipData.ExpiringMembers.Count;
+                var s = count == 1 ? "suscripción" : "suscripciones";
 
-                var counter = 1;
-                foreach (var socio in membershipData.ExpiringMembers)
-                {
-                    messageBuilder.AppendLine($"{counter}. {socio.FullName} (ID: {socio.IdMember})");
-                    counter++;
-                }
+                string completeMessage = $"{saludoAleatorio} {admin.FullName}, hoy vencen {count} {s} en {tenantContact.TenantName}. Por favor ingresa al sistema para revisarlas. {despedidaAleatoria}";
 
-                messageBuilder.AppendLine();
-                messageBuilder.AppendLine(sugerenciaAleatoria);
-                messageBuilder.AppendLine("—");
-                messageBuilder.AppendLine($"_{despedidaAleatoria}_");
-
-                string completeMessage = messageBuilder.ToString();
-
-                logger.LogInformation("Dispatching WhatsApp message | TenantName: {TenantName}, AdminName: {AdminName}, Phone: {Phone}",
+                logger.LogInformation("Dispatching SMS message | TenantName: {TenantName}, AdminName: {AdminName}, Phone: {Phone}",
                     tenantContact.TenantName, admin.FullName, admin.PhoneNumber);
 
                 bool sentSuccessfully = await whatsAppService.SendTextMessageAsync(admin.PhoneNumber, completeMessage, cancellationToken);
@@ -103,13 +84,9 @@ public class SendDailyExpirationRemindersHandler(
                 else
                 {
                     totalFailed++;
-                    logger.LogError("WhatsApp message dispatch failed | TenantName: {TenantName}, AdminName: {AdminName}, Phone: {Phone}",
+                    logger.LogError("SMS message dispatch failed | TenantName: {TenantName}, AdminName: {AdminName}, Phone: {Phone}",
                         tenantContact.TenantName, admin.FullName, admin.PhoneNumber);
                 }
-
-                int humanDelayMs = Random.Shared.Next(8000, 18000);
-                logger.LogInformation("Anti-ban activo: Esperando {Delay} segundos antes del siguiente envío...", humanDelayMs / 1000.0);
-                await Task.Delay(humanDelayMs, cancellationToken);
             }
         }
 
