@@ -11,4 +11,5 @@ public sealed record MemberResponse(
     string? LastPlanName, 
     bool IsSubscriptionActive,
     bool IsProrrogation,
-    string? PhotoUrl); 
+    string? PhotoUrl,
+    int? LastPlanId); 

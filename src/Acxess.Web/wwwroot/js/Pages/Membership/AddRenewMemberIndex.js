@@ -1,25 +1,27 @@
 document.addEventListener('alpine:init', () => {
-    Alpine.data('addRenewMemberApp', (inscAddon, preselectedMember) => ({
-        mode: 'new', 
+    Alpine.data('addRenewMemberApp', (inscAddon, preselectedMember, allPlans) => ({
+        mode: 'new',
         selectedMember: null,
         omitInscription: false,
+        isQuickRenewMode: false,
+        allPlans: allPlans || [],
         customer: {
             Id: 0,
             FirstName: '',
             LastName: '',
             Phone: '',
             Email: '',
-            PhotoUrl: '',     
-            PhotoBase64: ''  
+            PhotoUrl: '',
+            PhotoBase64: ''
         },
-        inscAddon: inscAddon ,
+        inscAddon: inscAddon,
         visitAddon: null,
         selectedPlan: null,
         beneficiaries: [],
-        selectPlan(plan){
+        selectPlan(plan) {
             this.selectedPlan = plan;
             this.beneficiaries = [];
-            const extraSlots = plan.totalMembers  - 1;
+            const extraSlots = plan.totalMembers - 1;
 
             if (extraSlots > 0) {
                 for (let i = 0; i < extraSlots; i++) {
@@ -33,22 +35,38 @@ document.addEventListener('alpine:init', () => {
                         });
                 }
             }
+
+            // Disparar el cálculo de fechas mediante HTMX programático
+            const planId = plan.idSellingPlan || plan.IdSellingPlan;
+            const memberId = this.customer?.Id || 0;
+            if (planId && window.htmx) {
+                const url = `?handler=CalculateExpiration&planId=${planId}&memberId=${memberId}`;
+                window.htmx.ajax('GET', url, {
+                    target: '#fecha-vencimiento',
+                    indicator: '#fecha-spinner'
+                });
+            }
         },
-        cartAddons: [], 
+        cartAddons: [],
         discountAmount: 0,
         promoName: '',
         paymentMethod: 'cash',
-        amountGiven: '',
+        get amountGiven() {
+            return this.total;
+        },
+        get change() {
+            return 0;
+        },
         transferRef: '',
         init() {
 
             const urlParams = new URLSearchParams(window.location.search);
             const modeParam = urlParams.get('mode');
-            
+
             if (preselectedMember) {
                 this.setMode('renew');
                 this.selectMember(preselectedMember);
-                setTimeout(() => document.getElementById('plans-items-list')?.scrollIntoView({behavior: 'smooth'}), 500);
+                setTimeout(() => document.getElementById('plans-items-list')?.scrollIntoView({ behavior: 'smooth' }), 500);
             } else if (modeParam === 'renew') {
                 this.setMode('renew');
             }
@@ -69,18 +87,18 @@ document.addEventListener('alpine:init', () => {
             this.resetCustomerForm();
 
             if (this.mode === 'new') {
-                if (this.visitAddon){
+                if (this.visitAddon) {
                     this.removeSystemAddon(this.visitAddon.IdAddOn);
                 }
                 this.omitInscription = false;
                 this.toggleInscription();
                 document.getElementById("first-name-input")?.focus();
             } else if (this.mode === 'renew') {
+                this.isQuickRenewMode = true;
                 this.removeSystemAddon(this.inscAddon.IdAddOn);
-                if (this.visitAddon){
+                if (this.visitAddon) {
                     this.removeSystemAddon(this.visitAddon.IdAddOn);
                 }
-                // document.getElementById("search-member-input")?.focus();
             } else {
                 // MODO VISITA
                 this.removeSystemAddon(this.inscAddon.IdAddOn);
@@ -89,12 +107,16 @@ document.addEventListener('alpine:init', () => {
             }
         },
         selectMember(memberData) {
+
+            const searchInput = document.getElementById('search-member-input');
+            if (searchInput) {
+                searchInput.value = `${memberData.FirstName} ${memberData.LastName}`.trim();
+            }
+
             this.selectedMember = memberData;
             this.customer.Id = memberData.Id;
-
-            this.selectedPlan = null; // Resetear plan para obligar a nueva selección
             this.beneficiaries = [];  // Limpiar beneficiarios previos
-            
+
             this.customer.FirstName = memberData.FirstName;
             this.customer.LastName = memberData.LastName;
             this.customer.Phone = memberData.Phone || '';
@@ -102,13 +124,26 @@ document.addEventListener('alpine:init', () => {
 
             this.customer.PhotoUrl = memberData.PhotoUrl || '';
             this.customer.PhotoBase64 = '';
-            
+
+            const planIdToFind = memberData.LastPlanId || memberData.lastPlanId;
+            const previousPlan = planIdToFind ? this.allPlans.find(p => (p.idSellingPlan || p.IdSellingPlan) === planIdToFind) : null;
+            if (previousPlan) {
+                this.selectPlan(previousPlan);
+                this.isQuickRenewMode = true;
+            } else {
+                this.selectedPlan = null;
+                this.isQuickRenewMode = false;
+            }
+
             const listContainer = document.getElementById('members-list');
-            if(listContainer) listContainer.innerHTML = '';
+            if (listContainer) listContainer.innerHTML = '';
 
             document.body.dispatchEvent(new CustomEvent('loadRenewalContext', {
                 detail: { id: memberData.Id } // Asegúrate de que coincida con la propiedad de tu JSON
             }));
+        },
+        enablePlanSelection() {
+            this.isQuickRenewMode = false;
         },
         addSuggestion(member) {
             // Busca el primer renglón que no tenga ID y esté vacío
@@ -147,14 +182,15 @@ document.addEventListener('alpine:init', () => {
         },
         resetCustomerForm() {
             this.selectedMember = null;
+            this.isQuickRenewMode = false;
             this.customer = {
                 Id: null,
                 FirstName: '',
                 LastName: '',
                 Phone: '',
                 Email: '',
-                PhotoUrl: '',    
-                PhotoBase64: ''  
+                PhotoUrl: '',
+                PhotoBase64: ''
             };
             this.selectedPlan = null; // Resetear plan para obligar a nueva selección
             this.beneficiaries = [];  // Limpiar beneficiarios previos
@@ -180,11 +216,11 @@ document.addEventListener('alpine:init', () => {
             this.setMode(this.mode);
             this.selectedMember = null;
             this.selectedPlan = null;
+            this.isQuickRenewMode = false;
             this.beneficiaries = [];
             this.customer = { Id: 0, FirstName: '', LastName: '', Phone: '', Email: '' };
             this.discountAmount = 0;
             this.paymentMethod = 'cash';
-            this.amountGiven = '';
             this.promoName = '';
             this.transferRef = '';
 
@@ -199,14 +235,16 @@ document.addEventListener('alpine:init', () => {
             }
 
             // Si no es visita, requiere plan y nombre.
-            const isFormInvalid = !this.selectedPlan || !this.customer.FirstName || this.customer.FirstName.trim() === '';
-            const isMoneyInsufficient = this.paymentMethod === 'cash' && this.change < 0;
-            return isFormInvalid || isMoneyInsufficient;
+            // const isFormInvalid = !this.selectedPlan || !this.customer.FirstName || this.customer.FirstName.trim() === '';
+            // const isMoneyInsufficient = this.paymentMethod === 'cash' && this.change < 0;
+            // return isFormInvalid || isMoneyInsufficient;
+
+            return !this.selectedPlan || !this.customer.FirstName || this.customer.FirstName.trim() === '';
         },
         // COMPUTADOS
         get total() {
             const addonsTotal = this.cartAddons.reduce((sum, item) => sum + item.Price, 0);
-            const pricePlan = this.selectedPlan?.price || 0.0;
+            const pricePlan = this.selectedPlan?.price || this.selectedPlan?.Price || 0.0;
             return (pricePlan + addonsTotal) - this.discountAmount;
         },
 

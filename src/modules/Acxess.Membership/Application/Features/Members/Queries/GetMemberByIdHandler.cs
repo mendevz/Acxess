@@ -28,6 +28,7 @@ public class GetMemberByIdHandler(MembershipModuleContext context) : IRequestHan
                 null,
                 true,
                 false,
-                member.PhotoUrl);
+                member.PhotoUrl,
+                null);
     }
 }

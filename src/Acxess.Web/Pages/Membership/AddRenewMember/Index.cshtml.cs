@@ -26,8 +26,9 @@ public class IndexModel(IMediator mediator) : PageModel
     public List<SellingPlanDto> PlanItems { get; private set; } = [];
     public List<AddOnDto> AddOnsItems { get; private set; } = [];
     public List<MemberResponse> Members { get; private set; } = [];
-    public string InscriptionJson { get; private set; } = string.Empty;
-    public string PreselectedMemberJson { get; private set; } = string.Empty;
+    public string InscriptionJson { get; private set; } = "null";
+    public string PreselectedMemberJson { get; private set; } = "null";
+    public string PlansListItemsJson { get; private set; } = "[]";
 
     public async Task OnGet()
     {
@@ -41,7 +42,10 @@ public class IndexModel(IMediator mediator) : PageModel
         if (inscResult.IsSuccess) InscriptionJson = JsonSerializer.Serialize(inscResult.Value);   
         
         var planResult = await mediator.Send(new GetSellingPlanQuery(false));
-        if (planResult.IsSuccess) PlanItems = planResult.Value;
+        if (planResult.IsSuccess) {
+            PlanItems = planResult.Value;
+            PlansListItemsJson = JsonSerializer.Serialize(PlanItems);
+        } 
         
         var addOnsResult = await mediator.Send(new GetAddOnsQuery(false));
         if (addOnsResult.IsSuccess) AddOnsItems = addOnsResult.Value;

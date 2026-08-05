@@ -66,28 +66,36 @@ internal sealed class GetMemberToRenewHandler(
                         s.Subscription.IdSellingPlan,
                         s.Subscription.SellingPlanName
                     })
+                    .FirstOrDefault(),
+                LatestPlan = m.SubscriptionMemberships
+                    .OrderByDescending(s => s.Subscription.EndDate)
+                    .Select(s => new
+                    {
+                        s.Subscription.IdSellingPlan
+                    })
                     .FirstOrDefault()
             })
             .Take(15)
             .ToListAsync(cancellationToken);
 
             var members = rawMembers.Select(x => new MemberResponse(
-                x.IdMember,
-                x.FirstName,
-                x.LastName,
-                x.Email ?? string.Empty,
-                x.Phone ?? string.Empty,
-                timeService.ConvertDateFromZoneId(x.CreatedAt, timeZoneId),
-                x.LatestSubscription != null 
+                Id: x.IdMember,
+                FirstName: x.FirstName,
+                LastName: x.LastName,
+                Email: x.Email ?? string.Empty,
+                Phone: x.Phone ?? string.Empty,
+                JoinedDate: timeService.ConvertDateFromZoneId(x.CreatedAt, timeZoneId),
+                LastExpirationDate:  x.LatestSubscription != null 
                     ? timeService.ConvertDateFromZoneId(x.LatestSubscription.EndDate, timeZoneId) 
                     : null, 
-                x.LatestSubscription?.SellingPlanName,
-                x.LatestSubscription != null 
+                LastPlanName: x.LatestSubscription?.SellingPlanName,
+                IsSubscriptionActive: x.LatestSubscription != null 
                     && x.LatestSubscription.EndDate >= utcNow,
-                x.LatestSubscription != null 
+                IsProrrogation: x.LatestSubscription != null 
                     && x.LatestSubscription.EndDate < utcNow 
                     && x.LatestSubscription.EndDate >= limitDate,
-                x.PhotoUrl
+                PhotoUrl: x.PhotoUrl,
+                LastPlanId: x.LatestPlan?.IdSellingPlan
             )).ToList();
 
 
