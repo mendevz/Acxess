@@ -52,8 +52,8 @@ public class SendDailyExpirationRemindersHandler(
         int totalDispatched = 0;
         int totalFailed = 0;
 
-        var saludos = new[] { "Hola", "Buen día", "Qué tal", "Saludos" };
-        var despedidas = new[] { "Sistema automático - Acxess App." };
+        var saludos = new[] { "Hola", "Buen dia", "Que tal", "Saludos" };
+        var despedidas = new[] { "Sistema automatico - Acxess App." };
 
         foreach (var tenantContact in adminsContacts)
         {
@@ -68,7 +68,7 @@ public class SendDailyExpirationRemindersHandler(
                 string despedidaAleatoria = despedidas[Random.Shared.Next(despedidas.Length)];
 
                 var count = membershipData.ExpiringMembers.Count;
-                var s = count == 1 ? "suscripción" : "suscripciones";
+                var s = count == 1 ? "suscripcion" : "suscripciones";
 
                 string completeMessage = $"{saludoAleatorio} {admin.FullName}, hoy vencen {count} {s} en {tenantContact.TenantName}. Por favor ingresa al sistema para revisarlas. {despedidaAleatoria}";
 
