@@ -53,7 +53,7 @@ public class SendDailyExpirationRemindersHandler(
         int totalFailed = 0;
 
         var saludos = new[] { "Hola", "Buen dia", "Que tal", "Saludos" };
-        var despedidas = new[] { "Sistema automatico - Acxess App." };
+        var despedidas = new[] { "Acxess App." };
 
         foreach (var tenantContact in adminsContacts)
         {
