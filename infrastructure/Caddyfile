@@ -6,7 +6,3 @@ acxess-app.com, www.acxess-app.com {
 
     reverse_proxy acxess-web:8080
 }
-
-api-wa.acxess-app.com {
-    reverse_proxy evolution-api:8080
-}

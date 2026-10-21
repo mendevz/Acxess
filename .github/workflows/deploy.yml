@@ -94,7 +94,7 @@ jobs:
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.MENDEZ_SERVER_IP }}
-          username: root
+          username: acxess-deploy
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "src/docker-compose.prod.yml,infrastructure/Caddyfile,infrastructure/backup.sh"
           target: "/opt/acxess/" 
@@ -103,7 +103,7 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.MENDEZ_SERVER_IP }}
-          username: root
+          username: acxess-deploy
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: APP_VERSION
           script: |
