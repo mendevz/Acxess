@@ -7,13 +7,10 @@ using Acxess.Infrastructure.Extensions;
 using Acxess.Infrastructure.Middlewares;
 using Acxess.Marketing;
 using Acxess.Membership;
-using Acxess.Membership.Application.Features.Subscriptions.Commands;
-using Acxess.Membership.Application.Features.Subscriptions.Queries;
 using Acxess.Shared.IntegrationServices;
 using Acxess.Web;
 using Acxess.Web.Filters;
 using Destructurama;
-using MediatR;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -123,31 +120,6 @@ try
     app.UseAuthorization();
     
     app.MapRazorPages();
-
-    app.MapPost("/api/membership/subscriptions/send-report-subscriptions/{idTenant:int}", async (int idTenant, IMediator mediator) =>
-    {
-        var query = new SendDailyExpirationRemindersCommand()
-        {
-            IdTenant = idTenant
-        };
-        var result = await mediator.Send(query, CancellationToken.None);
-        return Results.Ok(new { message = "Send report of expired subscriptions executed manually." });
-    })
-    .WithTags("Maintenance");
-
-    app.MapGet("/api/test-expiring-subs/{idTenant:int}", async (int idTenant, IMediator mediator) =>
-    {
-        var query = new GetExpiringSubscriptionsQuery
-        {
-            IdTenant = idTenant
-        };
-
-        var result = await mediator.Send(query);
-
-        return result.IsSuccess ? Results.Ok(result.Value) : Results.BadRequest(result.Error);
-    })
-.WithName("TestExpiringSubscriptions")
-.WithTags("Test Endpoints");
 
     app.Run();
 }
