@@ -108,7 +108,12 @@ jobs:
           envs: APP_VERSION
           script: |
             cd /opt/acxess
-            
+
+            # Backup before migrations run. Skipped on the very first deploy (no DB yet).
+            if docker ps --format '{{.Names}}' | grep -qx sql_acxess_container && [ -x ./backup.sh ]; then
+              ./backup.sh || { echo "Backup failed, aborting deploy"; exit 1; }
+            fi
+
             mv src/docker-compose.prod.yml docker-compose.yml
             mv infrastructure/* .
 
