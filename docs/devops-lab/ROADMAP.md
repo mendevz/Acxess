@@ -36,9 +36,9 @@ Vocabulario de Ansible: **inventory** (lista de servidores), **playbook** (archi
 
 ## Fase 0 - Laboratorio listo
 
-- [ ] **T0.1** Crear una VM: `multipass launch <versión-de-ubuntu-del-VPS> --name acxess-lab --cpus 2 --memory 4G --disk 20G`. Listo cuando: `multipass list` la muestra en `Running`.
-- [ ] **T0.2** Entrar por SSH a la VM con mi llave (no con `multipass shell`). Listo cuando: `ssh ubuntu@<ip-de-la-vm>` funciona.
-- [ ] **T0.3** Instalar Ansible en mi máquina. Listo cuando: `ansible --version` responde.
+- [x] **T0.1** Crear una VM: `multipass launch 24.04 --name acxess-lab --cpus 2 --memory 4G --disk 20G --cloud-init infra/lab/cloud-init.yaml` (misma versión que el VPS: Ubuntu 24.04). Listo cuando: `multipass list` la muestra en `Running`.
+- [x] **T0.2** Entrar por SSH a la VM con mi llave (no con `multipass shell`). Listo cuando: `ssh ubuntu@<ip-de-la-vm>` funciona.
+- [x] **T0.3** Instalar Ansible en mi máquina. Listo cuando: `ansible --version` responde.
 - [ ] **T0.4** Crear `infra/ansible/inventory.ini` con la VM. Listo cuando: `ansible all -i inventory.ini -m ping` devuelve `pong`.
 - [ ] **Nota mía:** `notes/ansible-basico.md` con: qué es un inventory, qué es un playbook, qué significa idempotente (con mis palabras).
 
@@ -87,4 +87,5 @@ Solo cuando haya más de un recurso de nube que crear (VPS, DNS, R2). Hoy es un 
 
 | Fecha | Tarea | Notas / aprendizaje |
 |---|---|---|
-| | | |
+| 2026-11-06 | T0.1, T0.2 | VM `acxess-lab` (Ubuntu 24.04) creada con Multipass y cloud-init; acceso por SSH con llave propia del laboratorio. |
+| 2026-11-06 | T0.3 | Ansible core 2.20.1 instalado con `apt` en la máquina de control. |
