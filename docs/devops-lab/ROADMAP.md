@@ -83,9 +83,9 @@ Vocabulario de Ansible: **inventory** (lista de servidores), **playbook** (archi
 
 Solo cuando haya más de un recurso de nube que crear (VPS, DNS, R2). Hoy es un servidor; Ansible es suficiente.
 
-## Backlog (sin fase asignada)
+## Backlog 
 
-- [ ] **B1** No ejecutar las pruebas de .NET cuando el PR no toca código de la aplicación.
+- [x] **B1** No ejecutar las pruebas de .NET cuando el PR no toca código de la aplicación.
   Hoy `ci-pr.yml` corre build y tests completos (con Testcontainers) aunque el PR solo cambie `docs/` o `infrastructure/`.
   Solución prevista: `paths-ignore` en el trigger `pull_request` con `docs/**`, `infrastructure/**` y `**.md`.
   Listo cuando: un PR que solo toca `docs/` no dispara el workflow, y uno que toca `src/` sí.
