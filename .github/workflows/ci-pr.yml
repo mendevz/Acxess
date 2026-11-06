@@ -3,7 +3,10 @@ name: CI - Pull Request Validation
 on:
   pull_request:
     branches: [ main ]
-
+    paths-ignore:
+      - 'docs/**'
+      - 'infrastructure/**'
+      - '**.md'
 jobs:
   run-tests:
     name: Execute Validation Suite
