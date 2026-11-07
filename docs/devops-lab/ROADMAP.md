@@ -44,8 +44,8 @@ Vocabulario de Ansible: **inventory** (lista de servidores), **playbook** (archi
 
 ## Fase 1 - Inventario del servidor real (solo lectura)
 
-- [ ] **T1.1** Correr en el VPS un script de inventario (usuarios, SSH, firewall, Docker, cron, directorios). Listo cuando: tengo la salida guardada, sin secretos.
-- [ ] **T1.2** Escribir `docs/runbooks/current-server-state.md` con lo que hay hoy.
+- [x] **T1.1** Correr en el VPS un script de inventario (usuarios, SSH, firewall, Docker, cron, directorios). Listo cuando: tengo la salida guardada, sin secretos.
+- [x] **T1.2** Escribir `docs/runbooks/current-server-state.md` con lo que hay hoy.
 - [ ] **Post posible:** "Perdí el rastro de cómo configuré mi servidor".
 
 ## Fase 2 - El servidor, como código (en la VM)
@@ -92,6 +92,12 @@ Solo cuando haya más de un recurso de nube que crear (VPS, DNS, R2). Hoy es un 
   Ojo: si algún día se exige el check como obligatorio en una regla de protección de rama, un workflow omitido por `paths-ignore`
   se queda como "pendiente" y bloquea el merge. Habría que resolverlo en ese momento.
 
+- [ ] **B2** Backup previo a migraciones, bien diseñado (Fase 3): un solo mecanismo con identidad propia; el deploy solo verifica que existe un backup reciente.
+- [x] **B3** Reinicio del servidor en ventana de mantenimiento (backup antes, `restart:` en compose verificado).
+- [ ] **B4** Limpieza automática de imágenes Docker antiguas y rotación de `cron.log`.
+  Hecho a mano el 2026-11-07 (11.4 GB liberados). Falta que el deploy use `docker image prune -a -f --filter "until=720h"` y configurar `logrotate` para `cron.log`.
+- [ ] **B5** ADR: `acxess-deploy` en el grupo `docker` (riesgo aceptado y mitigaciones).
+
 ## Registro de avance
 
 | Fecha | Tarea | Notas / aprendizaje |
@@ -99,3 +105,6 @@ Solo cuando haya más de un recurso de nube que crear (VPS, DNS, R2). Hoy es un 
 | 2026-11-06 | T0.1, T0.2 | VM `acxess-lab` (Ubuntu 24.04) creada con Multipass y cloud-init; acceso por SSH con llave propia del laboratorio. |
 | 2026-11-06 | T0.3 | Ansible core 2.20.1 instalado con `apt` en la máquina de control. |
 | 2026-11-06 | T0.4 | Inventario creado; `ansible -m ping` responde `pong` desde la VM. Se unifican las rutas en `infrastructure/`. |
+| 2026-11-07 | T1.1, T1.2 | Inventario del VPS corrido dos veces. Se corrigen SSH por contraseña, permisos de `.env` y volúmenes huérfanos. Runbook `current-server-state.md` creado. |
+| 2026-11-07 | B3 | Reinicio planeado del VPS: kernel actualizado, 4 contenedores arriba solos en ~3 min. |
+| 2026-11-07 | B4 (parcial) | Limpieza manual de imágenes: de 47 a 4, 11.4 GB liberados. Falta automatizarla. |
