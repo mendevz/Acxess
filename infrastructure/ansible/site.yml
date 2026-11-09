@@ -1,0 +1,21 @@
+---
+- name: Configurar nuevo servidor Acxess
+  hosts: lab
+  become: true
+  vars:
+    deploy_user: acxess-deploy
+    deploy_public_key: "{{ lookup('file', '~/.ssh/acxess_lab_deploy.pub') }}"
+
+  tasks:
+    - name: Crear usuario de deploy
+      ansible.builtin.user:
+        name: "{{ deploy_user }}"
+        shell: /bin/bash
+        create_home: true
+        state: present
+
+    - name: Autorizar la llave publica del usuario de deploy
+      ansible.posix.authorized_key:
+        user: "{{ deploy_user }}"
+        key: "{{ deploy_public_key }}"
+        state: present
