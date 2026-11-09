@@ -72,6 +72,9 @@ Vocabulario de Ansible: **inventory** (lista de servidores), **playbook** (archi
 - [ ] **T4.1** `restore.sh`: restaura el último backup de la base en la VM.
 - [ ] **T4.2** Simulacro: VM nueva, playbook, restore, app arriba. Listo cuando: puedo iniciar sesión y ver socios. Anotar **RTO** y **RPO**.
 - [ ] **T4.3** `docs/runbooks/nuevo-servidor.md`, con pasos que otra persona pueda seguir.
+- [ ] **T4.4** Decisión (ADR): dónde viven las llaves de DataProtection. Opciones: Redis persistente y cifrado (`ProtectKeysWith...`, `appendonly yes`) o SQL Server (`PersistKeysToDbContext`, entran en el backup).
+  Objetivo: que **el restore sea un solo comando** (`make restore` o `restore.sh`) sin pasos manuales para llaves ni sesiones.
+  Para los simulacros: usar un subdominio de prueba o el CA *staging* de Let's Encrypt (límite de certificados duplicados).
 - [ ] **Post posible:** "Un backup que nunca restauré no es un backup".
 
 ## Fase 5 - Ambiente de desarrollo
@@ -97,6 +100,8 @@ Solo cuando haya más de un recurso de nube que crear (VPS, DNS, R2). Hoy es un 
 - [ ] **B4** Limpieza automática de imágenes Docker antiguas y rotación de `cron.log`.
   Hecho a mano el 2026-11-07 (11.4 GB liberados). Falta que el deploy use `docker image prune -a -f --filter "until=720h"` y configurar `logrotate` para `cron.log`.
 - [ ] **B5** ADR: `acxess-deploy` en el grupo `docker` (riesgo aceptado y mitigaciones).
+
+- [ ] **B6** Laboratorio futuro de escalado: 2 instancias de la app + balanceador + base de datos en una VM aparte (red privada). Requiere app stateless (DataProtection compartido, ver T4.4) y TLS terminado en el balanceador.
 
 ## Registro de avance
 
