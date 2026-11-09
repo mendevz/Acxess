@@ -50,8 +50,8 @@ Vocabulario de Ansible: **inventory** (lista de servidores), **playbook** (archi
 
 ## Fase 2 - El servidor, como código (en la VM)
 
-- [ ] **T2.1** Playbook que crea el usuario `acxess-deploy` con su llave. Listo cuando: puedo entrar con esa llave.
-- [ ] **T2.2** Endurecer SSH (sin contraseña, sin root). **Cuidado:** probar con una segunda sesión abierta para no quedarme fuera.
+- [x] **T2.1** Playbook que crea el usuario `acxess-deploy` con su llave. Listo cuando: puedo entrar con esa llave.
+- [x] **T2.2** Endurecer SSH (sin contraseña, sin root). **Cuidado:** probar con una segunda sesión abierta para no quedarme fuera.
 - [ ] **T2.3** Firewall `ufw`. Anotar en la nota: Docker publica puertos saltándose `ufw`.
 - [ ] **T2.4** Instalar Docker y dar permisos a `acxess-deploy`.
 - [ ] **T2.5** Crear `/opt/acxess` con los permisos correctos e instalar `rclone`.
@@ -112,4 +112,6 @@ Solo cuando haya más de un recurso de nube que crear (VPS, DNS, R2). Hoy es un 
 | 2026-11-06 | T0.4 | Inventario creado; `ansible -m ping` responde `pong` desde la VM. Se unifican las rutas en `infrastructure/`. |
 | 2026-11-07 | T1.1, T1.2 | Inventario del VPS corrido dos veces. Se corrigen SSH por contraseña, permisos de `.env` y volúmenes huérfanos. Runbook `current-server-state.md` creado. |
 | 2026-11-07 | B3 | Reinicio planeado del VPS: kernel actualizado, 4 contenedores arriba solos en ~3 min. |
+| 2026-11-08 | T2.1 | Playbook `site.yml` crea `acxess-deploy` y su llave en la VM. Primera pasada `changed=2`, segunda `changed=0`. `--check` falla en un servidor limpio cuando una tarea depende de otra. |
+| 2026-11-08 | T2.2 | VM recreada desde cero con `cloud-init` que simula el VPS (contraseña habilitada) y llaves nuevas (humana con passphrase, deploy sin passphrase). El playbook endurece SSH con `validate` y handler; la contraseña deja de funcionar y la segunda pasada da `changed=0`. |
 | 2026-11-07 | B4 (parcial) | Limpieza manual de imágenes: de 47 a 4, 11.4 GB liberados. Falta automatizarla. |
