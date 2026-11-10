@@ -33,6 +33,25 @@
         validate: /usr/sbin/sshd -t -f %s
       notify: Reload sshd
 
+    - name: Allow SSH, HTTP y HTTPS
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "22"
+        - "80"
+        - "443"
+
+    - name: reject all incoming traffic by default
+      community.general.ufw:
+        default: deny
+        direction: incoming
+    
+    - name: Activate firewall
+      community.general.ufw:
+        state: enabled
+
   handlers:
     - name: Reload sshd
       ansible.builtin.service:
