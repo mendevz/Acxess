@@ -54,7 +54,7 @@ Vocabulario de Ansible: **inventory** (lista de servidores), **playbook** (archi
 - [x] **T2.2** Endurecer SSH (sin contraseña, sin root). **Cuidado:** probar con una segunda sesión abierta para no quedarme fuera.
 - [x] **T2.3** Firewall `ufw`. Anotar en la nota: Docker publica puertos saltándose `ufw`.
 - [x] **T2.4** Instalar Docker y dar permisos a `acxess-deploy`.
-- [ ] **T2.5** Crear `/opt/acxess` con los permisos correctos e instalar `rclone`.
+- [x] **T2.5** Crear `/opt/acxess` con los permisos correctos e instalar `rclone`.
 - [ ] **T2.6** Correr el playbook otra vez. Listo cuando: el resumen dice `changed=0`.
 - [ ] **Post posible:** "Idempotencia: correr el mismo playbook dos veces".
 
@@ -101,6 +101,7 @@ Solo cuando haya más de un recurso de nube que crear (VPS, DNS, R2). Hoy es un 
   Hecho a mano el 2026-11-07 (11.4 GB liberados). Falta que el deploy use `docker image prune -a -f --filter "until=720h"` y configurar `logrotate` para `cron.log`.
 - [ ] **B5** ADR: `acxess-deploy` en el grupo `docker` (riesgo aceptado y mitigaciones).
 
+- [ ] **B7** `deploy.yml` crea el `.env` con `cat > .env`, y un archivo nuevo toma el permiso por defecto (`664`). Añadir `umask 077` antes de crearlo o `chmod 600 .env` después. Hoy lo protege el permiso del directorio `/opt/acxess` (`750`, T2.5), pero no debe depender de eso.
 - [ ] **B6** Laboratorio futuro de escalado: 2 instancias de la app + balanceador + base de datos en una VM aparte (red privada). Requiere app stateless (DataProtection compartido, ver T4.4) y TLS terminado en el balanceador.
 
 ## Registro de avance
@@ -116,4 +117,5 @@ Solo cuando haya más de un recurso de nube que crear (VPS, DNS, R2). Hoy es un 
 | 2026-11-08 | T2.2 | VM recreada desde cero con `cloud-init` que simula el VPS (contraseña habilitada) y llaves nuevas (humana con passphrase, deploy sin passphrase). El playbook endurece SSH con `validate` y handler; la contraseña deja de funcionar y la segunda pasada da `changed=0`. |
 | 2026-11-09 | T2.3 | Firewall `ufw` por playbook: SSH, HTTP y HTTPS permitidos, resto de entrada denegado, activación al final para no perder la sesión. Segunda pasada `changed=0`. Pendiente: política `routed` (diferencia con producción) al instalar Docker. |
 | 2026-11-09 | T2.4 | Docker 29.9.3 y Compose v5.7.0 instalados desde el repositorio oficial por playbook (mismas versiones que producción). `acxess-deploy` usa `docker ps` sin `sudo`. Se sustituye `ansible_distribution_release` por `ansible_facts['distribution_release']`. |
+| 2026-11-10 | T2.5 | `/opt/acxess` creado por playbook con `0750` y dueño `acxess-deploy` (en producción era `775` con grupo `docker`); `rclone` 1.60.1 instalado. Otro usuario no puede listar la carpeta. Se anota B7 (permiso del `.env` en el workflow). |
 | 2026-11-07 | B4 (parcial) | Limpieza manual de imágenes: de 47 a 4, 11.4 GB liberados. Falta automatizarla. |

@@ -93,6 +93,19 @@
         groups: docker
         append: true
 
+    - name: Create app web directory 
+      ansible.builtin.file:
+        path: /opt/acxess
+        state: directory
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: "0750"
+
+    - name: Install rclone
+      ansible.builtin.apt:
+        name: rclone
+        state: present
+
   handlers:
     - name: Reload sshd
       ansible.builtin.service:
