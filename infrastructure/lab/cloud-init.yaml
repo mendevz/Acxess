@@ -2,4 +2,4 @@
 # Writes PasswordAuthentication yes in 50-cloud-init.conf, simulate production
 ssh_pwauth: true
 ssh_authorized_keys:
-  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF7AH8AQWatgOzwwE4aFZUVLgTsncSAahnAxBJCaqzWZ acxess-lab
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM1HU7rDDfHk5AoFMcdwRf8S7chVIrT6oxf96+mcMl/f acxess-lab
