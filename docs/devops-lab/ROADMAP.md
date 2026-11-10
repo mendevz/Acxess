@@ -55,7 +55,7 @@ Vocabulario de Ansible: **inventory** (lista de servidores), **playbook** (archi
 - [x] **T2.3** Firewall `ufw`. Anotar en la nota: Docker publica puertos saltándose `ufw`.
 - [x] **T2.4** Instalar Docker y dar permisos a `acxess-deploy`.
 - [x] **T2.5** Crear `/opt/acxess` con los permisos correctos e instalar `rclone`.
-- [ ] **T2.6** Correr el playbook otra vez. Listo cuando: el resumen dice `changed=0`.
+- [x] **T2.6** Correr el playbook otra vez. Listo cuando: el resumen dice `changed=0`.
 - [ ] **Post posible:** "Idempotencia: correr el mismo playbook dos veces".
 
 ## Fase 3 - Backups completos
@@ -118,4 +118,5 @@ Solo cuando haya más de un recurso de nube que crear (VPS, DNS, R2). Hoy es un 
 | 2026-11-09 | T2.3 | Firewall `ufw` por playbook: SSH, HTTP y HTTPS permitidos, resto de entrada denegado, activación al final para no perder la sesión. Segunda pasada `changed=0`. Pendiente: política `routed` (diferencia con producción) al instalar Docker. |
 | 2026-11-09 | T2.4 | Docker 29.9.3 y Compose v5.7.0 instalados desde el repositorio oficial por playbook (mismas versiones que producción). `acxess-deploy` usa `docker ps` sin `sudo`. Se sustituye `ansible_distribution_release` por `ansible_facts['distribution_release']`. |
 | 2026-11-10 | T2.5 | `/opt/acxess` creado por playbook con `0750` y dueño `acxess-deploy` (en producción era `775` con grupo `docker`); `rclone` 1.60.1 instalado. Otro usuario no puede listar la carpeta. Se anota B7 (permiso del `.env` en el workflow). |
+| 2026-11-10 | T2.6 | Prueba de fuego en una VM nueva y vacía: el playbook completo converge solo (`changed=12`) y la segunda pasada da `changed=0`. Se añaden `requirements.yml` y `ansible.cfg`. Fase 2 completa. |
 | 2026-11-07 | B4 (parcial) | Limpieza manual de imágenes: de 47 a 4, 11.4 GB liberados. Falta automatizarla. |
