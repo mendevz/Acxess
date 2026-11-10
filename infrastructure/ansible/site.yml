@@ -1,0 +1,113 @@
+---
+- name: Configure new Acxess Server
+  hosts: lab
+  become: true
+  vars:
+    deploy_user: acxess-deploy
+    deploy_public_key: "{{ lookup('file', '~/.ssh/acxess_lab_deploy.pub') }}"
+
+  tasks:
+    - name: Create deploy user
+      ansible.builtin.user:
+        name: "{{ deploy_user }}"
+        shell: /bin/bash
+        create_home: true
+        state: present
+
+    - name: Autorize ssh key of deploy user
+      ansible.posix.authorized_key:
+        user: "{{ deploy_user }}"
+        key: "{{ deploy_public_key }}"
+        state: present
+          
+    - name: Harden SSH
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/00-hardening.conf
+        content: |
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+          PermitRootLogin no
+        owner: root
+        group: root
+        mode: "0644"
+        validate: /usr/sbin/sshd -t -f %s
+      notify: Reload sshd
+
+    - name: Allow SSH, HTTP y HTTPS
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "22"
+        - "80"
+        - "443"
+
+    - name: reject all incoming traffic by default
+      community.general.ufw:
+        default: deny
+        direction: incoming
+    
+    - name: Activate firewall
+      community.general.ufw:
+        state: enabled
+
+    - name: Create apt keys directory 
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Docker GPC Key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Registry official Docker repository
+      ansible.builtin.apt_repository:
+        # amd64 fijo: la VM y el VPS son x86_64
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_facts['distribution_release'] }} stable"
+        state: present
+
+    - name: Install Docker y Compose
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Ensure that docker run with system
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Grant the deploy user access to Docker
+      ansible.builtin.user:
+        name: "{{ deploy_user }}"
+        groups: docker
+        append: true
+
+    - name: Create app web directory 
+      ansible.builtin.file:
+        path: /opt/acxess
+        state: directory
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: "0750"
+
+    - name: Install rclone
+      ansible.builtin.apt:
+        name: rclone
+        state: present
+
+  handlers:
+    - name: Reload sshd
+      ansible.builtin.service:
+        name: ssh
+        state: reloaded
