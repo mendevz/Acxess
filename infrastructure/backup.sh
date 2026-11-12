@@ -35,6 +35,12 @@ docker exec "$CONTAINER" /opt/mssql-tools18/bin/sqlcmd \
     -C \
     -Q "BACKUP DATABASE [$DB_NAME] TO DISK = N'$ARCHIVO_CONTENEDOR' WITH CHECKSUM, STATS = 10"
 
+
+ARCHIVO_CIFRADO="$BACKUP_DIR/acxess_${FECHA}.bak.age"
+echo "Encrypting backup"
+docker exec "$CONTAINER" cat "$ARCHIVO_CONTENEDOR" | age -r "$AGE_RECIPIENT" -o "$ARCHIVO_CIFRADO"
+docker exec "$CONTAINER" rm -f "$ARCHIVO_CONTENEDOR"
+
 # Create folder backups
 # mkdir -p /opt/acxess/backups
 
