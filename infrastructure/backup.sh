@@ -35,10 +35,17 @@ docker exec "$CONTAINER" /opt/mssql-tools18/bin/sqlcmd \
     -C \
     -Q "BACKUP DATABASE [$DB_NAME] TO DISK = N'$CONTAINER_FILE' WITH CHECKSUM, STATS = 10"
 
+cleanup() {
+    docker exec "$CONTAINER" rm -f "$CONTAINER_FILE" || true
+    rm -f "$ENCRYPT_FILE.part"
+}
+trap cleanup EXIT
 
 ENCRYPT_FILE="$BACKUP_DIR/acxess_${DATE_NOW}.bak.age"
 echo "Encrypting backup"
-docker exec "$CONTAINER" cat "$CONTAINER_FILE" | age -r "$AGE_RECIPIENT" -o "$ENCRYPT_FILE"
+docker exec "$CONTAINER" cat "$CONTAINER_FILE" | age -r "$AGE_RECIPIENT" -o "$ENCRYPT_FILE.part"
+mv "$ENCRYPT_FILE.part" "$ENCRYPT_FILE"
+
 docker exec "$CONTAINER" rm -f "$CONTAINER_FILE"
 
 echo "Uploading to $RCLONE_REMOTE"
