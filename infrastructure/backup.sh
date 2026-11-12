@@ -41,6 +41,17 @@ echo "Encrypting backup"
 docker exec "$CONTAINER" cat "$ARCHIVO_CONTENEDOR" | age -r "$AGE_RECIPIENT" -o "$ARCHIVO_CIFRADO"
 docker exec "$CONTAINER" rm -f "$ARCHIVO_CONTENEDOR"
 
+echo "Uploading to $RCLONE_REMOTE"
+rclone copy "$BACKUP_DIR" "$RCLONE_REMOTE/" --include "*.bak.age" -v
+
+echo "Verifying upload"
+rclone check "$BACKUP_DIR" "$RCLONE_REMOTE" --one-way
+
+echo "Removing local backups older than 7 days"
+find "$BACKUP_DIR" -type f -name "*.bak.age" -mtime +7 -delete
+
+echo "Backup completed: $ARCHIVO_CIFRADO"
+
 # Create folder backups
 # mkdir -p /opt/acxess/backups
 
