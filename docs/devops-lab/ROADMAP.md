@@ -60,11 +60,21 @@ Vocabulario de Ansible: **inventory** (lista de servidores), **playbook** (archi
 
 ## Fase 3 - Backups completos
 
+- [ ] **T3.0** Red de la VM: el MTU efectivo es 1460 pero `eth0` anuncia 1500, y la negociación TLS tarda ~4 s (`docker pull` y `apt` se cuelgan).
+  Solución prevista: variable opcional `network_mtu` (netplan), definida **solo en el inventario del laboratorio**. Producción no la usa. Explicación en `notes/11-mtu-red-de-la-vm.md`.
+  Listo cuando: en una VM nueva, tras el playbook, `curl -w "%{time_appconnect}"` a `downloads.rclone.org` da menos de 0.5 s y `docker pull alpine` funciona sin ayuda.
 - [ ] **T3.1** `backup.sh`: `rclone copy` (no `sync`) y archivos cifrados con `age`.
-- [ ] **T3.2** Programar el backup (timer de systemd o cron) desde Ansible.
+  - [x] **T3.1a** Par de llaves `age` creado (la privada solo en mi máquina y en el gestor de contraseñas).
+  - [ ] **T3.1b** Reescribir `backup.sh` por pasos (configuración, dump con `CHECKSUM`, cifrado en streaming, `rclone copy`, retención), probado en la VM con un contenedor de pega.
+- [ ] **T3.2a** Secretos con Ansible Vault (credenciales de R2, URL de healthchecks). Se necesita antes de T3.2: un servidor nuevo no tiene ningún secreto. La llave privada de `age` **no** va en el servidor; se instala solo al restaurar (Fase 4).
+- [ ] **T3.2** Programar el backup (timer de systemd o cron) desde Ansible. Incluye instalar el paquete `age` (el script falla sin él: se descubrió probando en la VM) e instalar `rclone` desde rclone.org con versión fijada (**v1.76.0**, ya probada a mano en la VM) y comprobando su suma SHA256: la 1.60.1 de `apt` devuelve `501 NotImplemented` con R2.
+  **Decisión:** se instala el paquete `unzip` con `apt` y se usa el módulo `unarchive` de Ansible (que lo necesita para `.zip`). No se usa `python3 -m zipfile`: solo sirvió para salir del paso en la VM cuando la red fallaba, y obligaría a un `command` que no es idempotente.
 - [ ] **T3.3** Copiar también el bucket de fotos a otro bucket.
 - [ ] **T3.4** Aviso si el backup deja de correr (healthchecks.io).
 - [ ] **T3.5** Segunda copia en otro proveedor (regla 3-2-1).
+- [ ] **T3.6** Pasar producción al backup nuevo (`backup-v2.sh` pasa a ser `backup.sh`). **No** antes de la Fase 4 (restore probado). `deploy.yml` sube `infrastructure/backup.sh` a producción en cada release, por eso el script nuevo vive en `backup-v2.sh` hasta este momento.
+  Requisitos en el VPS: paquete `age`, `rclone` v1.76.0, `AGE_RECIPIENT`, `RCLONE_REMOTE` y `BACKUP_DIR` en el `.env` (el workflow lo regenera: añadirlas ahí), remoto de rclone configurado para el usuario que ejecute el backup (hoy `r2-acxess`, solo de root), y el aviso de T3.4 activo **antes** del cambio.
+  Listo cuando: una noche completa corre sola, llega el `.age` a R2 y healthchecks lo registra.
 - [ ] **Nota mía:** `notes/backups-3-2-1.md`.
 
 ## Fase 4 - Restauración
@@ -119,4 +129,6 @@ Solo cuando haya más de un recurso de nube que crear (VPS, DNS, R2). Hoy es un 
 | 2026-11-09 | T2.4 | Docker 29.9.3 y Compose v5.7.0 instalados desde el repositorio oficial por playbook (mismas versiones que producción). `acxess-deploy` usa `docker ps` sin `sudo`. Se sustituye `ansible_distribution_release` por `ansible_facts['distribution_release']`. |
 | 2026-11-10 | T2.5 | `/opt/acxess` creado por playbook con `0750` y dueño `acxess-deploy` (en producción era `775` con grupo `docker`); `rclone` 1.60.1 instalado. Otro usuario no puede listar la carpeta. Se anota B7 (permiso del `.env` en el workflow). |
 | 2026-11-10 | T2.6 | Prueba de fuego en una VM nueva y vacía: el playbook completo converge solo (`changed=12`) y la segunda pasada da `changed=0`. Se añaden `requirements.yml` y `ansible.cfg`. Fase 2 completa. |
+| 2026-11-11 | T3.1a | Llaves `age` creadas y probadas (cifrar con la pública, descifrar con la privada). Con `rclone` y R2: `copy` no borra en destino, `sync --dry-run` anuncia el borrado. `rclone` 1.60.1 de `apt` da `501` al subir; el binario oficial no. |
+| 2026-11-11 | T3.0 (diagnóstico) | `apt`, `rclone` y `docker pull` lentos o colgados. El IPv6 se descartó (falla en 2 ms). Camino de 1460 bytes de MTU máximo con `eth0` en 1500: con `mtu 1400` temporal, el TLS pasó de 3.9 s a 0.10 s. Falta hacerlo persistente por Ansible. |
 | 2026-11-07 | B4 (parcial) | Limpieza manual de imágenes: de 47 a 4, 11.4 GB liberados. Falta automatizarla. |
