@@ -5,7 +5,10 @@
   vars:
     deploy_user: acxess-deploy
     deploy_public_key: "{{ lookup('file', '~/.ssh/acxess_lab_deploy.pub') }}"
-
+    rclone_version: "v1.76.0"
+    rclone_zip_url: "https://downloads.rclone.org/{{ rclone_version }}/rclone-{{ rclone_version }}-linux-amd64.zip"
+    rclone_sums_url: "https://downloads.rclone.org/{{ rclone_version }}/SHA256SUMS"
+  
   tasks:
     - name: Create deploy user
       ansible.builtin.user:
@@ -101,10 +104,35 @@
         group: "{{ deploy_user }}"
         mode: "0750"
 
-    - name: Install rclone
+    - name: Install age and unzip
       ansible.builtin.apt:
-        name: rclone
+        name:
+          - age
+          - unzip
         state: present
+
+    - name: Download rclone
+      ansible.builtin.get_url:
+        url: "{{ rclone_zip_url }}"
+        dest: "/usr/local/src/rclone-{{ rclone_version }}.zip"
+        checksum: "sha256:{{ rclone_sums_url }}"
+        mode: "0644"
+
+    - name: Unpack rclone
+      ansible.builtin.unarchive:
+        src: "/usr/local/src/rclone-{{ rclone_version }}.zip"
+        dest: /usr/local/src
+        remote_src: true
+        creates: "/usr/local/src/rclone-{{ rclone_version }}-linux-amd64/rclone"
+    
+    - name: Install rclone binary
+      ansible.builtin.copy:
+        src: "/usr/local/src/rclone-{{ rclone_version }}-linux-amd64/rclone"
+        dest: /usr/local/bin/rclone
+        owner: root
+        group: root
+        mode: "0755"
+        remote_src: true
 
   handlers:
     - name: Reload sshd
