@@ -28,6 +28,23 @@ CONTAINER_FILE="/var/opt/mssql/backup/acxess_${DATE_NOW}.bak"
 
 mkdir -p "$BACKUP_DIR"
 
+ENCRYPT_FILE="$BACKUP_DIR/acxess_${DATE_NOW}.bak.age"
+
+cleanup() {
+    status=$?
+    docker exec "$CONTAINER" rm -f "$CONTAINER_FILE" || true
+    rm -f "$ENCRYPT_FILE.part"
+
+    if [ -n "${HEALTHCHECK_URL:-}" ]; then
+        if [ "$status" -eq 0 ]; then
+            curl -fsS -m 10 --retry 3 "$HEALTHCHECK_URL" > /dev/null || true
+        else
+            curl -fsS -m 10 --retry 3 "$HEALTHCHECK_URL/fail" > /dev/null || true
+        fi
+    fi
+}
+trap cleanup EXIT
+
 echo "Starting backup of $DB_NAME"
 docker exec "$CONTAINER" /opt/mssql-tools18/bin/sqlcmd \
     -S localhost \
@@ -36,13 +53,6 @@ docker exec "$CONTAINER" /opt/mssql-tools18/bin/sqlcmd \
     -C \
     -Q "BACKUP DATABASE [$DB_NAME] TO DISK = N'$CONTAINER_FILE' WITH CHECKSUM, STATS = 10"
 
-cleanup() {
-    docker exec "$CONTAINER" rm -f "$CONTAINER_FILE" || true
-    rm -f "$ENCRYPT_FILE.part"
-}
-trap cleanup EXIT
-
-ENCRYPT_FILE="$BACKUP_DIR/acxess_${DATE_NOW}.bak.age"
 echo "Encrypting backup"
 docker exec "$CONTAINER" cat "$CONTAINER_FILE" | age -r "$AGE_RECIPIENT" -o "$ENCRYPT_FILE.part"
 mv "$ENCRYPT_FILE.part" "$ENCRYPT_FILE"
