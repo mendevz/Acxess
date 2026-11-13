@@ -3,6 +3,7 @@
   hosts: lab
   become: true
   vars:
+    backup_user: acxess-backup
     deploy_user: acxess-deploy
     deploy_public_key: "{{ lookup('file', '~/.ssh/acxess_lab_deploy.pub') }}"
     rclone_version: "v1.76.0"
@@ -133,6 +134,38 @@
         group: root
         mode: "0755"
         remote_src: true
+
+    - name: Create backup user
+      ansible.builtin.user:
+        name: "{{ backup_user }}"
+        shell: /usr/sbin/nologin
+        create_home: true
+        groups: docker
+        append: true
+
+    - name: Create backup tools directory
+      ansible.builtin.file:
+        path: /opt/acxess-backup
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Install backup script
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../backup-v2.sh"
+        dest: /opt/acxess-backup/backup.sh
+        owner: root
+        group: root
+        mode: "0755"
+        
+    - name: Create local backups directory
+      ansible.builtin.file:
+        path: /var/backups/acxess
+        state: directory
+        owner: "{{ backup_user }}"
+        group: "{{ backup_user }}"
+        mode: "0750"
 
   handlers:
     - name: Reload sshd
