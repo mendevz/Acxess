@@ -195,9 +195,40 @@
         group: "{{ backup_user }}"
         mode: "0600"
       no_log: true
-      
+
+    - name: Install backup service
+      ansible.builtin.template:
+        src: acxess-backup.service.j2
+        dest: /etc/systemd/system/acxess-backup.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload systemd
+
+    - name: Install backup timer
+      ansible.builtin.template:
+        src: acxess-backup.timer.j2
+        dest: /etc/systemd/system/acxess-backup.timer
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload systemd
+
+    - name: Apply systemd changes now
+      ansible.builtin.meta: flush_handlers
+
+    - name: Enable backup timer
+      ansible.builtin.systemd:
+        name: acxess-backup.timer
+        enabled: true
+        state: started
+
   handlers:
     - name: Reload sshd
       ansible.builtin.service:
         name: ssh
         state: reloaded
+        
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
