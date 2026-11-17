@@ -2,3 +2,5 @@ backup_age_recipient: "age1yz0kgejt7xd7tugvvtpxfnpg40y7s85pplaa4swampzk50lzdpwsl
 r2_remote_name: "r2-dev"
 backup_rclone_remote: "{{ r2_remote_name }}:acxess-backups-dev/sql-server"
 backup_dir: /var/backups/acxess
+photos_src_bucket: "acxess-storage-dev"
+photos_dst_bucket: "acxess-storage-backup-dev"
