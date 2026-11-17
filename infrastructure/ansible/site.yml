@@ -11,6 +11,20 @@
     rclone_sums_url: "https://downloads.rclone.org/{{ rclone_version }}/SHA256SUMS"
   
   tasks:
+
+    - name: Set network MTU (lab only)
+      ansible.builtin.template:
+        src: netplan-mtu.yaml.j2
+        dest: /etc/netplan/60-acxess-mtu.yaml
+        owner: root
+        group: root
+        mode: "0600"
+      when: network_mtu is defined
+      notify: Apply netplan
+
+    - name: Apply network changes now
+      ansible.builtin.meta: flush_handlers
+
     - name: Create deploy user
       ansible.builtin.user:
         name: "{{ deploy_user }}"
@@ -256,6 +270,9 @@
         state: started
 
   handlers:
+    - name: Apply netplan
+      ansible.builtin.command: netplan apply
+
     - name: Reload sshd
       ansible.builtin.service:
         name: ssh
