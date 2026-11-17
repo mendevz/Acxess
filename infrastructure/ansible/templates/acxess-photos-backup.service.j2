@@ -1,0 +1,8 @@
+[Unit]
+Description=Acxess photos backup
+
+[Service]
+Type=oneshot
+User={{ backup_user }}
+WorkingDirectory=/opt/acxess-backup
+ExecStart=/opt/acxess-backup/photos-backup.sh

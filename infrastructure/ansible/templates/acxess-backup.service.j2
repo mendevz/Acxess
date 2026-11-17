@@ -1,0 +1,10 @@
+[Unit]
+Description=Acxess database backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User={{ backup_user }}
+WorkingDirectory=/opt/acxess-backup
+ExecStart=/opt/acxess-backup/backup.sh
