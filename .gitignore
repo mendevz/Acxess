@@ -1,2 +1,6 @@
 # Borradores personales de estudio; lo pulido pasa a docs/
 docs/devops/
+
+# draw.io backup and temp files
+*.drawio.bkp
+*.drawio.dtmp
