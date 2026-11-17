@@ -158,6 +158,14 @@
         owner: root
         group: root
         mode: "0755"
+        
+    - name: Install photos backup script
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../photos-backup.sh"
+        dest: /opt/acxess-backup/photos-backup.sh
+        owner: root
+        group: root
+        mode: "0755"
 
     - name: Create local backups directory
       ansible.builtin.file:
