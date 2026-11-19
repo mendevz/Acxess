@@ -74,6 +74,28 @@ dotnet tool install --global dotnet-ef
 export PATH="$PATH:$HOME/.dotnet/tools"
 ```
 
+## Useful commands
+
+Query the database from the terminal. The function reads the password **inside** the container, so it does not go to your terminal or your shell history:
+
+```bash
+sql() {
+  docker exec sql_acxess_container bash -c \
+    '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -W -Q "$1"' _ "$1"
+}
+
+sql "SELECT name, state_desc FROM sys.databases"
+sql "SELECT COUNT(*) FROM AcxessDB.Membership.Members"
+```
+
+`Identity` is a reserved word in T-SQL. Write it with brackets: `AcxessDB.[Identity].Tenants`.
+
+| Command | What it does |
+|---|---|
+| `docker compose ps -a` | All services, also the stopped ones (for example, the migrator after it finishes) |
+| `docker stats --no-stream` | Memory and CPU of each container, one time |
+| `docker inspect acxess_web --format '{{range .Config.Env}}{{println .}}{{end}}' \| grep '^Name='` | The value of one variable that the running container really got. Careful: without `grep` it prints all variables, secrets too. |
+
 ## Tests
 
 ```bash
