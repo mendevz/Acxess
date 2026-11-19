@@ -1,0 +1,7 @@
+{
+  "auths": {
+    "ghcr.io": {
+      "auth": "{{ (ghcr_user ~ ':' ~ vault_ghcr_token) | b64encode }}"
+    }
+  }
+}
