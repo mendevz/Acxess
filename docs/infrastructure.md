@@ -2,7 +2,7 @@
 
 How Acxess runs in production, how a change gets there, and how we recover from a failure.
 
-Last checked: 2026-11-17.
+Last checked: 2026-11-19.
 
 ## The big picture
 
@@ -97,13 +97,14 @@ Production still uses the first version, [`infrastructure/backup.sh`](../infrast
 | Runs as | `root` (cron) | `acxess-backup` (systemd timer) |
 | Alert if it fails or does not run | No | Yes ([healthchecks.io](https://healthchecks.io)) |
 | Photos | Not copied | Copied to a second bucket. The backup token can only **read** the original photos. |
-| Restore tested | No | Next step |
+| Restore tested | No | Yes, with [`restore.sh`](../infrastructure/restore.sh) ([runbook](runbooks/restore-database.md)) |
 
 ### Measured so far
 
 | What | Result | Date |
 |---|---|---|
 | Server reboot: time until the app works again | About 3 minutes, no manual steps | 2026-11-07 |
+| Database restore with `restore.sh` (lab, 10 MB backup) | 14 s, from the command to the app answering | 2026-11-19 |
 | Full restore from an empty server (RTO) | Not measured yet | — |
 | Data we can lose (RPO) | Up to 24 hours (one backup per night) | — |
 
@@ -124,9 +125,11 @@ It is not applied to production yet. How to run it: [`infrastructure/README.md`]
 | Server set up by hand | Ansible playbook (lab) | Rebuild a server from code, not from memory. |
 | Backup without encryption, `sync`, no alerts | Encrypted, `copy`, check, alerts (lab) | A backup must be private, safe from deletes, and watched. |
 | Photos without backup | Nightly copy with a read-only token (lab) | Photos were in one place only. |
+| Restore never tested | `restore.sh`, tested with a real backup (lab) | A backup that was never restored is only a hope. |
+| Database log grew all the time (`FULL` recovery model, but no log backups) | `SIMPLE` recovery model: log from 328 MB to 72 MB (production) | `FULL` only helps with log backups. We take full backups. |
 
 ## What is next
 
-1. Restore script and a full restore test from an empty server. Measure RTO and RPO.
+1. A full restore test from an empty server: Ansible + `restore.sh`. Measure RTO and RPO.
 2. Move production to the new backup design.
 3. A second backup copy with another provider (today everything is in Cloudflare R2).

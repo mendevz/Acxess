@@ -1,4 +1,25 @@
 #!/bin/bash
+# -----------------------------------------------------------------------------
+# backup-v2.sh: back up the Acxess database to Cloudflare R2.
+#
+# What it does
+#   1. Makes a full SQL Server backup inside the container, WITH CHECKSUM.
+#   2. Encrypts it with age. Only the public key is on the server.
+#   3. Uploads it with "rclone copy" (never deletes in R2), then checks the upload.
+#   4. Deletes local copies older than 7 days (only after the check).
+#
+# On the server  /opt/acxess-backup/backup.sh (installed by Ansible)
+# Runs           every day at 03:00, as acxess-backup (acxess-backup.timer)
+# Run by hand    sudo systemctl start acxess-backup.service
+# Logs           journalctl -u acxess-backup.service
+# Config         .env next to the script, written by Ansible:
+#                DB_PASSWORD, AGE_RECIPIENT, RCLONE_REMOTE, BACKUP_DIR,
+#                HEALTHCHECK_URL (optional)
+# Alerts         pings HEALTHCHECK_URL when it works, HEALTHCHECK_URL/fail when not
+# Exit code      0 = backup uploaded and checked, other = failed
+# More           infrastructure/README.md
+# -----------------------------------------------------------------------------
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

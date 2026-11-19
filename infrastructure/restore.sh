@@ -1,10 +1,29 @@
 #!/bin/bash
-# Restore the Acxess database from the newest encrypted backup in R2 and start the app.
+# -----------------------------------------------------------------------------
+# restore.sh: restore the Acxess database from R2 and start the app.
 #
-# Usage: sudo acxess-restore /dev/shm/<age-identity> [backup-file-name]
+# Usage          sudo acxess-restore /dev/shm/<age-key> [backup-file-name]
+#                Without a file name, it uses the newest backup in R2.
 #
-# The age identity (private key) must be in /dev/shm (RAM, never written to disk).
+# What it does
+#   1. Checks: root, tools, Ansible already ran, free disk space.
+#   2. Chooses the backup.
+#   3. Downloads and decrypts it into the SQL Server container, then checks it
+#      (RESTORE VERIFYONLY). The decrypted file never touches the host disk.
+#      The app is still running in this step.
+#   4. Stops the web app, restores the database (WITH CHECKSUM) and runs
+#      DBCC CHECKDB. The app is down from here.
+#   5. Starts the app. The migrator runs first.
+#   6. Waits until the app answers and prints the time of each step.
+#
+# The age private key must be in /dev/shm (memory, never on disk).
 # The script deletes it as soon as the backup is decrypted.
+#
+# On the server  /usr/local/sbin/acxess-restore (installed by Ansible, root only)
+# Needs          ansible-playbook site.yml already applied on this server
+# Exit code      0 = database restored and app answering, other = failed
+# Runbook        docs/runbooks/restore-database.md
+# -----------------------------------------------------------------------------
 
 set -euo pipefail
 APP_DIR="/opt/acxess"
