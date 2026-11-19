@@ -313,6 +313,14 @@
         mode: "0644"
       notify: Reload systemd
 
+    - name: Install restore script
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../restore.sh"
+        dest: /usr/local/sbin/acxess-restore
+        owner: root
+        group: root
+        mode: "0750"
+
     - name: Apply systemd changes now
       ansible.builtin.meta: flush_handlers
 
