@@ -10,7 +10,7 @@ Last tested: 2026-11-19, in the lab virtual machine.
 - You need the data from an older backup.
 - A restore test (we do them on purpose, to know that backups work).
 
-This page covers a server that **already exists**. A new, empty server first needs `ansible-playbook site.yml` ([infrastructure/README.md](../../infrastructure/README.md)).
+This page covers a server that **already exists**. For a new, empty server, follow [new-server.md](new-server.md).
 
 ## Before you start
 
@@ -106,4 +106,4 @@ The script deletes the key in every case, even when it fails. To run it again, c
 |---|---|---|---|---|---|---|
 | 2026-11-19 | Lab VM | 10 MB | 14 s | 2 s | 1 s | 10 s |
 
-The restore from an **empty** server (Ansible + this script) is not measured yet.
+On an **empty** server, the script also downloads all Docker images first (about 1.5 minutes in the lab). Full recovery from an empty server, Ansible included: 5 min 36 s ([infrastructure.md](../infrastructure.md#measured-so-far)).

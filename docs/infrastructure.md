@@ -99,13 +99,16 @@ Production still uses the first version, [`infrastructure/backup.sh`](../infrast
 | Photos | Not copied | Copied to a second bucket. The backup token can only **read** the original photos. |
 | Restore tested | No | Yes, with [`restore.sh`](../infrastructure/restore.sh) ([runbook](runbooks/restore-database.md)) |
 
+Recovery runbooks: [new server](runbooks/new-server.md) and [restore the database](runbooks/restore-database.md).
+
 ### Measured so far
 
 | What | Result | Date |
 |---|---|---|
 | Server reboot: time until the app works again | About 3 minutes, no manual steps | 2026-11-07 |
 | Database restore with `restore.sh` (lab, 10 MB backup) | 14 s, from the command to the app answering | 2026-11-19 |
-| Full restore from an empty server (RTO) | Not measured yet | — |
+| Full recovery from an empty server: new VM, `ansible-playbook site.yml`, `acxess-restore`, sign in (lab, without DNS) | 5 min 38 s, from "the server is dead" to "I can sign in". About 4 min of machine time. | 2026-11-19 |
+| Data lost in that test (RPO) | Only the changes after the last backup. A test member created after the backup was missing, as expected. | 2026-11-19 |
 | Data we can lose (RPO) | Up to 24 hours (one backup per night) | — |
 
 ## Server setup as code
@@ -130,6 +133,6 @@ It is not applied to production yet. How to run it: [`infrastructure/README.md`]
 
 ## What is next
 
-1. A full restore test from an empty server: Ansible + `restore.sh`. Measure RTO and RPO.
+1. The same test on a real, temporary VPS: real DNS change and a Let's Encrypt certificate.
 2. Move production to the new backup design.
 3. A second backup copy with another provider (today everything is in Cloudflare R2).
