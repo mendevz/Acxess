@@ -8,7 +8,8 @@
 # What it does
 #   1. Checks: root, tools, Ansible already ran, free disk space.
 #   2. Chooses the backup.
-#   3. Downloads and decrypts it into the SQL Server container, then checks it
+#   3. Downloads all images (with the GHCR login of acxess-deploy), then downloads
+#      and decrypts the backup into the SQL Server container and checks it
 #      (RESTORE VERIFYONLY). The decrypted file never touches the host disk.
 #      The app is still running in this step.
 #   4. Stops the web app, restores the database (WITH CHECKSUM) and runs
@@ -29,6 +30,7 @@ set -euo pipefail
 APP_DIR="/opt/acxess"
 BACKUP_ENV="/opt/acxess-backup/.env"
 export RCLONE_CONFIG="/home/acxess-backup/.config/rclone/rclone.conf"
+export DOCKER_CONFIG="/home/acxess-deploy/.docker"
 CONTAINER="sql_acxess_container"
 DB_NAME="AcxessDB"
 RESTORE_FILE="/var/opt/mssql/backup/restore.bak"
@@ -91,11 +93,14 @@ fi
 log "Backup: $FILE"
 
 # ---------- 3. Prepare (the app is still running) ----------
+T=$SECONDS
+log "Downloading images"
+docker compose --profile app pull
+
 log "Starting SQL Server"
 docker compose up -d --wait acxess-db
 
 log "Downloading and decrypting into the container"
-T=$SECONDS
 docker exec "$CONTAINER" mkdir -p /var/opt/mssql/backup
 rclone cat "$RCLONE_REMOTE/$FILE" \
     | age -d -i "$IDENTITY" \
