@@ -83,7 +83,7 @@ Known trade-off: `acxess-deploy` and `acxess-backup` are in the `docker` group, 
 | Database | Docker volume on the server | Full backup every night at 03:00, uploaded to Cloudflare R2. |
 | Member photos | Cloudflare R2 | New design: copied every night to a second bucket. |
 | Configuration | This repository + GitHub Secrets | Git history. |
-| Redis | Docker volume | No backup. It holds idempotency keys and the ASP.NET Data Protection keys. If they are lost, users must log in again. Where these keys should live is an open decision (future ADR). |
+| Redis | Docker volume | No backup. It holds idempotency keys and the ASP.NET Data Protection keys. If they are lost, users must sign in again. They stay in Redis on purpose ([ADR 0005](adrs/0005-keep-data-protection-keys-in-redis.md)). |
 
 ### Production today vs. new design
 
