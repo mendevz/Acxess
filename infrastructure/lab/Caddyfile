@@ -1,0 +1,4 @@
+acxess-lab.test {
+    tls internal
+    reverse_proxy acxess-web:8080
+}

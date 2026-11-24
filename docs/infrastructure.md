@@ -2,13 +2,14 @@
 
 How Acxess runs in production, how a change gets there, and how we recover from a failure.
 
-Last checked: 2026-11-17.
+Last checked: 2026-11-19.
 
 ## The big picture
 
 ```mermaid
 flowchart LR
-    user["Gym staff<br/>(browser)"] -->|HTTPS| caddy
+    user["Gym staff<br/>(browser)"] -->|HTTPS| cf["Cloudflare<br/>DNS + proxy"]
+    cf -->|HTTPS| caddy
 
     subgraph vps["VPS · Ubuntu 24.04 · Docker Compose"]
         caddy["Caddy<br/>reverse proxy + TLS"] --> web["acxess-web<br/>.NET 9"]
@@ -29,6 +30,8 @@ flowchart LR
 ```
 
 One small server runs everything. Files (member photos) and backups live outside the server, in Cloudflare R2.
+
+The domain is registered at Namecheap, but its DNS lives in Cloudflare. The web records are **proxied**: users connect to Cloudflare, and Cloudflare connects to the server. Users never see the server IP.
 
 ## What runs on the server
 
@@ -83,7 +86,7 @@ Known trade-off: `acxess-deploy` and `acxess-backup` are in the `docker` group, 
 | Database | Docker volume on the server | Full backup every night at 03:00, uploaded to Cloudflare R2. |
 | Member photos | Cloudflare R2 | New design: copied every night to a second bucket. |
 | Configuration | This repository + GitHub Secrets | Git history. |
-| Redis | Docker volume | No backup. It holds idempotency keys and the ASP.NET Data Protection keys. If they are lost, users must log in again. Where these keys should live is an open decision (future ADR). |
+| Redis | Docker volume | No backup. It holds idempotency keys and the ASP.NET Data Protection keys. If they are lost, users must sign in again. They stay in Redis on purpose ([ADR 0005](adrs/0005-keep-data-protection-keys-in-redis.md)). |
 
 ### Production today vs. new design
 
@@ -97,14 +100,19 @@ Production still uses the first version, [`infrastructure/backup.sh`](../infrast
 | Runs as | `root` (cron) | `acxess-backup` (systemd timer) |
 | Alert if it fails or does not run | No | Yes ([healthchecks.io](https://healthchecks.io)) |
 | Photos | Not copied | Copied to a second bucket. The backup token can only **read** the original photos. |
-| Restore tested | No | Next step |
+| Restore tested | No | Yes, with [`restore.sh`](../infrastructure/restore.sh) ([runbook](runbooks/restore-database.md)) |
+
+Recovery runbooks: [new server](runbooks/new-server.md) and [restore the database](runbooks/restore-database.md).
 
 ### Measured so far
 
 | What | Result | Date |
 |---|---|---|
 | Server reboot: time until the app works again | About 3 minutes, no manual steps | 2026-11-07 |
-| Full restore from an empty server (RTO) | Not measured yet | — |
+| Database restore with `restore.sh` (lab, 10 MB backup) | 14 s, from the command to the app answering | 2026-11-19 |
+| Full recovery from an empty server: new VM, `ansible-playbook site.yml`, `acxess-restore`, sign in (lab, without DNS) | 5 min 38 s, from "the server is dead" to "I can sign in". About 4 min of machine time. | 2026-11-19 |
+| Full recovery on a real VPS (Hetzner, same type as production, Ubuntu 24.04) with Cloudflare DNS and a Let's Encrypt certificate | 10 min 58 s. Create the server 1 min, Ansible 5 min 43 s, restore 40 s. | 2026-11-24 |
+| Data lost in that test (RPO) | Only the changes after the last backup. A test member created after the backup was missing, as expected. | 2026-11-19 |
 | Data we can lose (RPO) | Up to 24 hours (one backup per night) | — |
 
 ## Server setup as code
@@ -124,9 +132,10 @@ It is not applied to production yet. How to run it: [`infrastructure/README.md`]
 | Server set up by hand | Ansible playbook (lab) | Rebuild a server from code, not from memory. |
 | Backup without encryption, `sync`, no alerts | Encrypted, `copy`, check, alerts (lab) | A backup must be private, safe from deletes, and watched. |
 | Photos without backup | Nightly copy with a read-only token (lab) | Photos were in one place only. |
+| Restore never tested | `restore.sh`, tested with a real backup (lab) | A backup that was never restored is only a hope. |
+| Database log grew all the time (`FULL` recovery model, but no log backups) | `SIMPLE` recovery model: log from 328 MB to 72 MB (production) | `FULL` only helps with log backups. We take full backups. |
 
 ## What is next
 
-1. Restore script and a full restore test from an empty server. Measure RTO and RPO.
 2. Move production to the new backup design.
 3. A second backup copy with another provider (today everything is in Cloudflare R2).

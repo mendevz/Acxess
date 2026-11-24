@@ -1,0 +1,8 @@
+# Solo laboratorio: los logs no se envían a BetterStack de producción.
+services:
+  acxess-migrator:
+    environment:
+      - Serilog__WriteTo__1__Args__configure__0__Args__sourceToken=lab-disabled
+  acxess-web:
+    environment:
+      - Serilog__WriteTo__1__Args__configure__0__Args__sourceToken=lab-disabled

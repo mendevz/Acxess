@@ -1,0 +1,6 @@
+{{ app_domain }} {
+    basic_auth {
+        drill {{ vault_drill_basic_auth_hash }}
+    }
+    reverse_proxy acxess-web:8080
+}
