@@ -1,6 +1,6 @@
 ---
 - name: Configure new Acxess Server
-  hosts: lab
+  hosts: all
   become: true
   vars:
     backup_user: acxess-backup
@@ -143,7 +143,7 @@
         mode: "0640"
 
     - name: Install Caddyfile
-      ansible.builtin.copy:
+      ansible.builtin.template:
         src: "{{ playbook_dir }}/../{{ app_caddyfile | default('Caddyfile') }}"
         dest: /opt/acxess/Caddyfile
         owner: "{{ deploy_user }}"
