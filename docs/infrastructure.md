@@ -111,6 +111,7 @@ Recovery runbooks: [new server](runbooks/new-server.md) and [restore the databas
 | Server reboot: time until the app works again | About 3 minutes, no manual steps | 2026-11-07 |
 | Database restore with `restore.sh` (lab, 10 MB backup) | 14 s, from the command to the app answering | 2026-11-19 |
 | Full recovery from an empty server: new VM, `ansible-playbook site.yml`, `acxess-restore`, sign in (lab, without DNS) | 5 min 38 s, from "the server is dead" to "I can sign in". About 4 min of machine time. | 2026-11-19 |
+| Full recovery on a real VPS (Hetzner, same type as production) with Cloudflare DNS and a Let's Encrypt certificate | 15 min 30 s. Creating the server in the panel 4 min, Ansible 5 min 51 s, restore 34 s. | 2026-11-24 |
 | Data lost in that test (RPO) | Only the changes after the last backup. A test member created after the backup was missing, as expected. | 2026-11-19 |
 | Data we can lose (RPO) | Up to 24 hours (one backup per night) | — |
 
@@ -136,6 +137,5 @@ It is not applied to production yet. How to run it: [`infrastructure/README.md`]
 
 ## What is next
 
-1. The same test on a real, temporary VPS: real DNS change and a Let's Encrypt certificate.
 2. Move production to the new backup design.
 3. A second backup copy with another provider (today everything is in Cloudflare R2).

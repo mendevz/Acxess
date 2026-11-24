@@ -2,7 +2,7 @@
 
 How to go from an empty server to a working Acxess with the data of the last backup. Two commands do the work: `ansible-playbook site.yml` and `acxess-restore`.
 
-Last tested: 2026-11-19, in a lab virtual machine (3 drills). Result: **5 min 38 s** from "the server is dead" to "I can sign in".
+Last tested: 2026-11-24, on a real Hetzner VPS with Cloudflare DNS: **15 min 30 s** from "the server is dead" to "I can sign in". In the lab VM (2026-11-19): 5 min 38 s.
 
 ## When to use it
 
@@ -17,15 +17,17 @@ To restore the database on a server that still works, use [restore-database.md](
 
 The steps are the same everywhere. These parts change:
 
-| | Lab | Staging (future) | Production |
+| | Lab | Drill on a VPS (also future staging) | Production |
 |---|---|---|---|
-| Create the server | `multipass launch` | VPS panel | VPS panel |
-| Ansible inventory group | `lab` | `staging` | `production` |
-| Name → server | `/etc/hosts` on your machine | DNS record of a test subdomain | DNS record of the real domain |
-| TLS certificate | Caddy internal CA (browser warning) | Let's Encrypt **staging** | Let's Encrypt |
+| Create the server | `multipass launch` | Hetzner panel | Hetzner panel |
+| Ansible inventory | `inventory.ini` (the default) | `-i inventory-drill.ini` | `-i inventory-production.ini` (not created yet) |
+| First SSH user | `ubuntu` | `root`, then the admin user | `root`, then the admin user |
+| Name → server | `/etc/hosts` on your machine | Cloudflare record `drill`, proxied | Cloudflare record, proxied |
+| TLS certificate | Caddy internal CA (browser warning) | Let's Encrypt (Cloudflare mode Full (strict)) | Let's Encrypt (same) |
+| Extra password before the app | No | Yes (`basic_auth` in Caddy) | No |
 | Logs to BetterStack | Blocked (Compose override) | Blocked | **Yes** |
 | SMS (Twilio) | Off | Off | **On** |
-| Tested | **Yes** | No | No (drill on a real VPS is next) |
+| Tested | Yes | Yes (2026-11-24) | No |
 
 ## Before you start
 
@@ -35,7 +37,8 @@ The steps are the same everywhere. These parts change:
 | Ansible and its collections | `ansible-galaxy collection install -r infrastructure/ansible/requirements.yml` |
 | The Ansible Vault password | In `~/.ansible-vault-pass` |
 | The age **private** key (decrypts the backups) | `age-keygen -y <key-file>` prints the same public key as `backup_age_recipient` in `group_vars/all/vars.yml` |
-| An SSH key for the new server | You can log in with it |
+| An SSH key for the new server | Uploaded to the provider, or in `cloud-init` for the lab |
+| The `sudo` password of the admin user | You need it for the restore and for later Ansible runs |
 
 The project owner keeps the Vault password and the age key. They are **never** on a server and never in this repository.
 
@@ -54,7 +57,9 @@ T0 is the moment the server **stopped working**, not the moment you started to f
 
 ### 1. Create the server
 
-Ubuntu 24.04, 2 CPUs, 4 GB RAM, 20 GB disk or more.
+**Ubuntu 24.04**, x86, 2 CPUs or more, 4 GB RAM, 20 GB disk or more. Production: Hetzner CPX21 in Ashburn.
+
+Check the image. The panel can offer a newer Ubuntu first. The playbook is tested on 24.04 only: on 26.04, `sudo` is a different program and Ansible cannot type the `sudo` password.
 
 Lab:
 
@@ -62,69 +67,90 @@ Lab:
 mark "1 create server"
 multipass launch 24.04 --name <vm-name> --cpus 2 --memory 4G --disk 20G \
   --cloud-init infrastructure/lab/cloud-init.yaml --timeout 600
-NEW_IP=$(multipass info <vm-name> | awk '/IPv4/ {print $2; exit}')
-echo "$NEW_IP"
+export NEW_IP=$(multipass info <vm-name> | awk '/IPv4/ {print $2; exit}')
 ```
 
-VPS: create it in the provider panel with your SSH key, then `NEW_IP=<server-ip>`.
-
-### 2. First connection
+VPS: create it in the panel with your SSH key, then:
 
 ```bash
-mark "2 first connection"
-ssh-keygen -R "$NEW_IP"
-ssh -i <ssh-key> <user>@"$NEW_IP" 'hostname'
+export NEW_IP=<server-ip>
+mark "1 server created"
 ```
 
-- `ssh-keygen -R` removes an old fingerprint for this IP, if there is one. A new server has a new fingerprint.
+`export` matters: the VPS inventory reads the IP from `NEW_IP`.
+
+### 2. Send the name to the new server, now
+
+Do this right after you have the IP. It works while Ansible runs.
+
+- **VPS (Cloudflare):** create or change the `A` record (`drill` for a drill, the real domain for production) to `NEW_IP`, **Proxied**, TTL Auto. Users connect to Cloudflare IPs, which do not change, so the new server gets the traffic in seconds.
+- **Lab:** on your machine, `sudo nano /etc/hosts` and change the IP of the line `acxess-lab.test`. Your computer reads this file **before** it asks DNS.
+
+```bash
+mark "2 name"
+```
+
+### 3. First connection
+
+```bash
+ssh-keygen -R "$NEW_IP"
+ssh -i <ssh-key> <first-user>@"$NEW_IP" 'hostname'
+mark "3 first connection"
+```
+
+- `ssh-keygen -R` removes an old fingerprint for this IP, if there is one.
 - Answer `yes` to the fingerprint question. If you skip this, Ansible waits for an answer and does not continue.
-
-### 3. Point Ansible to the server
-
-In `infrastructure/ansible/inventory.ini`, under the right group (`[lab]`, `[staging]` or `[production]`), set `ansible_host` to the new IP.
+- `<first-user>` is `ubuntu` in the lab and `root` on a new VPS.
 
 ### 4. Command 1: set up the server
 
 ```bash
-mark "3 ansible start"
 cd infrastructure/ansible
-ansible-playbook site.yml
+ansible-playbook site.yml                          # lab
+ansible-playbook -i inventory-drill.ini site.yml   # VPS drill (first run as root)
 cd ../..
-mark "3 ansible end"
+mark "4 ansible end"
 ```
 
-Expected: `failed=0`. Lab time: about 1 min 20 s.
+Expected: `failed=0`. Measured: 1 min 20 s in the lab, **5 min 51 s** on the VPS.
+
+On a VPS, this run creates the admin user and then turns off SSH login for `root`. From now on, connect as the admin user.
 
 ### 5. Command 2: restore the data
 
 ```bash
-mark "4 restore start"
-scp -i <ssh-key> <age-key-file> <user>@"$NEW_IP":/dev/shm/acxess-restore.key
-ssh -t -i <ssh-key> <user>@"$NEW_IP" 'sudo acxess-restore /dev/shm/acxess-restore.key'
-mark "4 restore end"
+scp -i <ssh-key> <age-key-file> <admin-user>@"$NEW_IP":/dev/shm/acxess-restore.key
+ssh -t -i <ssh-key> <admin-user>@"$NEW_IP" 'sudo acxess-restore /dev/shm/acxess-restore.key'
+mark "5 restore end"
 ```
 
-Expected: `Restore completed in ... s`. Lab time: about 1 min 50 s, most of it to download the Docker images. If something fails, see [restore-database.md](restore-database.md#if-something-fails).
+`sudo` asks for the admin password. Expected: `Restore completed in ... s`. Measured: 1 min 50 s in the lab, **34 s** on the VPS (a data center downloads the images much faster). If something fails, see [restore-database.md](restore-database.md#if-something-fails).
 
-### 6. Send the name to the new server
+### 6. Check HTTPS
 
 ```bash
-mark "5 name"
+dig +short <domain> @1.1.1.1
+curl -sS -o /dev/null -w "%{http_code}\n" https://<domain>/
+curl -sv -o /dev/null --resolve <domain>:443:"$NEW_IP" https://<domain>/ 2>&1 | grep -iE "issuer|HTTP/"
+mark "6 https ok"
 ```
 
-- **Lab:** on your machine, `sudo nano /etc/hosts` and change the IP of the line `acxess-lab.test`. Your computer reads this file **before** it asks DNS, so this line works like a private DNS record.
-- **Staging and production:** change the `A` record of the domain in the DNS provider to `NEW_IP`. Caddy gets the Let's Encrypt certificate when the first requests arrive. *Not tested yet.*
+| Check | Expected |
+|---|---|
+| `dig` | Cloudflare IPs, not the server IP (the record is proxied) |
+| `curl` | `302` (the app sends you to the sign-in page). On a drill with `basic_auth`: `401`. |
+| `curl --resolve` | Talks to the server directly, without DNS. Issuer: Let's Encrypt. |
 
-```bash
-curl -k -sS -o /dev/null -w "%{http_code}\n" https://<domain>/     # 302 = the app answers
-```
+While the restore runs, Cloudflare can show `521` (the server does not answer yet). `525` or `526` for a few seconds means Caddy is still getting its certificate. Wait and try again.
+
+Lab: `curl -k -sS -o /dev/null -w "%{http_code}\n" https://acxess-lab.test/`.
 
 ### 7. Check the app
 
-Open the domain in the browser, sign in and look at the members. Everybody must sign in again: the sign-in keys live in Redis, and Redis has no backup. No data is lost.
+Open the domain in the browser, sign in and look at the members. Everybody must sign in again: the sign-in keys live in Redis, and Redis has no backup. No data is lost ([ADR 0005](../adrs/0005-keep-data-protection-keys-in-redis.md)).
 
 ```bash
-mark "6 END: service is back"
+mark "7 END: service is back"
 ```
 
 ## After the service is back
@@ -133,33 +159,34 @@ The server works, but it must also be **protected** again.
 
 | Check | Command | Expected |
 |---|---|---|
-| The server matches the code | `ansible-playbook site.yml` | `changed=0` |
-| The new server makes backups | `sudo systemctl start acxess-backup.service`, then `journalctl -u acxess-backup.service -n 3` | `Finished`, and an "OK" in healthchecks.io |
-| Network (lab only) | `cat /sys/class/net/eth0/mtu` | `1400` |
+| `root` cannot log in (VPS) | `ssh root@"$NEW_IP"` | `Permission denied` |
+| The server matches the code | Lab: `ansible-playbook site.yml`. VPS: `ansible-playbook -i <inventory> site.yml -e ansible_user=<admin-user> -K` | `changed=0` |
+| The new server makes backups | `sudo systemctl start acxess-backup.service`, then `sudo journalctl -u acxess-backup.service -n 3` | `Finished`, and an "OK" in healthchecks.io |
+| Network | `cat /sys/class/net/eth0/mtu` | `1400` in the lab, `1500` on a VPS |
 | The timeline | `cat ~/incident-<date>.log` | RTO = from T0 to END |
 
 ## Production only: extra steps
 
-*Not tested yet. The drill on a real VPS will test them.*
-
-| Step | Why |
-|---|---|
-| **Stop the old server for good** (power off in the panel, or remove its network access) | If the old server comes back, two servers run the nightly jobs: double backups and **double SMS to the members**. |
-| Update the server address in GitHub Secrets (used by `deploy.yml`) | If not, the next release goes to the old server. |
-| Lower the DNS TTL before a planned move | The change reaches users faster. |
-| First access on a new VPS is often `root` only | The playbook creates the admin user (sudo with password) **before** it turns off SSH login for `root`. First run: `ansible-playbook site.yml -e ansible_user=root`. Later runs: `-e ansible_user=<admin-user> -K`. Tested in the lab (2026-11-24) with the image user, not yet with `root` on a VPS. |
+| Step | Why | Tested |
+|---|---|---|
+| **Stop the old server for good** (power off in the panel, or remove its network access) | If the old server comes back, two servers run the nightly jobs: double backups and **double SMS to the members**. | No |
+| Update the server address in GitHub Secrets (used by `deploy.yml`) | If not, the next release goes to the old server. | No |
+| Change the origin IP of the proxied records in Cloudflare | Users keep the Cloudflare IPs, so the change works in seconds. No TTL wait. | Yes, with a new record (drill) |
+| First access as `root` | The playbook creates the admin user **before** it turns off `root` login. | Yes (drill) |
+| Delete the drill server, its IP and its DNS record after a drill | A DNS record that points to an IP the provider gives to someone else is a risk. | Yes |
 
 ## Measured
 
-| Date | Where | From T0 to END | Machine time | Human time | Notes |
-|---|---|---|---|---|---|
-| 2026-11-19 | Lab VM | 8 min 17 s | ~3 min | ~5 min | One problem: the restore had no login for the private image registry. Fixed. |
-| 2026-11-19 | Lab VM | 5 min 36 s* | ~4 min | ~1 min 45 s | No problems. *Measured from "create server", T0 missing. |
-| 2026-11-19 | Lab VM | **5 min 38 s** | ~4 min | ~1 min 40 s | No problems. |
+| Date | Where | From T0 to END | Biggest parts | Notes |
+|---|---|---|---|---|
+| 2026-11-19 | Lab VM | 8 min 17 s | Human work ~5 min | The restore had no login for the private image registry. Fixed. |
+| 2026-11-19 | Lab VM | 5 min 36 s* | Machine ~4 min | No problems. *T0 missing. |
+| 2026-11-19 | Lab VM | 5 min 38 s | Machine ~4 min | No problems. |
+| 2026-11-24 | Hetzner VPS + Cloudflare | **15 min 30 s** | Create the server in the panel 4 min, Ansible 5 min 51 s, restore 34 s | HTTPS and DNS worked at once. Wrong image (Ubuntu 26.04): the second Ansible run as admin failed. |
 
 ## Done when
 
 - You can sign in and see the members.
 - The last changes before the backup are there. The changes after it are lost: that is the RPO.
-- A second `ansible-playbook site.yml` gives `changed=0`.
+- A second Ansible run gives `changed=0`.
 - The new server made a backup and healthchecks.io got the "OK".
