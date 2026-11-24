@@ -37,6 +37,21 @@
         user: "{{ deploy_user }}"
         key: "{{ deploy_public_key }}"
         state: present
+    
+    - name: Create admin user
+      ansible.builtin.user:
+        name: "{{ admin_user }}"
+        shell: /bin/bash
+        groups: sudo
+        append: true
+        password: "{{ vault_admin_password_hash }}"
+        update_password: always
+      no_log: true
+
+    - name: Authorize SSH key of admin user
+      ansible.posix.authorized_key:
+        user: "{{ admin_user }}"
+        key: "{{ lookup('file', admin_public_key_file) }}"
           
     - name: Harden SSH
       ansible.builtin.copy:

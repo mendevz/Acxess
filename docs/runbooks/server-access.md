@@ -20,6 +20,8 @@ Before, people and the CI pipeline used `root` with a password. Bots try passwor
 
 ### 1. Admin user
 
+The playbook creates this user now (`admin_user`, SSH key, `sudo` with a password from the Vault). These are the same steps by hand.
+
 ```bash
 adduser <admin-user>
 usermod -aG sudo <admin-user>

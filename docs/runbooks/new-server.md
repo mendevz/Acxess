@@ -147,7 +147,7 @@ The server works, but it must also be **protected** again.
 | **Stop the old server for good** (power off in the panel, or remove its network access) | If the old server comes back, two servers run the nightly jobs: double backups and **double SMS to the members**. |
 | Update the server address in GitHub Secrets (used by `deploy.yml`) | If not, the next release goes to the old server. |
 | Lower the DNS TTL before a planned move | The change reaches users faster. |
-| First access on a new VPS is often `root` only | The playbook turns off SSH login for `root`. The playbook does not create the admin user yet, so you can lose access. Fix this before the first real VPS. |
+| First access on a new VPS is often `root` only | The playbook creates the admin user (sudo with password) **before** it turns off SSH login for `root`. First run: `ansible-playbook site.yml -e ansible_user=root`. Later runs: `-e ansible_user=<admin-user> -K`. Tested in the lab (2026-11-24) with the image user, not yet with `root` on a VPS. |
 
 ## Measured
 
