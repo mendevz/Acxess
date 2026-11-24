@@ -9,9 +9,14 @@
     rclone_version: "v1.76.0"
     rclone_zip_url: "https://downloads.rclone.org/{{ rclone_version }}/rclone-{{ rclone_version }}-linux-amd64.zip"
     rclone_sums_url: "https://downloads.rclone.org/{{ rclone_version }}/SHA256SUMS"
-  
   tasks:
-
+    - name: Check the operating system
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == "Ubuntu"
+          - ansible_distribution_version == "24.04"
+        fail_msg: "Tested on Ubuntu 24.04 only. This server has {{ ansible_distribution }} {{ ansible_distribution_version }}."
+    
     - name: Set network MTU (lab only)
       ansible.builtin.template:
         src: netplan-mtu.yaml.j2
@@ -42,7 +47,7 @@
       ansible.builtin.user:
         name: "{{ admin_user }}"
         shell: /bin/bash
-        groups: sudo
+        groups: sudo,adm
         append: true
         password: "{{ vault_admin_password_hash }}"
         update_password: always
