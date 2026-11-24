@@ -8,7 +8,8 @@ Last checked: 2026-11-19.
 
 ```mermaid
 flowchart LR
-    user["Gym staff<br/>(browser)"] -->|HTTPS| caddy
+    user["Gym staff<br/>(browser)"] -->|HTTPS| cf["Cloudflare<br/>DNS + proxy"]
+    cf -->|HTTPS| caddy
 
     subgraph vps["VPS · Ubuntu 24.04 · Docker Compose"]
         caddy["Caddy<br/>reverse proxy + TLS"] --> web["acxess-web<br/>.NET 9"]
@@ -29,6 +30,8 @@ flowchart LR
 ```
 
 One small server runs everything. Files (member photos) and backups live outside the server, in Cloudflare R2.
+
+The domain is registered at Namecheap, but its DNS lives in Cloudflare. The web records are **proxied**: users connect to Cloudflare, and Cloudflare connects to the server. Users never see the server IP.
 
 ## What runs on the server
 
