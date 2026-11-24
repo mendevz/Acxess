@@ -2,7 +2,7 @@
 
 How to go from an empty server to a working Acxess with the data of the last backup. Two commands do the work: `ansible-playbook site.yml` and `acxess-restore`.
 
-Last tested: 2026-11-24, on a real Hetzner VPS with Cloudflare DNS: **15 min 30 s** from "the server is dead" to "I can sign in". In the lab VM (2026-11-19): 5 min 38 s.
+Last tested: 2026-11-24, on a real Hetzner VPS with Cloudflare DNS: **10 min 58 s** from "the server is dead" to "I can sign in". In the lab VM (2026-11-19): 5 min 38 s.
 
 ## When to use it
 
@@ -112,7 +112,7 @@ cd ../..
 mark "4 ansible end"
 ```
 
-Expected: `failed=0`. Measured: 1 min 20 s in the lab, **5 min 51 s** on the VPS.
+Expected: `failed=0`. Measured: 1 min 20 s in the lab, **about 5 min 45 s** on the VPS.
 
 On a VPS, this run creates the admin user and then turns off SSH login for `root`. From now on, connect as the admin user.
 
@@ -124,7 +124,7 @@ ssh -t -i <ssh-key> <admin-user>@"$NEW_IP" 'sudo acxess-restore /dev/shm/acxess-
 mark "5 restore end"
 ```
 
-`sudo` asks for the admin password. Expected: `Restore completed in ... s`. Measured: 1 min 50 s in the lab, **34 s** on the VPS (a data center downloads the images much faster). If something fails, see [restore-database.md](restore-database.md#if-something-fails).
+`sudo` asks for the admin password. Expected: `Restore completed in ... s`. Measured: 1 min 50 s in the lab, **34 to 40 s** on the VPS (a data center downloads the images much faster). If something fails, see [restore-database.md](restore-database.md#if-something-fails).
 
 ### 6. Check HTTPS
 
@@ -183,6 +183,7 @@ The server works, but it must also be **protected** again.
 | 2026-11-19 | Lab VM | 5 min 36 s* | Machine ~4 min | No problems. *T0 missing. |
 | 2026-11-19 | Lab VM | 5 min 38 s | Machine ~4 min | No problems. |
 | 2026-11-24 | Hetzner VPS + Cloudflare | **15 min 30 s** | Create the server in the panel 4 min, Ansible 5 min 51 s, restore 34 s | HTTPS and DNS worked at once. Wrong image (Ubuntu 26.04): the second Ansible run as admin failed. |
+| 2026-11-24 | Hetzner VPS + Cloudflare, Ubuntu 24.04 | **10 min 58 s** | Create the server 1 min, Ansible 5 min 43 s, restore 40 s | No problems. Second Ansible run as admin: `changed=0`. |
 
 ## Done when
 
