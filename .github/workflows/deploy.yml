@@ -96,7 +96,7 @@ jobs:
           host: ${{ secrets.MENDEZ_SERVER_IP }}
           username: acxess-deploy
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "src/docker-compose.prod.yml,infrastructure/Caddyfile,infrastructure/backup.sh"
+          source: "src/docker-compose.prod.yml,infrastructure/Caddyfile"
           target: "/opt/acxess/" 
 
       - name: Connect to VPS via SSH and Update Containers
@@ -107,39 +107,21 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: APP_VERSION
           script: |
+            set -e
             cd /opt/acxess
 
             mv src/docker-compose.prod.yml docker-compose.yml
-            mv infrastructure/* .
-
+            mv infrastructure/Caddyfile .
             rm -rf src infrastructure
 
-            chmod +x backup.sh || true
+            # The deploy only changes the version on .env.
+            test -f .env || { echo "ERROR: /opt/acxess/.env not found. Run ansible-playbook first."; exit 1; }
+            sed -i "s/^APP_VERSION=.*/APP_VERSION=${APP_VERSION}/" .env
+            grep -qxF "APP_VERSION=${APP_VERSION}" .env || { echo "ERROR: APP_VERSION was not updated in .env"; exit 1; }
 
-            cat <<EOF > .env
-            ASPNETCORE_ENVIRONMENT=Production
-            DB_USER=sa
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            SYSTEM_USER_PASSWORD=${{ secrets.SYSTEM_USER_PASSWORD }}
-            OPEN_TELEMETRY_ENDPOINT=${{ secrets.OPEN_TELEMETRY_ENDPOINT }}
-            OPEN_TELEMETRY_TOKEN=${{ secrets.OPEN_TELEMETRY_TOKEN }}
-            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
-            S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }}
-            S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }}
-            S3_SERVICE_URL=${{ secrets.S3_SERVICE_URL }}
-            S3_PUBLIC_DOMAIN=${{ secrets.S3_PUBLIC_DOMAIN }}
-            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-            TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }}
-            TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }}
-            TWILIO_FROM_PHONE_NUMBER=${{ secrets.TWILIO_FROM_PHONE_NUMBER }}
-            APP_VERSION=${APP_VERSION}
-            EOF
-            
-            # Force Docker to download the most recent version we just compiled
+            # Download the new image, then run the migrator and start the app
             docker compose pull
-
-            # Start everything: The DB, run the migrator and start the app
             docker compose --profile app up -d --force-recreate --remove-orphans
-            
-            # Cleanup: Delete old Docker images to prevent the server's hard drive from filling up
+
+            # Delete old untagged images
             docker image prune -f
