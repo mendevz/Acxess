@@ -17,6 +17,15 @@
           - ansible_distribution_version == "24.04"
         fail_msg: "Tested on Ubuntu 24.04 only. This server has {{ ansible_distribution }} {{ ansible_distribution_version }}."
     
+    - name: Check production safety
+      ansible.builtin.assert:
+        that:
+          - app_compose_override is not defined
+          - network_mtu is not defined
+          - "'nonprod' not in group_names"
+        fail_msg: "Production must not use lab settings (compose override, MTU) or be in the nonprod group."
+      when: "'production' in group_names"
+    
     - name: Set network MTU (lab only)
       ansible.builtin.template:
         src: netplan-mtu.yaml.j2
