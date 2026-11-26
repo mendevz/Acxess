@@ -13,7 +13,7 @@
 # Run by hand    sudo systemctl start acxess-backup.service
 # Logs           journalctl -u acxess-backup.service
 # Config         .env next to the script, written by Ansible:
-#                DB_PASSWORD, AGE_RECIPIENT, RCLONE_REMOTE, BACKUP_DIR,
+#                DB_PASSWORD, AGE_RECIPIENTS_FILE, RCLONE_REMOTE, BACKUP_DIR,
 #                HEALTHCHECK_URL (optional)
 # Alerts         pings HEALTHCHECK_URL when it works, HEALTHCHECK_URL/fail when not
 # Exit code      0 = backup uploaded and checked, other = failed
@@ -35,12 +35,16 @@ set -a
 source "$ENV_FILE"
 set +a
 
-for var in DB_PASSWORD AGE_RECIPIENT RCLONE_REMOTE BACKUP_DIR; do
+for var in DB_PASSWORD AGE_RECIPIENTS_FILE RCLONE_REMOTE BACKUP_DIR; do
     if [ -z "${!var:-}" ]; then
         echo "ERROR: $var is not defined in $ENV_FILE" >&2
         exit 1
     fi
 done
+if [ ! -s "$AGE_RECIPIENTS_FILE" ]; then
+    echo "ERROR: $AGE_RECIPIENTS_FILE not found or empty" >&2
+    exit 1
+fi
 
 CONTAINER="sql_acxess_container"
 DB_NAME="AcxessDB"
@@ -72,10 +76,11 @@ docker exec "$CONTAINER" /opt/mssql-tools18/bin/sqlcmd \
     -U sa \
     -P "$DB_PASSWORD" \
     -C \
+    -b \
     -Q "BACKUP DATABASE [$DB_NAME] TO DISK = N'$CONTAINER_FILE' WITH CHECKSUM, STATS = 10"
 
 echo "Encrypting backup"
-docker exec "$CONTAINER" cat "$CONTAINER_FILE" | age -r "$AGE_RECIPIENT" -o "$ENCRYPT_FILE.part"
+docker exec "$CONTAINER" cat "$CONTAINER_FILE" | age -R "$AGE_RECIPIENTS_FILE" -o "$ENCRYPT_FILE.part"
 mv "$ENCRYPT_FILE.part" "$ENCRYPT_FILE"
 
 docker exec "$CONTAINER" rm -f "$CONTAINER_FILE"

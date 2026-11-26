@@ -1,3 +1,6 @@
-backup_age_recipient: "age1yz0kgejt7xd7tugvvtpxfnpg40y7s85pplaa4swampzk50lzdpwslqktfc"
+backup_age_recipients:
+  - "age1yz0kgejt7xd7tugvvtpxfnpg40y7s85pplaa4swampzk50lzdpwslqktfc"  # main
+  - "age1g6a3cczu323ge4p9tc5540cwy2dkhnrn99yy8leglhcgzcnevsasptha8v"  # emergency
 backup_dir: /var/backups/acxess
 ghcr_user: "mendevz"
+server_timezone: "America/Mexico_City"
