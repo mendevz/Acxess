@@ -1,0 +1,8 @@
+r2_remote_name: "r2-dev"
+backup_rclone_remote: "{{ r2_remote_name }}:acxess-backups-dev/sql-server"
+photos_src_bucket: "acxess-storage-dev"
+photos_dst_bucket: "acxess-storage-backup-dev"
+app_version: "v1.12.3"
+app_s3_bucket_name: "acxess-storage-dev"
+app_s3_public_domain: "https://photos.acxess-lab.test"
+deploy_public_key_file: "~/.ssh/acxess_lab_deploy.pub"

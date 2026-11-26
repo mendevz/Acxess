@@ -5,7 +5,7 @@
   vars:
     backup_user: acxess-backup
     deploy_user: acxess-deploy
-    deploy_public_key: "{{ lookup('file', '~/.ssh/acxess_lab_deploy.pub') }}"
+    deploy_public_key: "{{ lookup('file', deploy_public_key_file) }}"
     rclone_version: "v1.76.0"
     rclone_zip_url: "https://downloads.rclone.org/{{ rclone_version }}/rclone-{{ rclone_version }}-linux-amd64.zip"
     rclone_sums_url: "https://downloads.rclone.org/{{ rclone_version }}/SHA256SUMS"
