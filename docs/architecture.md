@@ -24,7 +24,12 @@ Code: [`src/modules/`](../src/modules). The web host is [`src/Acxess.Web`](../sr
 - Each module has its **own `DbContext` and its own SQL schema**. One database, separate schemas.
 - Modules talk in two ways:
   - **Direct call** through an integration service interface (`ICatalogIntegrationService`, `IBillingIntegrationService`, `IIdentityIntegrationService`).
-  - **Event** in the same process (MediatR notification). Example: `SubscriptionPurchased` in Membership → Billing creates the transaction.
+  - **Event** in the same process (MediatR notification):
+
+| Event | Sent by | Handled by |
+|---|---|---|
+| `SubscriptionPurchased` | Membership (new member, renewal) | Billing: creates the transaction |
+| `TenantCreated` | Identity (a new gym) | Catalog: creates the default add-ons (inscription and visit) |
 
 ## Inside a module
 
@@ -41,6 +46,19 @@ Each feature is a **vertical slice**: one request and one MediatR handler, with 
 
 Every request goes through the same pipeline (MediatR behaviors in [`src/shared/Acxess.Infrastructure`](../src/shared/Acxess.Infrastructure)): logging, tenant, tracing, idempotency (Redis), database errors and transactions.
 
+## In production
+
+The same Docker image runs in two containers ([`docker-compose.prod.yml`](../src/docker-compose.prod.yml)):
+
+| Container | What it does |
+|---|---|
+| `acxess-migrator` | Starts with `--migrate-only`: applies the migrations of every module and runs the seeders, then stops. |
+| `acxess-web` | Starts only after the migrator ends with success (`RUN_MIGRATIONS=false`). Serves the app. |
+
+**Background job.** `DailyExpirationReportWorker` (Membership) runs inside `acxess-web`. Every day at 08:30, in the time zone of each gym, it sends the expiration reminders by SMS. Only **one** `acxess-web` may run: two servers with the app up would send every SMS twice.
+
+**Configuration.** `appsettings.json`, then environment variables on top. In production the variables come from `/opt/acxess/.env`, written by Ansible from the Vault ([ADR 0006](adrs/0006-ansible-vault-is-the-only-source-of-secrets.md)), and `docker-compose.prod.yml` maps them to .NET names (for example `ConnectionStrings__Default`). Known gap: the BetterStack token is still in `appsettings.json`.
+
 ## Technology
 
 | Area | Choice |
@@ -51,7 +69,7 @@ Every request goes through the same pipeline (MediatR behaviors in [`src/shared/
 | Files | Cloudflare R2 (S3 API) for member photos |
 | Messages | Twilio SMS ([ADR 0004](adrs/0004-replace-unofficial-whatsapp-with-twilio-sms.md)) |
 | Logs and traces | Serilog + BetterStack, OpenTelemetry ([ADR 0003](adrs/0003-use-cloud-based-telemetry-for-production.md)) |
-| Tests | xUnit, integration tests with Testcontainers (real SQL Server in Docker) |
+| Tests | xUnit: [`src/tests/Acxess.UnitTests`](../src/tests/Acxess.UnitTests) and [`Acxess.IntegrationTests`](../src/tests/Acxess.IntegrationTests) with Testcontainers (real SQL Server in Docker) |
 
 ## Diagrams
 
