@@ -8,42 +8,67 @@
 
 **Acxess** is a multi-tenant web app for gyms. It manages members, subscriptions, payments and expiration reminders. Two real gyms use it every day.
 
-## How it works
+This repository is the source of truth: the app, the server setup, the deploy, the backups and the recovery steps are all here as code or as tested runbooks.
 
-| Part | In short | More |
+## How it runs
+
+```mermaid
+flowchart LR
+    staff["Gym staff"] -->|HTTPS| cf["Cloudflare<br/>DNS + proxy"]
+    cf --> caddy
+
+    subgraph vps["One VPS · Ubuntu 24.04 · set up by Ansible"]
+        caddy["Caddy<br/>TLS"] --> web["acxess-web<br/>.NET 9"]
+        web --> sql[("SQL Server")]
+        web --> redis[("Redis")]
+        backup["backup.sh<br/>every night"] -.-> sql
+    end
+
+    web --> r2p[("R2: photos")]
+    backup -->|"encrypted (age)"| r2b[("R2: backups")]
+    backup -.->|ping| hc["healthchecks.io"]
+    gha["GitHub Actions"] -->|"image"| ghcr["GHCR"]
+    gha -->|"SSH: new version"| vps
+```
+
+| Area | How it works today | Where |
 |---|---|---|
-| **App** | .NET 9 modular monolith. Razor Pages with HTMX and Alpine.js. SQL Server and Redis. | [Architecture](docs/architecture.md) |
-| **Server** | One Ubuntu VPS. Docker Compose with Caddy (HTTPS), the app, SQL Server and Redis. | [Infrastructure](docs/infrastructure.md) |
-| **Deploy** | A GitHub Release builds the image, runs the tests and deploys by SSH. Rollback = deploy an older tag. | [Infrastructure](docs/infrastructure.md#how-a-change-gets-to-production) |
-| **Server setup** | Ansible playbook, secrets in Ansible Vault. Tested in a lab VM. | [infrastructure/](infrastructure/README.md) |
-| **Backups** | Nightly database backup to Cloudflare R2. A new encrypted design with alerts is in testing. | [Backups](docs/infrastructure.md#backups-and-recovery) |
-| **Decisions** | Why we chose each thing, with its cost. | [ADRs](docs/adrs/) |
-
-All documentation: [docs/](docs/README.md).
+| **App** | .NET 9 modular monolith: 5 modules, each with its own SQL schema. Razor Pages + HTMX + Alpine.js. MediatR pipeline for tenant, logs, idempotency and transactions. | [architecture.md](docs/architecture.md), [`src/`](src) |
+| **Server** | One VPS. Docker Compose runs Caddy, the app, a migrator, SQL Server and Redis. | [`src/docker-compose.prod.yml`](src/docker-compose.prod.yml) |
+| **Server setup** | One Ansible playbook builds the server from zero: users, SSH, firewall, Docker, app files, `.env`, backup timers. Production was rebuilt with it on 2026-11-27. | [`infrastructure/ansible/`](infrastructure/README.md#ansible) |
+| **Secrets** | Ansible Vault, one Vault per environment. GitHub only keeps the SSH key and the server address. | [ADR 0006](docs/adrs/0006-ansible-vault-is-the-only-source-of-secrets.md) |
+| **Deploy** | A GitHub Release runs the tests, builds the image and pushes it to GHCR. Then it changes `APP_VERSION` on the server and restarts the app. The migrator runs first. Rollback: deploy an older tag. | [`deploy.yml`](.github/workflows/deploy.yml), [infrastructure.md](docs/infrastructure.md#how-a-change-gets-to-production) |
+| **Backups** | Every night: database backup encrypted with age (2 keys) to Cloudflare R2, and a copy of the photos bucket. An alert if a backup fails or does not run. | [infrastructure.md](docs/infrastructure.md#backups-and-recovery) |
+| **Recovery** | `ansible-playbook site.yml` + `sudo acxess-restore`. Tested on real servers. | [new-server.md](docs/runbooks/new-server.md) |
+| **Decisions** | Why we chose each thing, and its cost. | [ADRs](docs/adrs/) |
 
 ## Repository
 
 ```
-src/              application code (.NET), Docker Compose files
-infrastructure/   server setup (Ansible), backup scripts, Caddy
-docs/             architecture, infrastructure, decisions, runbooks
-.github/          CI (pull requests) and CD (releases)
+src/
+  Acxess.Web/             web host: Razor Pages, startup, pipeline
+  modules/                Identity, Catalog, Membership, Billing, Marketing
+  shared/                 contracts between modules, shared infrastructure
+  docker-compose.yml      local development
+  docker-compose.prod.yml production
+infrastructure/
+  ansible/                server setup: playbook, inventories, variables, Vault
+  backup.sh               nightly database backup
+  photos-backup.sh        nightly photos copy
+  restore.sh              database restore (installed as acxess-restore)
+  Caddyfile               HTTPS for production
+  lab/, drill/            files only for the lab VM and for recovery drills
+docs/                     architecture, infrastructure, ADRs, runbooks
+.github/workflows/        CI (pull requests) and CD (releases)
 ```
 
 ## Local development
 
 You need Docker and the [.NET 9 SDK](https://dotnet.microsoft.com/download).
 
-**1. Clone**
-
 ```bash
 git clone https://github.com/mendevz/Acxess.git
 cd Acxess/src
-```
-
-**2. Configure**
-
-```bash
 cp .env.template .env      # then set your local passwords
 ```
 
@@ -57,29 +82,12 @@ Create `Acxess.Web/appsettings.Localhost.json`:
 }
 ```
 
-**3. Start the database, Redis and migrations**
+Start the database, Redis and the migrations, then the app:
 
 ```bash
 docker compose up -d acxess-db acxess-redis seq
 docker compose up --build acxess-migrator
-```
-
-**4. Run the app**
-
-```bash
 ASPNETCORE_ENVIRONMENT=Localhost dotnet run --project ./Acxess.Web/
 ```
 
-More commands (migrations, tests, Tailwind): [docs/development.md](docs/development.md).
-
-## Diagrams
-
-**Context (C4)**
-
-<img width="1186" height="270" alt="C4 context diagram of Acxess" src="https://github.com/user-attachments/assets/c0c060fd-6170-4d4d-a58d-78ab8f9a91cd" />
-
-**Deployment**
-
-<img width="1166" height="586" alt="Deployment diagram of Acxess" src="https://github.com/user-attachments/assets/353adbfa-dbda-4896-ad2c-302c2413c8ab" />
-
-The current deployment diagram, as code, is in [docs/infrastructure.md](docs/infrastructure.md).
+More commands (migrations, tests, Tailwind): [docs/development.md](docs/development.md). All documentation: [docs/](docs/README.md).

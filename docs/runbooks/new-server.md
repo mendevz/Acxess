@@ -2,7 +2,7 @@
 
 How to go from an empty server to a working Acxess with the data of the last backup. Two commands do the work: `ansible-playbook site.yml` and `acxess-restore`.
 
-Last tested: 2026-11-24, on a real Hetzner VPS with Cloudflare DNS: **10 min 58 s** from "the server is dead" to "I can sign in". In the lab VM (2026-11-19): 5 min 38 s.
+Last used: 2026-11-27, to rebuild **production** from code: **16 min 16 s**, no data lost. Drill on a real VPS (2026-11-24): 10 min 58 s. Lab VM (2026-11-19): 5 min 38 s.
 
 ## When to use it
 
@@ -20,14 +20,14 @@ The steps are the same everywhere. These parts change:
 | | Lab | Drill on a VPS (also future staging) | Production |
 |---|---|---|---|
 | Create the server | `multipass launch` | Hetzner panel | Hetzner panel |
-| Ansible inventory | `inventory.ini` (the default) | `-i inventory-drill.ini` | `-i inventory-production.ini` (not created yet) |
+| Ansible inventory | `inventory.ini` (the default) | `-i inventory-drill.ini` | `-i inventory-production.ini --vault-id production@<password-file>` |
 | First SSH user | `ubuntu` | `root`, then the admin user | `root`, then the admin user |
 | Name → server | `/etc/hosts` on your machine | Cloudflare record `drill`, proxied | Cloudflare record, proxied |
 | TLS certificate | Caddy internal CA (browser warning) | Let's Encrypt (Cloudflare mode Full (strict)) | Let's Encrypt (same) |
 | Extra password before the app | No | Yes (`basic_auth` in Caddy) | No |
 | Logs to BetterStack | Blocked (Compose override) | Blocked | **Yes** |
 | SMS (Twilio) | Off | Off | **On** |
-| Tested | Yes | Yes (2026-11-24) | No |
+| Tested | Yes | Yes (2026-11-24 and 2026-11-27) | Yes (2026-11-27, rebuild of the same server) |
 
 ## Before you start
 
@@ -36,7 +36,7 @@ The steps are the same everywhere. These parts change:
 | This repository, on the commit that runs in production | `git status` is clean |
 | Ansible and its collections | `ansible-galaxy collection install -r infrastructure/ansible/requirements.yml` |
 | The Ansible Vault password | In `~/.ansible-vault-pass` |
-| The age **private** key (decrypts the backups) | `age-keygen -y <key-file>` prints the same public key as `backup_age_recipient` in `group_vars/all/vars.yml` |
+| An age **private** key (decrypts the backups) | `age-keygen -y <key-file>` prints one of the keys in `backup_age_recipients` in `group_vars/all/vars.yml` (the main key, or the emergency key on paper) |
 | An SSH key for the new server | Uploaded to the provider, or in `cloud-init` for the lab |
 | The `sudo` password of the admin user | You need it for the restore and for later Ansible runs |
 
@@ -101,6 +101,7 @@ mark "3 first connection"
 - `ssh-keygen -R` removes an old fingerprint for this IP, if there is one.
 - Answer `yes` to the fingerprint question. If you skip this, Ansible waits for an answer and does not continue.
 - `<first-user>` is `ubuntu` in the lab and `root` on a new VPS.
+- If `root` asks for a password: the server was created without an SSH key, so the provider has no key to install. On Hetzner: *Rescue → Reset root password*, then `ssh-copy-id -i <ssh-key>.pub root@"$NEW_IP"`. This password stops working after the playbook (step 4). It happened with production on 2026-11-27.
 
 ### 4. Command 1: set up the server
 
@@ -108,6 +109,8 @@ mark "3 first connection"
 cd infrastructure/ansible
 ansible-playbook site.yml                          # lab
 ansible-playbook -i inventory-drill.ini site.yml   # VPS drill (first run as root)
+ansible-playbook -i inventory-production.ini --vault-id production@<password-file> \
+  -e app_version=<last-release> site.yml           # production (first run as root)
 cd ../..
 mark "4 ansible end"
 ```
@@ -115,6 +118,8 @@ mark "4 ansible end"
 Expected: `failed=0`. Measured: 1 min 20 s in the lab, **about 5 min 45 s** on the VPS.
 
 On a VPS, this run creates the admin user and then turns off SSH login for `root`. From now on, connect as the admin user.
+
+Production: `-e app_version` must be the **last release** (see GitHub Releases). The backup has the database of that version, and the app must match it. On a server that already has a version, Ansible keeps it.
 
 ### 5. Command 2: restore the data
 
@@ -170,9 +175,9 @@ The server works, but it must also be **protected** again.
 | Step | Why | Tested |
 |---|---|---|
 | **Stop the old server for good** (power off in the panel, or remove its network access) | If the old server comes back, two servers run the nightly jobs: double backups and **double SMS to the members**. | No |
-| Update the server address in GitHub Secrets (used by `deploy.yml`) | If not, the next release goes to the old server. | No |
+| Update the server address in GitHub Secrets (used by `deploy.yml`) | If not, the next release goes to the old server. Not needed after a rebuild of the same server (same IP). | No |
 | Change the origin IP of the proxied records in Cloudflare | Users keep the Cloudflare IPs, so the change works in seconds. No TTL wait. | Yes, with a new record (drill) |
-| First access as `root` | The playbook creates the admin user **before** it turns off `root` login. | Yes (drill) |
+| First access as `root` | The playbook creates the admin user **before** it turns off `root` login. | Yes (drill and production) |
 | Delete the drill server, its IP and its DNS record after a drill | A DNS record that points to an IP the provider gives to someone else is a risk. | Yes |
 
 ## Measured
@@ -184,6 +189,7 @@ The server works, but it must also be **protected** again.
 | 2026-11-19 | Lab VM | 5 min 38 s | Machine ~4 min | No problems. |
 | 2026-11-24 | Hetzner VPS + Cloudflare | **15 min 30 s** | Create the server in the panel 4 min, Ansible 5 min 51 s, restore 34 s | HTTPS and DNS worked at once. Wrong image (Ubuntu 26.04): the second Ansible run as admin failed. |
 | 2026-11-24 | Hetzner VPS + Cloudflare, Ubuntu 24.04 | **10 min 58 s** | Create the server 1 min, Ansible 5 min 43 s, restore 40 s | No problems. Second Ansible run as admin: `changed=0`. |
+| 2026-11-27 | **Production**, rebuild of the same Hetzner server | **16 min 16 s** | Root access 7 min 29 s, Ansible 2 min 56 s, upload + restore 2 min 13 s | Planned move: app stopped before the last backup, snapshot before the rebuild. No data lost. `root` had no SSH key after the rebuild. |
 
 ## Done when
 
