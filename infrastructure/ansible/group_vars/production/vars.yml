@@ -1,0 +1,10 @@
+admin_user: acxess-admin
+admin_public_key_file: "~/.ssh/id_ed25519_acxess.pub"
+deploy_public_key_file: "{{ playbook_dir }}/files/acxess-prod-deploy.pub"
+app_version: "v1.12.3"
+app_s3_bucket_name: "acxess-storage"
+app_s3_public_domain: "https://assets.acxess-app.com"
+r2_remote_name: "r2-prod"
+backup_rclone_remote: "{{ r2_remote_name }}:acxess-backups/sql-server-encrypted"
+photos_src_bucket: "acxess-storage"
+photos_dst_bucket: "acxess-storage-backup"
