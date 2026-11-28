@@ -2,7 +2,7 @@
 
 How to set up the server accounts and SSH by hand. The Ansible playbook ([`site.yml`](../../infrastructure/ansible/site.yml)) does the same steps automatically. Use this page to understand them or to check a server.
 
-Last checked: 2026-11-07 (production), 2026-11-10 (lab, with Ansible).
+Last checked: 2026-11-27 (production, built by Ansible).
 
 ## Why
 

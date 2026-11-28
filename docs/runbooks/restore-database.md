@@ -2,7 +2,7 @@
 
 How to bring the database back from the encrypted backup in Cloudflare R2, with [`restore.sh`](../../infrastructure/restore.sh).
 
-Last tested: 2026-11-19, in the lab virtual machine.
+Last tested: 2026-11-27, in production (on the rebuilt server). Before: lab VM and drills.
 
 ## When to use it
 
@@ -49,7 +49,7 @@ sudo -u acxess-backup rclone lsf <remote>:<bucket>/sql-server
 sudo acxess-restore /dev/shm/acxess-restore.key acxess_2026-11-18_03-00-01.bak.age
 ```
 
-`<remote>:<bucket>/sql-server` is the `RCLONE_REMOTE` value in `/opt/acxess-backup/.env`.
+`<remote>:<bucket>/sql-server` is the `RCLONE_REMOTE` value in `/opt/acxess-backup/.env`. In production: `r2-prod:acxess-backups/sql-server-encrypted`.
 
 ### 3. Read the result
 
@@ -91,7 +91,7 @@ The script stops at the first error. The table says if the app is still running.
 | Error | Meaning | App | What to do |
 |---|---|---|---|
 | `the age identity must be in /dev/shm` | The key is in another folder. | Up | Copy it to `/dev/shm`. |
-| `age: ... unknown identity type` | The file is not an age key (for example, the Ansible Vault password). | Up | Copy the right file. Check it with `age-keygen -y <file>`: the public key must be the same as `backup_age_recipient` in `group_vars/all/vars.yml`. |
+| `age: ... unknown identity type` | The file is not an age key (for example, the Ansible Vault password). | Up | Copy the right file. Check it with `age-keygen -y <file>`: the public key must be one of `backup_age_recipients` in `group_vars/all/vars.yml`. |
 | `age: ... no identity matched any of the recipients` | A real age key, but not the one that encrypted the backups. | Up | Same as above. |
 | `RESTORE VERIFYONLY` fails | The backup file is damaged. | Up | Restore an older backup (step 2). |
 | `only ... MB free` | Not enough disk space. | Up | Free space, then run again. |
@@ -105,5 +105,6 @@ The script deletes the key in every case, even when it fails. To run it again, c
 | Date | Where | Backup size | Total | Prepare | Restore and checks | App start |
 |---|---|---|---|---|---|---|
 | 2026-11-19 | Lab VM | 10 MB | 14 s | 2 s | 1 s | 10 s |
+| 2026-11-27 | Drill VPS (empty server, images downloaded) | 10 MB | 33 s | 21 s | 1 s | 11 s |
 
 On an **empty** server, the script also downloads all Docker images first (about 1.5 minutes in the lab). Full recovery from an empty server, Ansible included: 5 min 36 s ([infrastructure.md](../infrastructure.md#measured-so-far)).
